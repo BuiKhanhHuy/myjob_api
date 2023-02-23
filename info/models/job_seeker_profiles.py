@@ -6,12 +6,13 @@ from common.models import Career, Skill, Location
 
 
 class JobSeekerProfile(InfoBaseModel):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
+    title = models.CharField(max_length=200, null=True)
+    description = models.TextField(null=True)
     marital_status = models.CharField(max_length=1,
                                       choices=var_sys.MARITAL_STATUS_CHOICES,
-                                      default=var_sys.MARITAL_STATUS_CHOICES[0][0])
-    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES)
+                                      default=var_sys.MARITAL_STATUS_CHOICES[0][0],
+                                      null=True)
+    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")

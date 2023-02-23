@@ -10,17 +10,20 @@ class CustomTokenView(TokenView):
     def post(self, request, *args, **kwargs):
         mutable_data = request.data.copy()
         request._request.POST = request._request.POST.copy()
-        email = mutable_data.get("username", "")
-
-        if mutable_data.get("grant_type", "") == "password":
-            role = mutable_data.get("role", "")
-            if not User.objects.filter(email__iexact=email).exists():
-                return Response(status=status.HTTP_408_REQUEST_TIMEOUT)
 
         for key, value in mutable_data.items():
             request._request.POST[key] = value
 
         url, headers, body, stt = self.create_token_response(request._request)
+        if stt == status.HTTP_200_OK:
+            body = json.loads(body)
+            access_token = body.get("access_token")
+            if access_token is not None:
+                token = get_access_token_model().objects.get(token=access_token)
+                roles = [r.name for r in token.user.roles.all()]
+                body['roles'] = roles
+                body = json.dumps(body)
+
         response = Response(data=json.loads(body), status=stt)
 
         for k, v in headers.items():

@@ -1,13 +1,17 @@
 from rest_framework.response import Response
+from rest_framework import status as res_status
 
 
-def data_response(data=None, status=1, message="Success"):
+def data_response(data=None, errors=None):
+    if errors is None:
+        errors = []
     return {
-        'status_code': status,
-        'message': message,
+        'errors': errors,
         'data': data
     }
 
 
-def response_data(data=None, status=1, message="Success"):
-    return Response(data_response(data, status, message))
+def response_data(status=res_status.HTTP_200_OK, data=None, errors=None):
+    if errors is None:
+        errors = []
+    return Response(status=status, data=data_response(data, errors))

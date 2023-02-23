@@ -3,6 +3,7 @@ from helpers import utils
 from django.db import models
 from django.contrib.auth.models import (AbstractUser, BaseUserManager)
 from .base import AuthBaseModel
+from .roles import Role
 
 
 class UserManager(BaseUserManager):
@@ -24,7 +25,12 @@ class UserManager(BaseUserManager):
         user = self.create_user(email, full_name, password)
         user.is_superuser = True
         user.is_staff = True
+        role = Role.objects.filter(name__in=[var_sys.ADMIN])
+        if not role.exists():
+            raise TypeError(f"{var_sys.ADMIN} role does not exists!")
+        user.roles.add(role.first())
         user.save()
+
         return user
 
 

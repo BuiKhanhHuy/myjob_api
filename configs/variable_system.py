@@ -1,3 +1,7 @@
+ADMIN = 'ADMIN'
+EMPLOYER = 'EMPLOYER'
+JOB_SEEKER = 'JOB_SEEKER'
+
 AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
 
 AVATAR_DEFAULT = {
@@ -13,9 +17,9 @@ PLATFORM_CHOICES = (
 )
 
 ROLE_CHOICES = (
-    ('ADMIN', 'Quản trị viên'),
-    ('EMPLOYER', 'Nhà tuyển dụng'),
-    ('JOB_SEEKER', 'Người tìm việc')
+    (ADMIN, 'Quản trị viên'),
+    (EMPLOYER, 'Nhà tuyển dụng'),
+    (JOB_SEEKER, 'Người tìm việc')
 )
 
 GENDER_CHOICES = (
