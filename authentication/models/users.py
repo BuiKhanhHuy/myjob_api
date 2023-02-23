@@ -1,6 +1,8 @@
-from django.contrib.auth.models import (AbstractUser, BaseUserManager)
-from django.db import models
+from configs import variable_system as var_sys
 from helpers import utils
+from django.db import models
+from django.contrib.auth.models import (AbstractUser, BaseUserManager)
+from .base import AuthBaseModel
 
 
 class UserManager(BaseUserManager):
@@ -26,17 +28,38 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractUser):
-    class Meta:
-        db_table = "myjob_user"
+class User(AbstractUser, AuthBaseModel):
     groups = None
     user_permissions = None
 
     username = None
     first_name = None
     last_name = None
-    full_name = models.CharField(max_length=100, null=False, blank=False)
-    email = models.EmailField(max_length=100, null=False, blank=False, unique=True, db_index=True)
+    date_joined = None
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField(max_length=100, unique=True, db_index=True)
+    avatar_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["USER_AVT"])
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    birthday = models.DateField(null=True)
+    gender = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES, null=True)
+    email_notification_active = models.BooleanField(default=True)
+    sms_notification_active = models.BooleanField(default=True)
+    has_company = models.BooleanField(default=False)
+
+    # ForeignKey
+    roles = models.ManyToManyField("Role", through="UserRole", related_name="users")
+
+    class Meta:
+        db_table = "myjob_authentication_user"
+
     objects = UserManager()
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
+
+
+class UserRole(AuthBaseModel):
+    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="user_roles")
+    role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="user_roles")
+
+    class Meta:
+        db_table = 'myjob_authentication_user_role'

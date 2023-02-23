@@ -1,5 +1,12 @@
 AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
 
+AVATAR_DEFAULT = {
+    "USER_AVT": "https://cloudinary.com/console/c-7145a9883ab06f170cab39cb3463a5/media_library/folders" \
+                "/c16d59372d09573f486adb6bf8d49e1cb3 ",
+    "LOGO": "https://cloudinary.com/console/c-7145a9883ab06f170cab39cb3463a5/media_library/folders" \
+            "/c16d59372d09573f486adb6bf8d49e1cb3 "
+}
+
 PLATFORM_CHOICES = (
     ('WEB', 'Website'),
     ('APP', 'Ứng dụng')
@@ -26,6 +33,14 @@ LANGUAGE_CHOICES = (
     (1, ''),
 )
 
+LANGUAGE_LEVEL_CHOICES = (
+    (1, 'Level 1'),
+    (2, 'Level 2'),
+    (3, 'Level 3'),
+    (4, 'Level 4'),
+    (5, 'Level 5')
+)
+
 POSITION_CHOICES = (
     (1, ''),
 )
@@ -37,7 +52,7 @@ TYPE_OF_WORKPLACE_CHOICES = (
 )
 
 JOB_TYPE_CHOICES = (
-    (1, '')
+    (1, ''),
 )
 
 EXPERIENCE_CHOICES = (
