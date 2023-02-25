@@ -6,13 +6,12 @@ from common.models import Location
 
 
 class Company(InfoBaseModel):
-    company_name = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255, unique=True)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
-    email = models.EmailField(max_length=100)
-    phone = models.CharField(max_length=15)
-    head_office_address = models.CharField(max_length=255)
+    email = models.EmailField(max_length=100, unique=True)
+    phone = models.CharField(max_length=15, unique=True)
     website_url = models.URLField(max_length=300, null=True, blank=True)
-    tax_code = models.CharField(max_length=30, null=True, blank=True)
+    tax_code = models.CharField(max_length=30, unique=True)
     since = models.DateField(null=True)
     field_operation = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)

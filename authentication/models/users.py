@@ -1,34 +1,36 @@
 from configs import variable_system as var_sys
-from helpers import utils
 from django.db import models
 from django.contrib.auth.models import (AbstractUser, BaseUserManager)
 from .base import AuthBaseModel
-from .roles import Role
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, full_name=utils.generate_random_name(), password=None):
+    def create_user(self, email, full_name="name", password=None, **extra_fields):
         if email is None:
-            raise TypeError('Users should have a Email')
+            raise ValueError('Users should have a email')
         if full_name is None:
-            raise TypeError('Users should have a Full name')
+            raise ValueError('Users should have a full name')
 
-        user = self.model(email=self.normalize_email(email), full_name=full_name)
+        user = self.model(email=self.normalize_email(email), full_name=full_name, **extra_fields)
         user.set_password(password)
         user.save()
+
         return user
 
-    def create_superuser(self, email, full_name, password=None):
+    def create_superuser(self, email, full_name, password=None, **extra_fields):
         if password is None:
-            raise TypeError('Password should not be none')
+            raise ValueError('Super users should have a password')
 
-        user = self.create_user(email, full_name, password)
-        user.is_superuser = True
-        user.is_staff = True
-        role = Role.objects.filter(name__in=[var_sys.ADMIN])
-        if not role.exists():
-            raise TypeError(f"{var_sys.ADMIN} role does not exists!")
-        user.roles.add(role.first())
+        user = self.create_user_with_role_name(email, full_name, var_sys.ADMIN,
+                                               password=password, is_superuser=True,
+                                               is_staff=True, is_active=True)
+        return user
+
+    def create_user_with_role_name(self, email, full_name, role_name, password=None, **extra_fields):
+        if role_name is None:
+            raise ValueError("Role name is required!")
+        user = self.create_user(email, full_name, password, **extra_fields)
+        user.role_name = role_name
         user.save()
 
         return user
@@ -53,7 +55,8 @@ class User(AbstractUser, AuthBaseModel):
     has_company = models.BooleanField(default=False)
 
     # ForeignKey
-    roles = models.ManyToManyField("Role", through="UserRole", related_name="users")
+    role_name = models.CharField(max_length=10, choices=var_sys.ROLE_CHOICES,
+                                 default=var_sys.JOB_SEEKER)
 
     class Meta:
         db_table = "myjob_authentication_user"
@@ -61,11 +64,3 @@ class User(AbstractUser, AuthBaseModel):
     objects = UserManager()
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
-
-
-class UserRole(AuthBaseModel):
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="user_roles")
-    role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="user_roles")
-
-    class Meta:
-        db_table = 'myjob_authentication_user_role'
