@@ -27,7 +27,8 @@ SECRET_KEY = 'django-insecure-m)n0iq(0d55p5$xc7t)wmn5$9-dv8zw1a3k9nwnf#v86&mu=gt
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = ['192.168.1.5']
 
 # Application definition
 
@@ -51,7 +52,9 @@ INSTALLED_APPS = [
     'authentication',
     'info',
     'job_post',
-    'post'
+    'post',
+
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -63,7 +66,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
+
 
 ROOT_URLCONF = 'myjob_api.urls'
 
@@ -171,6 +176,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOW_ALL_ORIGINS = True
+INTERNAL_IPS = ('127.0.0.1', '192.168.1.5')
 
 SERVICE_REDIS_HOST = config('SERVICE_REDIS_HOST')
 SERVICE_REDIS_PORT = config('SERVICE_REDIS_PORT', cast=int)

@@ -1,5 +1,12 @@
 from django.db import models
-from .base import CommonBaseModel
+
+
+class CommonBaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
 class City(CommonBaseModel):
@@ -29,3 +36,17 @@ class Location(CommonBaseModel):
 
     class Meta:
         db_table = "myjob_common_location"
+
+
+class Career(CommonBaseModel):
+    name = models.CharField(max_length=150)
+
+    class Meta:
+        db_table = "myjob_common_career"
+
+
+class Skill(CommonBaseModel):
+    name = models.CharField(max_length=150)
+
+    class Meta:
+        db_table = "myjob_common_skill"

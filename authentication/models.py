@@ -1,7 +1,14 @@
 from configs import variable_system as var_sys
 from django.db import models
 from django.contrib.auth.models import (AbstractUser, BaseUserManager)
-from .base import AuthBaseModel
+
+
+class AuthBaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
 class UserManager(BaseUserManager):

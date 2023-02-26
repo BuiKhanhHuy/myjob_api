@@ -1,15 +1,12 @@
-from django.urls import path, include
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+from .views import (
+    JobSeekerProfileViewSet
+)
+
+router = DefaultRouter()
+router.register(r'job-seeker-profiles', JobSeekerProfileViewSet, basename='job-seeker-profile')
 
 urlpatterns = [
-    path('job-seeker/', include([
-        path('app/', include([
-
-        ])),
-        path('web/', include([
-
-        ]))
-    ])),
-    path('employer/', include([
-
-    ]))
+    path("", include(router.urls))
 ]

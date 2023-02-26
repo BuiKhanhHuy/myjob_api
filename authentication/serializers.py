@@ -3,7 +3,7 @@ from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db import transaction
-from ..models import User
+from .models import User
 from common.models import Location, District
 from info.models import JobSeekerProfile, Company
 
@@ -95,20 +95,18 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
 
 class UserInfoSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
-    isActive = serializers.BooleanField(source="is_active")
     fullName = serializers.CharField(source="full_name")
     email = serializers.CharField()
     avatarUrl = serializers.URLField(source="avatar_url")
-    phone = serializers.CharField()
-    birthday = serializers.DateField()
-    gender = serializers.CharField()
-    emailNotificationActive = serializers.BooleanField(source="email_notification_active")
-    smsNotificationActive = serializers.BooleanField(source="sms_notification_active")
     roleName = serializers.CharField(source="role_name")
 
     class Meta:
         model = User
-        fields = ("id", "isActive", "fullName", "email", "avatarUrl",
-                  "phone", "birthday", "gender", "emailNotificationActive",
-                  "smsNotificationActive", "roleName", "job_seeker_profile",
-                  "company")
+        fields = ("id", "fullName", "email",
+                  "avatarUrl", "roleName")
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'

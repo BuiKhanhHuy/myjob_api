@@ -1,9 +1,16 @@
 from configs import variable_system as var_sys
 from django.db import models
-from .base import JobPostBaseModel
 from authentication.models import User
 from common.models import Location, Career
 from info.models import Company
+
+
+class JobPostBaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
 
 class JobPost(JobPostBaseModel):
