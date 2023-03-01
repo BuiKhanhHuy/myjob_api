@@ -1,26 +1,20 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import (
-    CustomTokenView,
-    check_email_exists,
-    reset_password,
-    get_user_info,
-    job_seeker_register,
-    employer_register,
-    UserViewSet
-)
+from . import views
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet, basename='user')
+router.register(r'users', views.UserViewSet, basename='user')
 
 urlpatterns = [
-    path('token/', CustomTokenView.as_view()),
+    path('token/', views.CustomTokenView.as_view()),
     path('', include('drf_social_oauth2.urls', namespace='drf')),
-    path('email-exists/', check_email_exists),
-    path('reset-password', reset_password),
-    path('user-info/', get_user_info),
-    path('job-seeker/register/', job_seeker_register),
-    path('employer/register/', employer_register),
+    path('email-exists/', views.check_email_exists),
+    path('verify-email/', views.verify_email),
+    path('forgot-password/', views.forgot_password),
+    path('reset-password/', views.reset_password),
+    path('change-password', views.change_password),
+    path('user-info/', views.get_user_info),
+    path('job-seeker/register/', views.job_seeker_register),
+    path('employer/register/', views.employer_register),
     path('', include(router.urls))
 ]
-

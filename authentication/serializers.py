@@ -8,6 +8,15 @@ from common.models import Location, District
 from info.models import JobSeekerProfile, Company
 
 
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=100)
+    roleName = serializers.CharField(required=True, max_length=10)
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    newPassword = serializers.CharField(required=True, max_length=128)
+
+
 class JobSeekerRegisterSerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100,

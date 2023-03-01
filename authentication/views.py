@@ -1,5 +1,6 @@
 import json
 from configs.variable_response import response_data
+from console.jobs import queue_mail
 from helpers import helper
 from rest_framework import viewsets, generics
 from rest_framework.decorators import api_view, permission_classes
@@ -10,6 +11,8 @@ from oauth2_provider.models import get_access_token_model
 
 from .models import User
 from .serializers import (
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
     UserInfoSerializer,
@@ -51,10 +54,32 @@ def check_email_exists(request):
                          data=['ahihi'])
 
 
-@api_view(http_method_names=['post'])
-@permission_classes(permission_classes=[IsAuthenticated])
+@api_view(http_method_names=["get"])
+def verify_email(request):
+    return response_data()
+
+
+@api_view(http_method_names=["post"])
+def forgot_password(request):
+    data = request.data
+    forgot_password_serializer = ForgotPasswordSerializer(data=data)
+    if not forgot_password_serializer.is_valid():
+        pass
+    return response_data()
+
+
+@api_view(http_method_names=['get'])
 def reset_password(request):
-    pass
+    data = request.data
+    reset_password_serializer = ResetPasswordSerializer(data=data)
+    if not reset_password_serializer.is_valid():
+        pass
+    return response_data(message="DA GUI")
+
+
+@api_view(http_method_names=['get'])
+def change_password(request):
+    return response_data()
 
 
 @api_view(http_method_names=['post'])

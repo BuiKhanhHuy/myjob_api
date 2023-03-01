@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from decouple import config
 from pathlib import Path
 from datetime import timedelta
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,7 +29,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
-ALLOWED_HOSTS = ['192.168.1.5']
+ALLOWED_HOSTS = ['192.168.1.5', '127.0.0.1']
 
 # Application definition
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'social_django',
     'drf_social_oauth2',
+    'celery',
 
     # internal apps
     'common',
@@ -68,7 +70,6 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'corsheaders.middleware.CorsMiddleware'
 ]
-
 
 ROOT_URLCONF = 'myjob_api.urls'
 
@@ -182,6 +183,7 @@ INTERNAL_IPS = ('127.0.0.1', '192.168.1.5')
 
 SERVICE_REDIS_HOST = config('SERVICE_REDIS_HOST')
 SERVICE_REDIS_PORT = config('SERVICE_REDIS_PORT', cast=int)
+SERVICE_REDIS_USERNAME = config('SERVICE_REDIS_USERNAME')
 SERVICE_REDIS_PASSWORD = config('SERVICE_REDIS_PASSWORD')
 
 # FACEBOOK
@@ -206,5 +208,27 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
 ]
+
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CELERY_BROKER_URL = f"redis://{SERVICE_REDIS_USERNAME}:{SERVICE_REDIS_PASSWORD}@{SERVICE_REDIS_HOST}:{SERVICE_REDIS_PORT}"
+CELERY_RESULT_BACKEND = f"redis://{SERVICE_REDIS_USERNAME}:{SERVICE_REDIS_PASSWORD}@{SERVICE_REDIS_HOST}:{SERVICE_REDIS_PORT} "
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
+
+CELERY_BEAT_SCHEDULE = {
+    "sample_task": {
+        "task": "console.jobs.queue_cron_job.sample_task",
+        "schedule": crontab(minute="*/1"),
+    },
+}
 
 APP_ENVIRONMENT = config('APP_ENV')
