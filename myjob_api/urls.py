@@ -27,7 +27,7 @@ urlpatterns = [
             path('common/', include('common.urls')),
             path('auth/', include('authentication.urls')),
             path('info/', include('info.urls')),
-            path('job-post/', include('job_post.urls')),
+            path('job/', include('job.urls')),
             path('post/', include('post.urls'))
         ]
     ))

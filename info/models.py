@@ -15,8 +15,8 @@ class InfoBaseModel(models.Model):
 class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
-    email = models.EmailField(max_length=100, unique=True)
-    phone = models.CharField(max_length=15, unique=True)
+    companyEmail = models.EmailField(max_length=100, unique=True)
+    companyPhone = models.CharField(max_length=15, unique=True)
     website_url = models.URLField(max_length=300, null=True, blank=True)
     tax_code = models.CharField(max_length=30, unique=True)
     since = models.DateField(null=True)
@@ -50,6 +50,9 @@ class CompanyImage(InfoBaseModel):
 class JobSeekerProfile(InfoBaseModel):
     title = models.CharField(max_length=200, null=True)
     description = models.TextField(null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    birthday = models.DateField(null=True)
+    gender = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES, null=True)
     marital_status = models.CharField(max_length=1,
                                       choices=var_sys.MARITAL_STATUS_CHOICES,
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],

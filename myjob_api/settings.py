@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'common',
     'authentication',
     'info',
-    'job_post',
+    'job',
     'post',
 
     'corsheaders'

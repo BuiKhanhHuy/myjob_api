@@ -27,6 +27,11 @@ class JobPost(JobPostBaseModel):
     type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES)
     experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES)
     job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES)
+    salary_min = models.IntegerField()
+    salary_max = models.IntegerField()
+    contact_person_name = models.CharField(max_length=100)
+    contact_person_phone = models.CharField(max_length=15)
+    contact_person_email = models.EmailField(max_length=100)
 
     # ForeignKey
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
@@ -41,7 +46,7 @@ class JobPost(JobPostBaseModel):
                                      related_name="job_posts")
 
     class Meta:
-        db_table = "myjob_job_post_job_post"
+        db_table = "myjob_job_job_post"
 
 
 class SavedJobPost(JobPostBaseModel):
@@ -52,7 +57,7 @@ class SavedJobPost(JobPostBaseModel):
                              related_name="saved_job_posts")
 
     class Meta:
-        db_table = "myjob_job_post_saved_job_post"
+        db_table = "myjob_job_saved_job_post"
 
 
 class JobPostActivity(JobPostBaseModel):
@@ -63,7 +68,7 @@ class JobPostActivity(JobPostBaseModel):
                              related_name="job_posts_activity")
 
     class Meta:
-        db_table = "myjob_job_post_job_post_activity"
+        db_table = "myjob_job_job_post_activity"
 
 
 class JobPostCareer(JobPostBaseModel):
@@ -74,4 +79,4 @@ class JobPostCareer(JobPostBaseModel):
                                related_name="job_post_careers")
 
     class Meta:
-        db_table = "myjob_job_post_job_post_career"
+        db_table = "myjob_job_job_post_career"

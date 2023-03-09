@@ -29,8 +29,11 @@ class UserManager(BaseUserManager):
             raise ValueError('Super users should have a password')
 
         user = self.create_user_with_role_name(email, full_name, var_sys.ADMIN,
-                                               password=password, is_superuser=True,
-                                               is_staff=True, is_active=True)
+                                               password=password,
+                                               is_superuser=True,
+                                               is_staff=True,
+                                               is_active=True,
+                                               is_verify_email=True)
         return user
 
     def create_user_with_role_name(self, email, full_name, role_name, password=None, **extra_fields):
@@ -54,12 +57,10 @@ class User(AbstractUser, AuthBaseModel):
     full_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True, db_index=True)
     avatar_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["USER_AVT"])
-    phone = models.CharField(max_length=15, blank=True, null=True)
-    birthday = models.DateField(null=True)
-    gender = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES, null=True)
     email_notification_active = models.BooleanField(default=True)
     sms_notification_active = models.BooleanField(default=True)
     has_company = models.BooleanField(default=False)
+    is_verify_email = models.BooleanField(default=False)
 
     # ForeignKey
     role_name = models.CharField(max_length=10, choices=var_sys.ROLE_CHOICES,

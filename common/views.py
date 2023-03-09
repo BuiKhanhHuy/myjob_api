@@ -3,6 +3,40 @@ from helpers import utils, helper
 from configs import variable_response as var_res
 from rest_framework.decorators import api_view
 from rest_framework import status
+from .models import (
+    Career
+)
+
+
+@api_view(http_method_names=["POST"])
+def create_database(request):
+    careers = ['Chứng khoán - Vàng', 'Tài chính - Tiền tệ', 'Bảo hiểm/ Tư vấn bảo hiểm', 'Đầu tư', 'Bất động sản',
+               'Kế toán - Kiểm toán', 'Ngân hàng/ Tài Chính', 'Xây dựng', 'Kiến trúc - Thiết kế nội thất',
+               'Khách sạn - Du lịch', 'Du lịch', 'Khách sạn - Nhà hàng', 'Sản xuất', 'Công nghệ cao', 'Công nghiệp',
+               'Dệt may - Da giày', 'In ấn - Xuất bản', 'Lao động phổ thông', 'Nông - Lâm - Ngư nghiệp',
+               'Ô tô - Xe máy', 'Thủ công mỹ nghệ', 'Vật tư/Thiết bị/Mua hàng', 'Làm thêm', 'Làm bán thời gian',
+               'Nhân viên trông quán internet', 'Promotion Girl/ Boy (PG-PB)', 'Sinh viên làm thêm', 'Thực tập',
+               'Kinh doanh - Thương mại', 'Bán hàng', 'Nhân viên kinh doanh', 'Quản trị kinh doanh', 'Xuất - Nhập khẩu',
+               'Công nghệ thông tin', 'Games', 'IT phần cứng/mạng', 'IT phần mềm', 'Thiết kế đồ họa - Web',
+               'Thương mại điện tử', 'Truyền thông - PR', 'Biên tập/ Báo chí/ Truyền hình', 'Marketing - PR',
+               'Tiếp thị - Quảng cáo', 'Tổ chức sự kiện - Quà tặng', 'Viễn thông', 'Bưu chính', 'Điện tử viễn thông',
+               'Hàng tiêu dùng', 'Hàng gia dụng', 'Mỹ phẩm - Trang sức', 'Thời trang', 'Thực phẩm - Đồ uống',
+               'Dịch vụ - Hỗ trợ', 'Bảo vệ/ An ninh/ Vệ sỹ', 'Phiên dịch/ Ngoại ngữ', 'Dịch vụ', 'Giáo dục - Đào tạo',
+               'Hàng hải', 'Hàng không', 'Người giúp việc/ Phục vụ/ Tạp vụ', 'Pháp luật/ Pháp lý',
+               'Tư vấn/ Chăm sóc khách hàng', 'Vận tải - Lái xe/ Tài xế', 'Y tế - Dược', 'Kỹ thuật - Công nghệ',
+               'Cơ khí - Chế tạo', 'Dầu khí - Hóa chất', 'Điện - Điện tử - Điện lạnh', 'Hóa học - Sinh học', 'Kỹ thuật',
+               'Kỹ thuật ứng dụng', 'Hành chính - Nhân sự', 'Hành chính - Văn phòng', 'Nhân sự', 'Thư ký - Trợ lý',
+               'Ngành nghề khác', 'Hoạch định - Dự án', 'Nghệ thuật/ Điện ảnh', 'Thiết kế - Mỹ thuật',
+               'Quan hệ đối ngoại', 'Xuất khẩu lao động', 'Startup', 'Freelance', 'Tính chất công việc',
+               'QA-QC/ Thẩm định/ Giám định', 'Môi trường', 'Phi chính phủ/ Phi lợi nhuận', 'Lương cao',
+               'Việc làm cấp cao', 'Việc myjob_common_careerlàm Tết', 'Công chức / Viên chức', 'Phát triển thị trường',
+               'Giao nhận/ Vận chuyển/ Kho bãi', 'Làm đẹp/ Thể lực/ Spa', 'Thể dục/ Thể thao', 'Vận tải',
+               'Nghệ thuật/ Giải trí']
+    if not Career.objects.exists():
+        for career in careers:
+            Career.objects.create(name=career)
+
+    return var_res.response_data()
 
 
 @api_view(http_method_names=["GET"])
@@ -37,4 +71,3 @@ def get_all_config(request):
                                      data=None, message="Lỗi hệ thống!")
     else:
         return var_res.response_data(data=res_data)
-

@@ -1,6 +1,9 @@
 import json
 from configs.variable_response import response_data
-from console.jobs import queue_mail
+from console.jobs import queue_mail, thread_mail
+from .email_verification_token_generator import email_verification_token
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 from helpers import helper
 from rest_framework import viewsets, generics
 from rest_framework.decorators import api_view, permission_classes
@@ -11,6 +14,7 @@ from oauth2_provider.models import get_access_token_model
 
 from .models import User
 from .serializers import (
+    CheckCredsSerializer,
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
     EmployerRegisterSerializer,
@@ -54,9 +58,40 @@ def check_email_exists(request):
                          data=['ahihi'])
 
 
-@api_view(http_method_names=["get"])
+@api_view(http_method_names=["POST"])
+def check_creds(request):
+    data = request.data
+    res_data = {
+        "exists": False,
+        "email": "",
+        "email_verified": False
+    }
+
+    check_creds_serializer = CheckCredsSerializer(data=data)
+    if not check_creds_serializer.is_valid():
+        return response_data(status=status.HTTP_400_BAD_REQUEST, errors=check_creds_serializer.errors)
+
+    serializer_data = check_creds_serializer.data
+
+    email = serializer_data["email"]
+    role_name = serializer_data["roleName"]
+    user = User.objects.filter(email__iexact=email, role_name=role_name)
+
+    res_data["email"] = email
+    if user.exists():
+        user = user.first()
+        res_data["exists"] = True
+        if user.is_verify_email:
+            res_data["email_verified"] = True
+
+    return response_data(data=res_data)
+
+
+@api_view(http_method_names=["POST"])
 def verify_email(request):
-    return response_data()
+    data = request.data
+
+    return response_data(data=request.data)
 
 
 @api_view(http_method_names=["post"])
@@ -103,7 +138,17 @@ def job_seeker_register(request):
     if not serializer.is_valid():
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
     try:
-        serializer.save()
+        user = serializer.save()
+        if user:
+            # send mail verify email
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = email_verification_token.make_token(user=user)
+            data = {
+                "email_subject": "Xác thực email",
+                "email_body": f'http://localhost:3000/verify-email/{uidb64}/{token}/',
+                "to_email": user.email
+            }
+            thread_mail.Util.send_email(data=data)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

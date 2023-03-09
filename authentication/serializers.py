@@ -8,6 +8,10 @@ from common.models import Location, District
 from info.models import JobSeekerProfile, Company
 
 
+class CheckCredsSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=100)
+    roleName = serializers.CharField(required=True, max_length=10)
+
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=100)
     roleName = serializers.CharField(required=True, max_length=10)
@@ -44,10 +48,10 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
 class CompanyRegisterSerializer(serializers.ModelSerializer):
     companyName = serializers.CharField(source="company_name", required=True, max_length=255,
                                         validators=[UniqueValidator(Company.objects.all())])
-    email = serializers.EmailField(required=True, max_length=100,
-                                   validators=[UniqueValidator(Company.objects.all())])
-    phone = serializers.CharField(required=False, max_length=15,
-                                  validators=[UniqueValidator(Company.objects.all())])
+    companyEmail = serializers.EmailField(required=True, max_length=100,
+                                          validators=[UniqueValidator(Company.objects.all())])
+    companyPhone = serializers.CharField(required=False, max_length=15,
+                                         validators=[UniqueValidator(Company.objects.all())])
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
                                     validators=[UniqueValidator(Company.objects.all())])
     fieldOperation = serializers.CharField(source="field_operation", required=False,
@@ -62,7 +66,7 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        fields = ("companyName", "email", "phone",
+        fields = ("companyName", "companyEmail", "companyPhone",
                   "taxCode", "fieldOperation", "since",
                   "districtId",
                   "address",

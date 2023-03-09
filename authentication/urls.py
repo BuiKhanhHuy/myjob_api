@@ -9,6 +9,7 @@ urlpatterns = [
     path('token/', views.CustomTokenView.as_view()),
     path('', include('drf_social_oauth2.urls', namespace='drf')),
     path('email-exists/', views.check_email_exists),
+    path('check-creds/', views.check_creds),
     path('verify-email/', views.verify_email),
     path('forgot-password/', views.forgot_password),
     path('reset-password/', views.reset_password),
