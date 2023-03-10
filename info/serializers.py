@@ -7,7 +7,6 @@ from .models import JobSeekerProfile, Company, CompanyImage
 from common.models import Location, District
 
 
-
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSeekerProfile
