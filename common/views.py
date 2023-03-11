@@ -4,7 +4,9 @@ from configs import variable_response as var_res
 from rest_framework.decorators import api_view
 from rest_framework import status
 from .models import (
-    Career
+    Career,
+    City,
+    District
 )
 
 
@@ -42,6 +44,7 @@ def create_database(request):
 @api_view(http_method_names=["GET"])
 def get_all_config(request):
     try:
+        # system
         gender_options = utils.convert_tuple_choices_to_option_list(var_sys.GENDER_CHOICES)
         marital_status_options = utils.convert_tuple_choices_to_option_list(var_sys.MARITAL_STATUS_CHOICES)
         language_options = utils.convert_tuple_choices_to_option_list(var_sys.LANGUAGE_CHOICES)
@@ -53,6 +56,10 @@ def get_all_config(request):
         employee_size_options = utils.convert_tuple_choices_to_option_list(var_sys.EMPLOYEE_SIZE_CHOICES)
         application_status_options = utils.convert_tuple_choices_to_option_list(var_sys.APPLICATION_STATUS)
 
+        # database
+        cities = City.objects.values_list("id", "name")
+        city_options = utils.convert_tuple_choices_to_option_list(cities)
+
         res_data = {
             "genderOptions": gender_options,
             "maritalStatusOptions": marital_status_options,
@@ -63,7 +70,8 @@ def get_all_config(request):
             "jobTypeOptions": job_type_options,
             "experienceOptions": experience_options,
             "employeeSizeOptions": employee_size_options,
-            "applicationStatusOptions": application_status_options
+            "applicationStatusOptions": application_status_options,
+            "cityOptions": city_options
         }
     except Exception as ex:
         helper.print_log_error(func_name="get_all_config", error=ex)
@@ -71,3 +79,23 @@ def get_all_config(request):
                                      data=None, message="Lỗi hệ thống!")
     else:
         return var_res.response_data(data=res_data)
+
+
+@api_view(http_method_names=["GET"])
+def get_districts(request):
+    params = request.query_params
+    city_id = params.get('cityId', None)
+
+    try:
+        district_queryset = District.objects
+        if city_id:
+            district_queryset = district_queryset.filter(city_id=city_id)
+
+        districts = district_queryset.values_list("id", "name")
+        district_options = utils.convert_tuple_choices_to_option_list(districts)
+    except Exception as ex:
+        helper.print_log_error(func_name="get_districts", error=ex)
+        return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                     data=None, message="Lỗi hệ thống!")
+    else:
+        return var_res.response_data(data=district_options)

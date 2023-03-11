@@ -74,8 +74,11 @@ def check_creds(request):
     serializer_data = check_creds_serializer.data
 
     email = serializer_data["email"]
-    role_name = serializer_data["roleName"]
-    user = User.objects.filter(email__iexact=email, role_name=role_name)
+    role_name = serializer_data.get("roleName", None)
+
+    user = User.objects.filter(email__iexact=email)
+    if role_name is not None:
+        user = user.filter(role_name=role_name)
 
     res_data["email"] = email
     if user.exists():

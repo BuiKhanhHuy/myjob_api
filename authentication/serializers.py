@@ -1,3 +1,5 @@
+import datetime
+
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -10,7 +12,8 @@ from info.models import JobSeekerProfile, Company
 
 class CheckCredsSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=100)
-    roleName = serializers.CharField(required=True, max_length=10)
+    roleName = serializers.CharField(required=False, max_length=10,
+                                     allow_null=True, allow_blank=True)
 
 
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -26,13 +29,13 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100,
                                    validators=[UniqueValidator(queryset=User.objects.all(),
-                                                               message="Email đã tồn tại!")])
+                                                               message="Email đã tồn tại.")])
     password = serializers.CharField(required=True, max_length=100)
     confirmPassword = serializers.CharField(required=True, max_length=100)
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["confirmPassword"]:
-            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác!'})
+            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
         return attrs
 
     def create(self, validated_data):
@@ -57,7 +60,7 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
 class CompanyRegisterSerializer(serializers.ModelSerializer):
     companyName = serializers.CharField(source="company_name", required=True, max_length=255,
                                         validators=[UniqueValidator(Company.objects.all(),
-                                                                    message='Tên công ty đã tồn tại!')])
+                                                                    message='Tên công ty đã tồn tại.')])
     companyEmail = serializers.EmailField(required=True, max_length=100,
                                           validators=[UniqueValidator(Company.objects.all(),
                                                                       message='Email công ty đã tồn tại.')])
@@ -68,13 +71,18 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
                                     validators=[UniqueValidator(Company.objects.all(),
                                                                 message='Mã số thuế công ty đã tồn tại.')])
     fieldOperation = serializers.CharField(source="field_operation", required=False,
-                                           max_length=255)
+                                           max_length=255,
+                                           allow_null=True,
+                                           allow_blank=True)
     districtId = serializers.IntegerField(required=True)
-    since = serializers.DateField(required=False)
+    since = serializers.DateField(required=False,
+                                  input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"]],
+                                  allow_null=True)
     address = serializers.CharField(required=True, max_length=255)
     employeeSize = serializers.IntegerField(source="employee_size", required=True)
-    websiteUrl = serializers.URLField(source="website_url", required=False,
-                                      max_length=300)
+    websiteUrl = serializers.URLField(source="website_url", required=False, max_length=300,
+                                      allow_blank=True,
+                                      allow_null=True)
     description = serializers.CharField(required=False)
 
     class Meta:

@@ -2,6 +2,10 @@ ADMIN = 'ADMIN'
 EMPLOYER = 'EMPLOYER'
 JOB_SEEKER = 'JOB_SEEKER'
 
+DATE_TIME_FORMAT = {
+    "ISO8601": "%Y-%m-%dT%H:%M:%S.%fZ"
+}
+
 AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
 
 AVATAR_DEFAULT = {
