@@ -139,11 +139,14 @@ class UserInfoSerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name")
     email = serializers.CharField()
     avatarUrl = serializers.URLField(source="avatar_url")
+    isActive = serializers.BooleanField(source='is_active')
+    isVerifyEmail = serializers.BooleanField(source='is_verify_email')
     roleName = serializers.CharField(source="role_name")
 
     class Meta:
         model = User
         fields = ("id", "fullName", "email",
+                  "isActive", "isVerifyEmail",
                   "avatarUrl", "roleName")
 
 
@@ -151,3 +154,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+
+class ProfileUserSerializer(serializers.ModelSerializer):
+    fullName = serializers.CharField(source='full_name')
+
+    class Meta:
+        model = User
+        fields = ('id', 'fullName', 'email')

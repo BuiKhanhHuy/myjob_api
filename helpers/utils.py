@@ -1,10 +1,11 @@
-def convert_tuple_choices_to_option_list(tuple_choices):
-    results = []
-    for row in tuple_choices:
+def convert_tuple_or_list_to_options(values):
+    result_list = []
+    result_dict = {}
+    for row in values:
         option_dict = {
             "id": row[0],
             "name": row[1],
-            row[0]: row[1]
         }
-        results.append(option_dict)
-    return results
+        result_list.append(option_dict)
+        result_dict[row[0]] = row[1]
+    return result_list, result_dict

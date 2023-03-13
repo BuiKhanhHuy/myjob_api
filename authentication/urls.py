@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
-router.register(r'users', views.UserViewSet, basename='user')
+# router.register(r'users', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('token/', views.CustomTokenView.as_view()),
@@ -17,5 +17,5 @@ urlpatterns = [
     path('user-info/', views.get_user_info),
     path('job-seeker/register/', views.job_seeker_register),
     path('employer/register/', views.employer_register),
-    path('', include(router.urls))
+    # path('', include(router.urls))
 ]

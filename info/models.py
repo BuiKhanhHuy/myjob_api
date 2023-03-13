@@ -8,7 +8,7 @@ class InfoBaseModel(models.Model):
     class Meta:
         abstract = True
 
-    create_at = models.DateTimeField(auto_created=True)
+    create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
 
@@ -50,6 +50,7 @@ class CompanyImage(InfoBaseModel):
 class JobSeekerProfile(InfoBaseModel):
     title = models.CharField(max_length=200, null=True)
     description = models.TextField(null=True)
+    cover_image_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["COVER_IMG"])
     phone = models.CharField(max_length=15, blank=True, null=True)
     birthday = models.DateField(null=True)
     gender = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES, null=True)
@@ -57,7 +58,7 @@ class JobSeekerProfile(InfoBaseModel):
                                       choices=var_sys.MARITAL_STATUS_CHOICES,
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],
                                       null=True)
-    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
+    is_active = models.BooleanField(default=False)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")

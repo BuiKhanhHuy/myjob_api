@@ -154,7 +154,8 @@ def job_seeker_register(request):
             thread_mail.Util.send_email(data=data)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
-        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                             message="Lỗi hệ thống!")
     return response_data(status=status.HTTP_201_CREATED)
 
 

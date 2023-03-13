@@ -45,22 +45,54 @@ def create_database(request):
 def get_all_config(request):
     try:
         # system
-        gender_options = utils.convert_tuple_choices_to_option_list(var_sys.GENDER_CHOICES)
-        marital_status_options = utils.convert_tuple_choices_to_option_list(var_sys.MARITAL_STATUS_CHOICES)
-        language_options = utils.convert_tuple_choices_to_option_list(var_sys.LANGUAGE_CHOICES)
-        language_level_options = utils.convert_tuple_choices_to_option_list(var_sys.LANGUAGE_LEVEL_CHOICES)
-        position_options = utils.convert_tuple_choices_to_option_list(var_sys.POSITION_CHOICES)
-        type_of_workplace_options = utils.convert_tuple_choices_to_option_list(var_sys.TYPE_OF_WORKPLACE_CHOICES)
-        job_type_options = utils.convert_tuple_choices_to_option_list(var_sys.JOB_TYPE_CHOICES)
-        experience_options = utils.convert_tuple_choices_to_option_list(var_sys.EXPERIENCE_CHOICES)
-        employee_size_options = utils.convert_tuple_choices_to_option_list(var_sys.EMPLOYEE_SIZE_CHOICES)
-        application_status_options = utils.convert_tuple_choices_to_option_list(var_sys.APPLICATION_STATUS)
+        completed_profile_tuple = utils.convert_tuple_or_list_to_options(var_sys.COMPLETED_PROFILE)
+        gender_tuple = utils.convert_tuple_or_list_to_options(var_sys.GENDER_CHOICES)
+        marital_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.MARITAL_STATUS_CHOICES)
+        language_tuple = utils.convert_tuple_or_list_to_options(var_sys.LANGUAGE_CHOICES)
+        language_level_tuple = utils.convert_tuple_or_list_to_options(var_sys.LANGUAGE_LEVEL_CHOICES)
+        position_tuple = utils.convert_tuple_or_list_to_options(var_sys.POSITION_CHOICES)
+        type_of_workplace_tuple = utils.convert_tuple_or_list_to_options(var_sys.TYPE_OF_WORKPLACE_CHOICES)
+        job_type_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_TYPE_CHOICES)
+        experience_tuple = utils.convert_tuple_or_list_to_options(var_sys.EXPERIENCE_CHOICES)
+        employee_size_tuple = utils.convert_tuple_or_list_to_options(var_sys.EMPLOYEE_SIZE_CHOICES)
+        application_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.APPLICATION_STATUS)
 
         # database
         cities = City.objects.values_list("id", "name")
-        city_options = utils.convert_tuple_choices_to_option_list(cities)
+        careers = Career.objects.values_list("id", "name")
+        city_tuple = utils.convert_tuple_or_list_to_options(cities)
+        career_tuple = utils.convert_tuple_or_list_to_options(careers)
+
+        completed_profile_options = completed_profile_tuple[0]
+        gender_options = gender_tuple[0]
+        marital_status_options = marital_status_tuple[0]
+        language_options = language_tuple[0]
+        language_level_options = language_level_tuple[0]
+        position_options = position_tuple[0]
+        type_of_workplace_options = type_of_workplace_tuple[0]
+        job_type_options = job_type_tuple[0]
+        experience_options = experience_tuple[0]
+        employee_size_options = employee_size_tuple[0]
+        application_status_options = application_status_tuple[0]
+        city_options = city_tuple[0]
+        career_options = career_tuple[0]
+
+        completed_profile_dict = completed_profile_tuple[1]
+        gender_dict = gender_tuple[1]
+        marital_status_dict = marital_status_tuple[1]
+        language_dict = language_tuple[1]
+        language_level_dict = language_level_tuple[1]
+        position_dict = position_tuple[1]
+        type_of_workplace_dict = type_of_workplace_tuple[1]
+        job_type_dict = job_type_tuple[1]
+        experience_dict = experience_tuple[1]
+        employee_size_dict = employee_size_tuple[1]
+        application_status_dict = application_status_tuple[1]
+        city_dict = city_tuple[1]
+        career_dict = career_tuple[1]
 
         res_data = {
+            "completedProfileOptions": completed_profile_options,
             "genderOptions": gender_options,
             "maritalStatusOptions": marital_status_options,
             "languageOptions": language_options,
@@ -71,7 +103,23 @@ def get_all_config(request):
             "experienceOptions": experience_options,
             "employeeSizeOptions": employee_size_options,
             "applicationStatusOptions": application_status_options,
-            "cityOptions": city_options
+            "cityOptions": city_options,
+            "careerOptions": career_options,
+
+            "completedProfileDict": completed_profile_dict,
+            "genderDict": gender_dict,
+            "maritalStatusDict": marital_status_dict,
+            "languageDict": language_dict,
+            "languageLevelDict": language_level_dict,
+            "positionDict": position_dict,
+            "typeOfWorkplaceDict": type_of_workplace_dict,
+            "jobTypeDict": job_type_dict,
+            "experienceDict": experience_dict,
+            "employeeSizeDict": employee_size_dict,
+            "applicationStatusDict": application_status_dict,
+            "cityDict": city_dict,
+            "careerDict": career_dict,
+
         }
     except Exception as ex:
         helper.print_log_error(func_name="get_all_config", error=ex)
@@ -92,7 +140,7 @@ def get_districts(request):
             district_queryset = district_queryset.filter(city_id=city_id)
 
         districts = district_queryset.values_list("id", "name")
-        district_options = utils.convert_tuple_choices_to_option_list(districts)
+        district_options = utils.convert_tuple_or_list_to_options(districts)
     except Exception as ex:
         helper.print_log_error(func_name="get_districts", error=ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
