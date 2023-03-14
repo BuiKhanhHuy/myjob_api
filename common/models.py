@@ -26,18 +26,6 @@ class District(CommonBaseModel):
         db_table = "myjob_common_district"
 
 
-class Location(CommonBaseModel):
-    address = models.CharField(max_length=255, blank=True, null=True)
-    lat = models.FloatField(null=True)
-    lng = models.FloatField(null=True)
-
-    # ForeignKey
-    district = models.ForeignKey("District", on_delete=models.CASCADE, related_name="locations")
-
-    class Meta:
-        db_table = "myjob_common_location"
-
-
 class Career(CommonBaseModel):
     name = models.CharField(max_length=150)
 

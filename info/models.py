@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
-from common.models import Location, Career, Skill
+from common.models import Career, Skill, City, District
 
 
 class InfoBaseModel(models.Model):
@@ -23,12 +23,17 @@ class Company(InfoBaseModel):
     field_operation = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     employee_size = models.SmallIntegerField(choices=var_sys.EMPLOYEE_SIZE_CHOICES, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    lat = models.FloatField(null=True)
+    lng = models.FloatField(null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 related_name="company")
     # ForeignKey
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
+                             related_name="companies")
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True,
                                  related_name="companies")
 
     class Meta:
@@ -59,12 +64,18 @@ class JobSeekerProfile(InfoBaseModel):
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],
                                       null=True)
     is_active = models.BooleanField(default=False)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    lat = models.FloatField(null=True)
+    lng = models.FloatField(null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")
     # ForeignKey
     career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="job_seeker_profiles")
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, related_name="job_seeker_profiles")
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
+                             related_name="job_seeker_profiles")
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True,
+                                 related_name="job_seeker_profiles")
     # ManyToManyField
     skills = models.ManyToManyField(Skill, through="SeekerProfileSkill", related_name="job_seeker_profiles")
 

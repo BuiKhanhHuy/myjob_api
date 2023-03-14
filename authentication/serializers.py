@@ -6,7 +6,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db import transaction
 from .models import User
-from common.models import Location, District
 from info.models import JobSeekerProfile, Company
 
 
@@ -74,11 +73,10 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
                                            max_length=255,
                                            allow_null=True,
                                            allow_blank=True)
-    districtId = serializers.IntegerField(required=True)
     since = serializers.DateField(required=False,
-                                  input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"]],
+                                  input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                 var_sys.DATE_TIME_FORMAT["Ymd"]],
                                   allow_null=True)
-    address = serializers.CharField(required=True, max_length=255)
     employeeSize = serializers.IntegerField(source="employee_size", required=True)
     websiteUrl = serializers.URLField(source="website_url", required=False, max_length=300,
                                       allow_blank=True,
@@ -89,7 +87,8 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
         model = Company
         fields = ("companyName", "companyEmail", "companyPhone",
                   "taxCode", "fieldOperation", "since",
-                  "districtId",
+                  "city",
+                  "district",
                   "address",
                   "employeeSize",
                   "websiteUrl", "description")
@@ -113,16 +112,11 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 validated_data.pop("confirmPassword")
                 company = validated_data.pop("company")
-                district_id = company.pop("districtId")
-                address = company.pop("address")
-
                 user = User.objects.create_user_with_role_name(**validated_data,
                                                                is_active=False,
                                                                has_company=True,
                                                                role_name=var_sys.EMPLOYER)
-                location = Location.objects.create(address=address,
-                                                   district=District.objects.get(pk=district_id))
-                Company.objects.create(user=user, location=location, **company)
+                Company.objects.create(user=user, **company)
 
                 return validated_data
         except Exception as ex:
@@ -142,18 +136,17 @@ class UserInfoSerializer(serializers.ModelSerializer):
     isActive = serializers.BooleanField(source='is_active')
     isVerifyEmail = serializers.BooleanField(source='is_verify_email')
     roleName = serializers.CharField(source="role_name")
+    jobSeekerProfileId = serializers.PrimaryKeyRelatedField(source='job_seeker_profile',
+                                                            read_only=True)
+    companyId = serializers.PrimaryKeyRelatedField(source='company', read_only=True)
 
     class Meta:
         model = User
         fields = ("id", "fullName", "email",
                   "isActive", "isVerifyEmail",
-                  "avatarUrl", "roleName")
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+                  "avatarUrl", "roleName",
+                  "jobSeekerProfileId",
+                  "companyId")
 
 
 class ProfileUserSerializer(serializers.ModelSerializer):
@@ -162,3 +155,9 @@ class ProfileUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'fullName', 'email')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'

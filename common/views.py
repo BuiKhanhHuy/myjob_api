@@ -140,7 +140,7 @@ def get_districts(request):
             district_queryset = district_queryset.filter(city_id=city_id)
 
         districts = district_queryset.values_list("id", "name")
-        district_options = utils.convert_tuple_or_list_to_options(districts)
+        district_options = utils.convert_tuple_or_list_to_options(districts)[0]
     except Exception as ex:
         helper.print_log_error(func_name="get_districts", error=ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,

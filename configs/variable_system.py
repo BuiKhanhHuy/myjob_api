@@ -3,6 +3,8 @@ EMPLOYER = 'EMPLOYER'
 JOB_SEEKER = 'JOB_SEEKER'
 
 DATE_TIME_FORMAT = {
+    "dmY": "%d/%m/%Y",
+    "Ymd": "%Y-%m-%d",
     "ISO8601": "%Y-%m-%dT%H:%M:%S.%fZ"
 }
 

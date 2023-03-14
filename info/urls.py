@@ -12,7 +12,7 @@ urlpatterns = [
         path('', include(app_router.urls))
     ])),
     path('web/', include([
-        path("profile/", web_views.ProfileView.as_view({'get': 'get_profile_info', 'patch': 'update_profile_info'})),
+        path("profile/", web_views.ProfileView.as_view({'get': 'get_profile_info', 'put': 'update_profile_info'})),
         path("profile-detail/", web_views.ProfileView.as_view({'get': 'get_profile_info_detail'})),
         path("", include(web_router.urls))
     ]))

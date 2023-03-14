@@ -8,7 +8,7 @@ class JobPostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPost
         fields = ('id', 'job_name', 'position', 'job_type',
-                  'type_of_workplace', 'experience', 'location', 'careers')
+                  'type_of_workplace', 'experience', 'careers')
 
 
 class JobPostDetailSerializer(serializers.ModelSerializer):
