@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
-from common.models import City, District, Career
+from common.models import City, District, Location, Career
 from info.models import Company
 
 
@@ -32,14 +32,9 @@ class JobPost(JobPostBaseModel):
     contact_person_name = models.CharField(max_length=100)
     contact_person_phone = models.CharField(max_length=15)
     contact_person_email = models.EmailField(max_length=100)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    lat = models.FloatField(null=True)
-    lng = models.FloatField(null=True)
 
     # ForeignKey
-    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
-                             related_name="job_posts")
-    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True,
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="job_posts")
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              related_name="job_posts")

@@ -7,6 +7,8 @@ from rest_framework.validators import UniqueValidator
 from django.db import transaction
 from .models import User
 from info.models import JobSeekerProfile, Company
+from common.models import Location
+from common.serializers import LocationSerializer
 
 
 class CheckCredsSerializer(serializers.Serializer):
@@ -82,16 +84,15 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
                                       allow_blank=True,
                                       allow_null=True)
     description = serializers.CharField(required=False)
+    location = LocationSerializer()
 
     class Meta:
         model = Company
         fields = ("companyName", "companyEmail", "companyPhone",
                   "taxCode", "fieldOperation", "since",
-                  "city",
-                  "district",
-                  "address",
                   "employeeSize",
-                  "websiteUrl", "description")
+                  "websiteUrl", "description",
+                  "location")
 
 
 class EmployerRegisterSerializer(serializers.ModelSerializer):
@@ -112,11 +113,14 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 validated_data.pop("confirmPassword")
                 company = validated_data.pop("company")
+                location = company.pop("location")
+
+                location_obj = Location.objects.create(**location)
                 user = User.objects.create_user_with_role_name(**validated_data,
                                                                is_active=False,
                                                                has_company=True,
                                                                role_name=var_sys.EMPLOYER)
-                Company.objects.create(user=user, **company)
+                Company.objects.create(user=user, **company, location=location_obj)
 
                 return validated_data
         except Exception as ex:
@@ -155,6 +159,9 @@ class ProfileUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'fullName', 'email')
+        extra_kwargs = {
+            'email': {'read_only': True},
+        }
 
 
 class UserSerializer(serializers.ModelSerializer):

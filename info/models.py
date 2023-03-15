@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
-from common.models import Career, Skill, City, District
+from common.models import Career, Skill, City, District, Location
 
 
 class InfoBaseModel(models.Model):
@@ -23,17 +23,12 @@ class Company(InfoBaseModel):
     field_operation = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     employee_size = models.SmallIntegerField(choices=var_sys.EMPLOYEE_SIZE_CHOICES, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    lat = models.FloatField(null=True)
-    lng = models.FloatField(null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 related_name="company")
     # ForeignKey
-    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
-                             related_name="companies")
-    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True,
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="companies")
 
     class Meta:
@@ -64,17 +59,12 @@ class JobSeekerProfile(InfoBaseModel):
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],
                                       null=True)
     is_active = models.BooleanField(default=False)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    lat = models.FloatField(null=True)
-    lng = models.FloatField(null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")
     # ForeignKey
     career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="job_seeker_profiles")
-    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
-                             related_name="job_seeker_profiles")
-    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True,
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="job_seeker_profiles")
     # ManyToManyField
     skills = models.ManyToManyField(Skill, through="SeekerProfileSkill", related_name="job_seeker_profiles")
@@ -114,25 +104,23 @@ class ExperienceDetail(InfoBaseModel):
         db_table = "myjob_info_experience_detail"
 
 
-class Appreciation(InfoBaseModel):
-    award_name = models.CharField(max_length=200)
-    category = models.CharField(max_length=255)
-    end_date = models.DateField()
-    description = models.CharField(max_length=255, null=True, blank=True)
+class Certificate(InfoBaseModel):
+    name = models.CharField(max_length=200)
+    training_place = models.CharField(max_length=255)
+    start_date = models.DateField()
+    expiration_date = models.DateField(null=True, blank=True)
 
     # ForeignKey
     job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
-                                           related_name="appreciations")
+                                           related_name='certificates')
 
     class Meta:
-        db_table = "myjob_info_appreciation"
+        db_table = "myjob_info_certificate"
 
 
 class LanguageSkill(InfoBaseModel):
     language = models.SmallIntegerField(choices=var_sys.LANGUAGE_CHOICES)
-    first_language = models.BooleanField(default=False)
     level = models.SmallIntegerField(choices=var_sys.LANGUAGE_LEVEL_CHOICES)
-    description = models.CharField(max_length=255, null=True, blank=True)
 
     # ForeignKey
     job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,

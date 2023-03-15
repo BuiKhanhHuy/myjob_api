@@ -6,6 +6,10 @@ app_router = DefaultRouter()
 
 web_router = DefaultRouter()
 web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='job-seeker-profile')
+web_router.register(r'experiences-detail', web_views.ExperienceDetailViewSet, basename='experience-detail')
+web_router.register(r'educations-detail', web_views.EducationDetailViewSet, basename='education-detail')
+web_router.register(r'certificates-detail', web_views.CertificateDetailViewSet, basename='certificate-detail')
+web_router.register(r'language-skills', web_views.LanguageSkillViewSet, basename='language-skill')
 
 urlpatterns = [
     path('app/', include([
