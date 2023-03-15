@@ -45,10 +45,10 @@ class CustomTokenView(TokenView):
                     token = get_access_token_model().objects.get(token=access_token)
                     role_name = token.user.role_name
                     if not role_name == role_name_input:
-                        return response_data(status=status.HTTP_400_BAD_REQUEST, message="Thất bại!")
-            return response_data(status=stt, message="Thành công.", data=json.loads(body))
+                        return response_data(status=status.HTTP_400_BAD_REQUEST)
+            return response_data(status=stt, data=json.loads(body))
         else:
-            return response_data(status=stt, message="Thất bại!")
+            return response_data(status=stt)
 
 
 @api_view(http_method_names=['post'])
@@ -112,7 +112,7 @@ def reset_password(request):
     reset_password_serializer = ResetPasswordSerializer(data=data)
     if not reset_password_serializer.is_valid():
         pass
-    return response_data(message="DA GUI")
+    return response_data(data="DA GUI")
 
 
 @api_view(http_method_names=['get'])
@@ -154,8 +154,7 @@ def job_seeker_register(request):
             thread_mail.Util.send_email(data=data)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
-        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                             message="Lỗi hệ thống!")
+        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return response_data(status=status.HTTP_201_CREATED)
 
 

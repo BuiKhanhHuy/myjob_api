@@ -10,7 +10,8 @@ from ..models import (JobSeekerProfile,
                       EducationDetail,
                       ExperienceDetail,
                       Certificate,
-                      LanguageSkill)
+                      LanguageSkill,
+                      AdvancedSkill)
 from ..serializers.web_serializers import (
     ProfileSerializer,
     ProfileUpdateSerializer,
@@ -19,7 +20,8 @@ from ..serializers.web_serializers import (
     EducationListCreateRetrieveUpdateDestroySerializer,
     ExperienceListCreateRetrieveUpdateDestroySerializer,
     CertificateListCreateRetrieveUpdateDestroySerializer,
-    LanguageSkillListCreateRetrieveUpdateDestroySerializer
+    LanguageSkillListCreateRetrieveUpdateDestroySerializer,
+    AdvancedSkillListCreateRetrieveUpdateDestroySerializer
 )
 
 
@@ -38,8 +40,7 @@ class ProfileView(viewsets.ViewSet):
             profile_serializer = ProfileSerializer(profile)
         except Exception as ex:
             helper.print_log_error("get_profile_info", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=profile_serializer.data)
 
@@ -50,8 +51,7 @@ class ProfileView(viewsets.ViewSet):
             profile_detail_serializer = ProfileDetailSerializer(profileDetail)
         except Exception as ex:
             helper.print_log_error("get_profile_info_detail", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=profile_detail_serializer.data)
 
@@ -68,8 +68,7 @@ class ProfileView(viewsets.ViewSet):
             serializer.save()
         except Exception as ex:
             helper.print_log_error("update_profile_info", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=serializer.data)
 
@@ -84,7 +83,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         if self.action in ["get_experiences_detail",
                            "get_educations_detail",
                            "get_certificates_detail",
-                           "get_language_skills"]:
+                           "get_language_skills",
+                           "get_advanced_skills"]:
             return [perms_custom.IsJobSeekerUser()]
         return perms_sys.IsAuthenticated()
 
@@ -98,8 +98,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 many=True)
         except Exception as ex:
             helper.print_log_error("get_educations_detail", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=educations_detail_serializer.data)
 
@@ -113,8 +112,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 many=True)
         except Exception as ex:
             helper.print_log_error("update_profile_info", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=experiences_detail_serializer.data)
 
@@ -128,8 +126,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 many=True)
         except Exception as ex:
             helper.print_log_error("get_certificates_detail", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=certificates_detail_serializer.data)
 
@@ -143,10 +140,23 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 many=True)
         except Exception as ex:
             helper.print_log_error("get_language_skills", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                         message="Lỗi hệ thống!")
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=language_skill_serializer.data)
+
+    @action(methods=['get'], detail=True,
+            url_path='advanced-skills', url_name='get-advanced-skills')
+    def get_advanced_skills(self, request, pk):
+        try:
+            advanced_skill_queryset = AdvancedSkill.objects.filter(job_seeker_profile_id__exact=pk).all()
+            advanced_skill_serializer = AdvancedSkillListCreateRetrieveUpdateDestroySerializer(
+                advanced_skill_queryset,
+                many=True)
+        except Exception as ex:
+            helper.print_log_error("get_advanced_skills", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.response_data(data=advanced_skill_serializer.data)
 
 
 class EducationDetailViewSet(viewsets.ViewSet,
@@ -178,4 +188,12 @@ class LanguageSkillViewSet(viewsets.ViewSet,
                            generics.RetrieveUpdateDestroyAPIView):
     queryset = LanguageSkill.objects
     serializer_class = LanguageSkillListCreateRetrieveUpdateDestroySerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
+class AdvancedSkillViewSet(viewsets.ViewSet,
+                           generics.CreateAPIView,
+                           generics.RetrieveUpdateDestroyAPIView):
+    queryset = AdvancedSkill.objects
+    serializer_class = AdvancedSkillListCreateRetrieveUpdateDestroySerializer
     renderer_classes = [renderers.MyJSONRenderer]

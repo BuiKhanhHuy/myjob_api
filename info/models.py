@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
-from common.models import Career, Skill, City, District, Location
+from common.models import Career, City, District, Location
 
 
 class InfoBaseModel(models.Model):
@@ -66,8 +66,6 @@ class JobSeekerProfile(InfoBaseModel):
     career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="job_seeker_profiles")
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="job_seeker_profiles")
-    # ManyToManyField
-    skills = models.ManyToManyField(Skill, through="SeekerProfileSkill", related_name="job_seeker_profiles")
 
     class Meta:
         db_table = "myjob_info_job_seeker_profile"
@@ -130,12 +128,12 @@ class LanguageSkill(InfoBaseModel):
         db_table = "myjob_info_language_skill"
 
 
-class SeekerProfileSkill(InfoBaseModel):
-    # Foreignkey
-    job_seeker_profile = models.ForeignKey("JobSeekerProfile", on_delete=models.CASCADE,
-                                           related_name="seeker_profile_skills")
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE,
-                              related_name="seeker_profile_skills")
+class AdvancedSkill(InfoBaseModel):
+    name = models.CharField(max_length=200)
+    level = models.SmallIntegerField(default=3)
+
+    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
+                                           related_name='advanced_skills')
 
     class Meta:
-        db_table = "myjob_info_seeker_profile_skill"
+        db_table = "myjob_info_advanced_skill"

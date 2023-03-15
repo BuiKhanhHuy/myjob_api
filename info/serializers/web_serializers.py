@@ -1,10 +1,12 @@
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from ..models import (
     JobSeekerProfile,
     EducationDetail, ExperienceDetail,
-    Certificate, LanguageSkill
+    Certificate, LanguageSkill,
+    AdvancedSkill
 )
 from common.models import (
     Location
@@ -96,14 +98,23 @@ class EducationListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerial
     degreeName = serializers.CharField(source='degree_name', required=True, max_length=200)
     major = serializers.CharField(required=True, max_length=255)
     trainingPlaceName = serializers.CharField(source='training_place_name', required=True, max_length=255)
-    startDate = serializers.DateField(source='start_date', required=True)
-    completedDate = serializers.DateField(source='completed_date', required=False, allow_null=True)
+    startDate = serializers.DateField(source='start_date', required=True,
+                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                     var_sys.DATE_TIME_FORMAT["Ymd"]])
+    completedDate = serializers.DateField(source='completed_date', required=False, allow_null=True,
+                                          input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                         var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = EducationDetail
         fields = ('id', 'degreeName', 'major', 'trainingPlaceName',
                   'startDate', 'completedDate', 'description')
+
+    def validate(self, attrs):
+        if EducationDetail.objects.count() >= 10:
+            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin học vấn'})
+        return attrs
 
     def create(self, validated_data):
         request = self.context['request']
@@ -118,9 +129,18 @@ class EducationListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerial
 class ExperienceListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
     jobName = serializers.CharField(source='job_name', required=True, max_length=200)
     companyName = serializers.CharField(source='company_name', required=True, max_length=255)
-    startDate = serializers.DateField(source='start_date', required=True)
-    endDate = serializers.DateField(source='end_date', required=True)
+    startDate = serializers.DateField(source='start_date', required=True,
+                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                     var_sys.DATE_TIME_FORMAT["Ymd"]])
+    endDate = serializers.DateField(source='end_date', required=True,
+                                    input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                   var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
+    def validate(self, attrs):
+        if ExperienceDetail.objects.count() >= 10:
+            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin kinh nghiệm làm việc'})
+        return attrs
 
     class Meta:
         model = ExperienceDetail
@@ -141,8 +161,17 @@ class ExperienceListCreateRetrieveUpdateDestroySerializer(serializers.ModelSeria
 class CertificateListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     trainingPlace = serializers.CharField(source='training_place', required=True, max_length=255)
-    startDate = serializers.DateField(source='start_date', required=True)
-    expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True)
+    startDate = serializers.DateField(source='start_date', required=True,
+                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                     var_sys.DATE_TIME_FORMAT["Ymd"]])
+    expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True,
+                                           input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
+
+    def validate(self, attrs):
+        if Certificate.objects.count() >= 10:
+            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin chứng chỉ'})
+        return attrs
 
     class Meta:
         model = Certificate
@@ -163,6 +192,14 @@ class LanguageSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSe
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
 
+    def validate_language(self, language):
+        request = self.context['request']
+
+        if LanguageSkill.objects.filter(language=language,
+                                        job_seeker_profile=request.user.job_seeker_profile).exists():
+            raise serializers.ValidationError('Ngôn ngữ này đã tồn tại.')
+        return language
+
     class Meta:
         model = LanguageSkill
         fields = ('id', 'language', 'level')
@@ -174,4 +211,35 @@ class LanguageSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSe
             language_skill = LanguageSkill.objects.create(**validated_data,
                                                           job_seeker_profile=user.job_seeker_profile)
             return language_skill
+        return None
+
+
+class AdvancedSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=True, max_length=200)
+    level = serializers.IntegerField(required=True)
+
+    def validate_name(self, name):
+        request = self.context['request']
+
+        if AdvancedSkill.objects.filter(name__iexact=name,
+                                        job_seeker_profile=request.user.job_seeker_profile).exists():
+            raise serializers.ValidationError('Kỹ năng này đã tồn tại.')
+        return name
+
+    def validate(self, attrs):
+        if AdvancedSkill.objects.count() >= 15:
+            raise serializers.ValidationError({'errorMessage': 'Tối đa 15 thông tin kỹ năng chuyên môn'})
+        return attrs
+
+    class Meta:
+        model = AdvancedSkill
+        fields = ('id', 'name', 'level')
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+        if user.is_authenticated:
+            advanced_skill = AdvancedSkill.objects.create(**validated_data,
+                                                          job_seeker_profile=user.job_seeker_profile)
+            return advanced_skill
         return None

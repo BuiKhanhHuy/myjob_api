@@ -124,7 +124,7 @@ def get_all_config(request):
     except Exception as ex:
         helper.print_log_error(func_name="get_all_config", error=ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                     data=None, message="Lỗi hệ thống!")
+                                     data=None)
     else:
         return var_res.response_data(data=res_data)
 
@@ -144,6 +144,6 @@ def get_districts(request):
     except Exception as ex:
         helper.print_log_error(func_name="get_districts", error=ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                     data=None, message="Lỗi hệ thống!")
+                                     data=None)
     else:
         return var_res.response_data(data=district_options)

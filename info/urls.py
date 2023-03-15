@@ -10,6 +10,7 @@ web_router.register(r'experiences-detail', web_views.ExperienceDetailViewSet, ba
 web_router.register(r'educations-detail', web_views.EducationDetailViewSet, basename='education-detail')
 web_router.register(r'certificates-detail', web_views.CertificateDetailViewSet, basename='certificate-detail')
 web_router.register(r'language-skills', web_views.LanguageSkillViewSet, basename='language-skill')
+web_router.register(r'advanced-skills', web_views.AdvancedSkillViewSet, basename='advanced-skill')
 
 urlpatterns = [
     path('app/', include([
