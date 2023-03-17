@@ -29,6 +29,8 @@ class JobPost(JobPostBaseModel):
     job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES)
     salary_min = models.IntegerField()
     salary_max = models.IntegerField()
+    is_hot = models.BooleanField(default=False)
+    is_urgent = models.BooleanField(default=False)
     contact_person_name = models.CharField(max_length=100)
     contact_person_phone = models.CharField(max_length=15)
     contact_person_email = models.EmailField(max_length=100)

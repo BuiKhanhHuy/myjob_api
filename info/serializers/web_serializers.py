@@ -2,11 +2,13 @@ from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.db import transaction
 from ..models import (
     JobSeekerProfile,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
-    AdvancedSkill
+    AdvancedSkill,
+    Company
 )
 from common.models import (
     Location
@@ -38,7 +40,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     maritalStatus = serializers.CharField(source='marital_status',
                                           required=True,
                                           max_length=1)
-    user = auth_serializers.ProfileUserSerializer()
+    user = auth_serializers.UserRetrieveUpdateSerializer()
     location = common_serializers.LocationSerializer()
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
@@ -76,7 +78,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
-    user = auth_serializers.ProfileUserSerializer()
+    user = auth_serializers.UserRetrieveUpdateSerializer()
     maritalStatus = serializers.CharField(source="marital_status")
     location = common_serializers.ProfileLocationSerializer()
 
@@ -243,3 +245,64 @@ class AdvancedSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSe
                                                           job_seeker_profile=user.job_seeker_profile)
             return advanced_skill
         return None
+
+
+class CompanyRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+    taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
+                                    validators=[UniqueValidator(Company.objects.all(),
+                                                                message="Mã số thuế công ty đã tồn tại.")])
+    companyName = serializers.CharField(source="company_name", required=True,
+                                        validators=[UniqueValidator(Company.objects.all(),
+                                                                    message='Tên công ty đã tồn tại.')])
+    employeeSize = serializers.IntegerField(source="employee_size", required=True)
+    fieldOperation = serializers.CharField(source="field_operation", required=True,
+                                           max_length=255)
+    location = common_serializers.LocationSerializer()
+    since = serializers.DateField(required=True, allow_null=True, input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                                   var_sys.DATE_TIME_FORMAT["Ymd"]])
+    companyEmail = serializers.CharField(source="company_email", required=True,
+                                         max_length=100, validators=[UniqueValidator(Company.objects.all(),
+                                                                                     message='Email công ty đã tồn tại.')])
+    companyPhone = serializers.CharField(source="company_phone", required=True,
+                                         max_length=15, validators=[UniqueValidator(Company.objects.all(),
+                                                                                    message='Số điện thoại công ty đã tồn tại.')])
+    websiteUrl = serializers.URLField(required=False, source="website_url", max_length=300,
+                                       allow_null=True, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = Company
+        fields = ('id', 'taxCode', 'companyName',
+                  'employeeSize', 'fieldOperation', 'location',
+                  'since', 'companyEmail', 'companyPhone',
+                  'websiteUrl', 'description')
+
+    def update(self, instance, validated_data):
+        try:
+            instance.tax_code = validated_data.get('tax_code', instance.tax_code)
+            instance.company_name = validated_data.get('company_name', instance.company_name)
+            instance.employee_size = validated_data.get('employee_size', instance.employee_size)
+            instance.field_operation = validated_data.get('field_operation', instance.field_operation)
+            instance.since = validated_data.get('since', instance.since)
+            instance.company_email = validated_data.get('company_email', instance.company_email)
+            instance.company_phone = validated_data.get('company_phone', instance.company_phone)
+            instance.website_url = validated_data.get('website_url', instance.website_url)
+            instance.description = validated_data.get('company_phone', instance.description)
+            location_obj = instance.location
+
+            with transaction.atomic():
+                if location_obj:
+                    location_obj.city = validated_data["location"].get("city", location_obj.city)
+                    location_obj.district = validated_data["location"].get("district", location_obj.district)
+                    location_obj.address = validated_data["location"].get("address", location_obj.address)
+                    location_obj.lat = validated_data["location"].get("lat", location_obj.lat)
+                    location_obj.lng = validated_data["location"].get("lng", location_obj.lng)
+                    location_obj.save()
+                else:
+                    location_new = Location.objects.create(**validated_data["location"])
+                    instance.location = location_new
+                instance.save()
+                return instance
+        except Exception as ex:
+            helper.print_log_error("update company", ex)
+            return None

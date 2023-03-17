@@ -23,7 +23,28 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
+    oldPassword = serializers.CharField(required=True, max_length=128)
     newPassword = serializers.CharField(required=True, max_length=128)
+    confirmPassword = serializers.CharField(required=True, max_length=128)
+
+    def validate(self, attrs):
+        user = self.context['user']
+
+        old_pass = attrs.get('oldPassword', '')
+        new_pass = attrs.get('newPassword', '')
+        confirm_pass = attrs.get('confirmPassword', '')
+        if not new_pass == confirm_pass:
+            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+
+        if not user.check_password(old_pass):
+            raise serializers.ValidationError({'oldPassword': 'Mật khẩu hiện tại không chính xác.'})
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data.get('newPassword'))
+        instance.save()
+
+        return instance
 
 
 class JobSeekerRegisterSerializer(serializers.ModelSerializer):
@@ -62,10 +83,10 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
     companyName = serializers.CharField(source="company_name", required=True, max_length=255,
                                         validators=[UniqueValidator(Company.objects.all(),
                                                                     message='Tên công ty đã tồn tại.')])
-    companyEmail = serializers.EmailField(required=True, max_length=100,
+    companyEmail = serializers.EmailField(source='company_email', required=True, max_length=100,
                                           validators=[UniqueValidator(Company.objects.all(),
                                                                       message='Email công ty đã tồn tại.')])
-    companyPhone = serializers.CharField(required=False, max_length=15,
+    companyPhone = serializers.CharField(source='company_phone', required=False, max_length=15,
                                          validators=[UniqueValidator(Company.objects.all(),
                                                                      message='Số điện thoại công ty đã tồn tại.')])
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
@@ -153,7 +174,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
                   "companyId")
 
 
-class ProfileUserSerializer(serializers.ModelSerializer):
+class UserRetrieveUpdateSerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source='full_name')
 
     class Meta:

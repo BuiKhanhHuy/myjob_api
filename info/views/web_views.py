@@ -11,7 +11,8 @@ from ..models import (JobSeekerProfile,
                       ExperienceDetail,
                       Certificate,
                       LanguageSkill,
-                      AdvancedSkill)
+                      AdvancedSkill,
+                      Company)
 from ..serializers.web_serializers import (
     ProfileSerializer,
     ProfileUpdateSerializer,
@@ -21,7 +22,8 @@ from ..serializers.web_serializers import (
     ExperienceListCreateRetrieveUpdateDestroySerializer,
     CertificateListCreateRetrieveUpdateDestroySerializer,
     LanguageSkillListCreateRetrieveUpdateDestroySerializer,
-    AdvancedSkillListCreateRetrieveUpdateDestroySerializer
+    AdvancedSkillListCreateRetrieveUpdateDestroySerializer,
+    CompanyRetrieveUpdateDestroySerializer
 )
 
 
@@ -197,3 +199,41 @@ class AdvancedSkillViewSet(viewsets.ViewSet,
     queryset = AdvancedSkill.objects
     serializer_class = AdvancedSkillListCreateRetrieveUpdateDestroySerializer
     renderer_classes = [renderers.MyJSONRenderer]
+
+
+class CompanyView(viewsets.ViewSet):
+    def get_permissions(self):
+        if self.action in ["get_company_info"]:
+            return [perms_custom.IsEmployerUser()]
+        return perms_sys.IsAuthenticated()
+
+    def get_company_info(self, request):
+        user = request.user
+        try:
+            company = Company.objects.get(user=user)
+            company_serializer = CompanyRetrieveUpdateDestroySerializer(company)
+        except Exception as ex:
+            helper.print_log_error("get_company_info", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.response_data(data=company_serializer.data)
+
+
+class CompanyViewSet(viewsets.ViewSet,
+                     generics.ListAPIView,
+                     generics.RetrieveUpdateDestroyAPIView):
+    queryset = Company.objects
+    # mai mốt đổi lại của list
+    serializer_class = CompanyRetrieveUpdateDestroySerializer
+    permission_classes = [perms_sys.AllowAny()]
+    renderer_classes = [renderers.MyJSONRenderer]
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [perms_custom.IsEmployerUser()]
+        return self.get_permissions()
+
+    def get_serializer_class(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return CompanyRetrieveUpdateDestroySerializer
+        return self.serializer_class

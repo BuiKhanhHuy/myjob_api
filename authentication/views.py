@@ -20,7 +20,8 @@ from .serializers import (
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
     UserInfoSerializer,
-    UserSerializer
+    UserSerializer,
+    UserRetrieveUpdateSerializer
 )
 
 
@@ -115,9 +116,45 @@ def reset_password(request):
     return response_data(data="DA GUI")
 
 
-@api_view(http_method_names=['get'])
+@api_view(http_method_names=['put'])
+@permission_classes(permission_classes=[IsAuthenticated])
 def change_password(request):
-    return response_data()
+    try:
+        data = request.data
+        user = request.user
+
+        reset_pass_serializer = ResetPasswordSerializer(user, data=data, context={
+            'user': request.user
+        })
+        if not reset_pass_serializer.is_valid():
+            return response_data(status=status.HTTP_400_BAD_REQUEST,
+                                 errors=reset_pass_serializer.errors)
+        reset_pass_serializer.save()
+    except Exception as ex:
+        helper.print_log_error("change_password", ex)
+        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        return response_data(status=status.HTTP_200_OK)
+
+
+@api_view(http_method_names=['patch'])
+@permission_classes(permission_classes=[IsAuthenticated])
+def update_user_account(request):
+    try:
+        data = request.data
+        user = request.user
+
+        user_account_serializer = UserRetrieveUpdateSerializer(user, data=data, partial=True)
+        if not user_account_serializer.is_valid():
+            return response_data(status=status.HTTP_400_BAD_REQUEST, errors=user_account_serializer.errors)
+
+        user_account_serializer.save()
+    except Exception as ex:
+        helper.print_log_error("update_user_account", ex)
+        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        user_info_serializer = UserInfoSerializer(user)
+        return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
 
 
 @api_view(http_method_names=['post'])

@@ -12,6 +12,8 @@ web_router.register(r'certificates-detail', web_views.CertificateDetailViewSet, 
 web_router.register(r'language-skills', web_views.LanguageSkillViewSet, basename='language-skill')
 web_router.register(r'advanced-skills', web_views.AdvancedSkillViewSet, basename='advanced-skill')
 
+web_router.register(r'companies', web_views.CompanyViewSet, basename='company')
+
 urlpatterns = [
     path('app/', include([
         path('', include(app_router.urls))
@@ -19,6 +21,7 @@ urlpatterns = [
     path('web/', include([
         path("profile/", web_views.ProfileView.as_view({'get': 'get_profile_info', 'put': 'update_profile_info'})),
         path("profile-detail/", web_views.ProfileView.as_view({'get': 'get_profile_info_detail'})),
+        path("company/", web_views.CompanyView.as_view({'get': 'get_company_info'})),
         path("", include(web_router.urls))
     ]))
 ]
