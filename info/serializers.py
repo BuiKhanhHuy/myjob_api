@@ -3,7 +3,7 @@ from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db import transaction
-from ..models import (
+from .models import (
     JobSeekerProfile,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
@@ -96,7 +96,7 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EducationListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class EducationSerializer(serializers.ModelSerializer):
     degreeName = serializers.CharField(source='degree_name', required=True, max_length=200)
     major = serializers.CharField(required=True, max_length=255)
     trainingPlaceName = serializers.CharField(source='training_place_name', required=True, max_length=255)
@@ -128,7 +128,7 @@ class EducationListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerial
         return None
 
 
-class ExperienceListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class ExperienceSerializer(serializers.ModelSerializer):
     jobName = serializers.CharField(source='job_name', required=True, max_length=200)
     companyName = serializers.CharField(source='company_name', required=True, max_length=255)
     startDate = serializers.DateField(source='start_date', required=True,
@@ -160,7 +160,7 @@ class ExperienceListCreateRetrieveUpdateDestroySerializer(serializers.ModelSeria
         return None
 
 
-class CertificateListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class CertificateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     trainingPlace = serializers.CharField(source='training_place', required=True, max_length=255)
     startDate = serializers.DateField(source='start_date', required=True,
@@ -190,7 +190,7 @@ class CertificateListCreateRetrieveUpdateDestroySerializer(serializers.ModelSeri
         return None
 
 
-class LanguageSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
 
@@ -216,7 +216,7 @@ class LanguageSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSe
         return None
 
 
-class AdvancedSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
 
@@ -247,7 +247,7 @@ class AdvancedSkillListCreateRetrieveUpdateDestroySerializer(serializers.ModelSe
         return None
 
 
-class CompanyRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
+class CompanySerializer(serializers.ModelSerializer):
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
                                     validators=[UniqueValidator(Company.objects.all(),
                                                                 message="Mã số thuế công ty đã tồn tại.")])

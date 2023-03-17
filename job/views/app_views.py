@@ -9,19 +9,3 @@ from rest_framework import status
 from ..models import (
     JobPost
 )
-from ..serializers.app_serializers import (
-    JobPostListSerializer,
-    JobPostDetailSerializer
-)
-
-
-class JobPostViewSet(viewsets.ViewSet,
-                     generics.ListAPIView,
-                     generics.RetrieveAPIView):
-    queryset = JobPost.objects
-    serializer_class = JobPostListSerializer
-
-    def get_serializer_class(self):
-        if self.action in ["retrieve"]:
-            return JobPostDetailSerializer
-        return self.serializer_class
