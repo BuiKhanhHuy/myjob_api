@@ -1,7 +1,9 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
-from common.models import Career, City, District, Location
+from common.models import (
+    Career, City, District, Location,
+)
 
 
 class InfoBaseModel(models.Model):
@@ -59,6 +61,12 @@ class JobSeekerProfile(InfoBaseModel):
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],
                                       null=True)
     is_active = models.BooleanField(default=False)
+    salary = models.BigIntegerField(default=0)
+    position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES, null=True)
+    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
+    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL, null=True)
+    type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES, null=True)
+    job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES, null=True)
 
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")
@@ -92,7 +100,6 @@ class ExperienceDetail(InfoBaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     description = models.CharField(max_length=255, null=True, blank=True)
-    position = models.SmallIntegerField(var_sys.POSITION_CHOICES)
 
     # ForeignKey
     job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,

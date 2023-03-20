@@ -26,6 +26,7 @@ class JobPost(JobPostBaseModel):
     position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES)
     type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES)
     experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES)
+    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL, null=True)
     job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES)
     salary_min = models.IntegerField()
     salary_max = models.IntegerField()

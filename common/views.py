@@ -53,6 +53,7 @@ def get_all_config(request):
         position_tuple = utils.convert_tuple_or_list_to_options(var_sys.POSITION_CHOICES)
         type_of_workplace_tuple = utils.convert_tuple_or_list_to_options(var_sys.TYPE_OF_WORKPLACE_CHOICES)
         job_type_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_TYPE_CHOICES)
+        academic_level_tuple = utils.convert_tuple_or_list_to_options(var_sys.ACADEMIC_LEVEL)
         experience_tuple = utils.convert_tuple_or_list_to_options(var_sys.EXPERIENCE_CHOICES)
         employee_size_tuple = utils.convert_tuple_or_list_to_options(var_sys.EMPLOYEE_SIZE_CHOICES)
         application_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.APPLICATION_STATUS)
@@ -72,6 +73,7 @@ def get_all_config(request):
         type_of_workplace_options = type_of_workplace_tuple[0]
         job_type_options = job_type_tuple[0]
         experience_options = experience_tuple[0]
+        academic_level_options = academic_level_tuple[0]
         employee_size_options = employee_size_tuple[0]
         application_status_options = application_status_tuple[0]
         city_options = city_tuple[0]
@@ -86,6 +88,7 @@ def get_all_config(request):
         type_of_workplace_dict = type_of_workplace_tuple[1]
         job_type_dict = job_type_tuple[1]
         experience_dict = experience_tuple[1]
+        academic_level_dict = academic_level_tuple[1]
         employee_size_dict = employee_size_tuple[1]
         application_status_dict = application_status_tuple[1]
         city_dict = city_tuple[1]
@@ -101,6 +104,7 @@ def get_all_config(request):
             "typeOfWorkplaceOptions": type_of_workplace_options,
             "jobTypeOptions": job_type_options,
             "experienceOptions": experience_options,
+            "academicLevelOptions": academic_level_options,
             "employeeSizeOptions": employee_size_options,
             "applicationStatusOptions": application_status_options,
             "cityOptions": city_options,
@@ -115,6 +119,7 @@ def get_all_config(request):
             "typeOfWorkplaceDict": type_of_workplace_dict,
             "jobTypeDict": job_type_dict,
             "experienceDict": experience_dict,
+            "academicLevelDict": academic_level_dict,
             "employeeSizeDict": employee_size_dict,
             "applicationStatusDict": application_status_dict,
             "cityDict": city_dict,

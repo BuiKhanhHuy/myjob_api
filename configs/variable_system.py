@@ -105,6 +105,15 @@ EXPERIENCE_CHOICES = (
     (8, 'Trên 5 năm kinh nghiệm')
 )
 
+ACADEMIC_LEVEL = (
+    (1, 'Trên Đại học'),
+    (2, 'Đại học'),
+    (3, 'Cao đẳng'),
+    (4, 'Trung cấp'),
+    (5, 'Trung học'),
+    (6, 'Chứng chỉ nghề')
+)
+
 EMPLOYEE_SIZE_CHOICES = (
     (1, '1-9 nhân viên'),
     (2, '10-24 nhân viên'),

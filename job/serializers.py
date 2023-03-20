@@ -30,6 +30,7 @@ class JobPostSerializer(serializers.ModelSerializer):
     position = serializers.IntegerField(required=True)
     typeOfWorkplace = serializers.IntegerField(source="type_of_workplace", required=True)
     experience = serializers.IntegerField(required=True)
+    academicLevel = serializers.IntegerField(source='academic_level', required=True)
     jobType = serializers.IntegerField(source="job_type", required=True)
     salaryMin = serializers.IntegerField(source="salary_min", required=True)
     salaryMax = serializers.IntegerField(source="salary_max", required=True)
@@ -61,7 +62,7 @@ class JobPostSerializer(serializers.ModelSerializer):
         model = JobPost
         fields = ('id', 'jobName', 'deadline', 'quantity', 'genderRequired',
                   'jobDescription', 'jobRequirement', 'benefitsEnjoyed',
-                  'position', 'typeOfWorkplace', 'experience',
+                  'position', 'typeOfWorkplace', 'experience', 'academicLevel',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
                   'location', 'createAt', 'appliedNumber')
@@ -100,6 +101,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             instance.position = validated_data.get('position', instance.position)
             instance.type_of_workplace = validated_data.get('type_of_workplace', instance.type_of_workplace)
             instance.experience = validated_data.get('experience', instance.experience)
+            instance.academic_level = validated_data.get('academic_level', instance.academic_level)
             instance.job_type = validated_data.get('job_type', instance.job_type)
             instance.salary_min = validated_data.get('salary_min', instance.salary_min)
             instance.salary_max = validated_data.get('salary_max', instance.salary_max)

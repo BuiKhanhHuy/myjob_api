@@ -40,17 +40,24 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     maritalStatus = serializers.CharField(source='marital_status',
                                           required=True,
                                           max_length=1)
-    user = auth_serializers.UserRetrieveUpdateSerializer()
     location = common_serializers.LocationSerializer()
+    # career here
+    salary = serializers.IntegerField(required=True)
+    position = serializers.IntegerField(required=True)
+    experience = serializers.IntegerField(required=True)
+    academicLevel = serializers.IntegerField(source='academic_level', required=True)
+    typeOfWorkplace = serializers.IntegerField(source='type_of_workplace', required=True)
+    jobType = serializers.IntegerField(source='job_type', required=True)
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = JobSeekerProfile
-        fields = ('title',
-                  'phone', 'birthday',
-                  'gender', 'maritalStatus',
-                  'user', 'location',
-                  'career', 'description')
+        fields = ('title', 'phone', 'birthday',
+                  'gender', 'maritalStatus', 'location',
+                  'career', 'salary', 'position',
+                  'experience', 'academicLevel',
+                  'typeOfWorkplace', 'jobType',
+                  'description')
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get('title', instance.title)
@@ -59,12 +66,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         instance.gender = validated_data.get('gender', instance.gender)
         instance.marital_status = validated_data.get('marital_status', instance.marital_status)
         instance.career = validated_data.get('career', instance.career)
+        instance.salary = validated_data.get('salary', instance.salary)
+        instance.position = validated_data.get('position', instance.position)
+        instance.experience = validated_data.get('experience', instance.experience)
+        instance.academic_level = validated_data.get('academic_level', instance.academic_level)
+        instance.type_of_workplace = validated_data.get('type_of_workplace', instance.type_of_workplace)
+        instance.job_type = validated_data.get('job_type', instance.job_type)
         instance.description = validated_data.get('description', instance.description)
         location_obj = instance.location
-        user = instance.user
-        if user:
-            user.full_name = validated_data['user'].get('full_name', user.full_name)
-            user.save()
         if location_obj:
             location_obj.city = validated_data["location"].get("city", location_obj.city)
             location_obj.district = validated_data["location"].get("district", location_obj.district)
@@ -81,13 +90,18 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
     user = auth_serializers.UserRetrieveUpdateSerializer()
     maritalStatus = serializers.CharField(source="marital_status")
     location = common_serializers.ProfileLocationSerializer()
+    academicLevel = serializers.IntegerField(source='academic_level')
+    typeOfWorkplace = serializers.IntegerField(source='type_of_workplace')
+    jobType = serializers.IntegerField(source='job_type')
 
     class Meta:
         model = JobSeekerProfile
         fields = ('title', 'user', 'phone', 'birthday',
                   'gender', 'maritalStatus',
-                  'location',
-                  'career', 'description')
+                  'location', 'career',
+                  'salary', 'position', 'experience',
+                  'academicLevel', 'typeOfWorkplace',
+                  'jobType', 'description')
 
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
@@ -146,7 +160,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExperienceDetail
-        fields = ('id', 'jobName', 'companyName', 'position',
+        fields = ('id', 'jobName', 'companyName',
                   'startDate', 'endDate',
                   'description')
 

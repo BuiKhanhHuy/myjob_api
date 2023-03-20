@@ -237,7 +237,7 @@ class CompanyView(viewsets.ViewSet):
 
             job_post_serializer = job_serializers \
                 .JobPostSerializer(job_post_queryset,
-                                   fields=["id", "jobName", "deadline", "quantity", "genderRequired",
+                                   fields=["id", "jobName", "academicLevel", "deadline", "quantity", "genderRequired",
                                            "jobDescription", "jobRequirement", "benefitsEnjoyed",
                                            "position", "typeOfWorkplace", "experience",
                                            "jobType", "salaryMin", "salaryMax", "isUrgent",
