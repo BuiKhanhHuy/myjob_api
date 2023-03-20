@@ -28,8 +28,8 @@ class JobPostViewSet(viewsets.ViewSet,
         return self.permission_classes
 
     # def get_serializer_class(self):
-    #     if self.action in ['list']:
-    #         return JobPostSerializer
+    #     if self.action in ['update']:
+    #         return JobPostSerializer(fields=["id"])
     #     return self.serializer_class
 
 

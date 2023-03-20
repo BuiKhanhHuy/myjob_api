@@ -84,8 +84,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
             return [perms_custom.IsJobSeekerUser()]
         return [perms_sys.IsAuthenticated()]
 
-    @action(methods=['get'], detail=True,
-            url_path='educations-detail', url_name='get-educations-detail')
+    @action(methods=["get"], detail=True,
+            url_path="educations-detail", url_name="get-educations-detail")
     def get_educations_detail(self, request, pk):
         try:
             educations_detail_queryset = EducationDetail.objects.filter(job_seeker_profile_id__exact=pk).all()
@@ -98,8 +98,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         else:
             return var_res.response_data(data=educations_detail_serializer.data)
 
-    @action(methods=['get'], detail=True,
-            url_path='experiences-detail', url_name='get-experiences-detail')
+    @action(methods=["get"], detail=True,
+            url_path="experiences-detail", url_name="get-experiences-detail")
     def get_experiences_detail(self, request, pk):
         try:
             experiences_detail_queryset = ExperienceDetail.objects.filter(job_seeker_profile_id__exact=pk).all()
@@ -112,8 +112,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         else:
             return var_res.response_data(data=experiences_detail_serializer.data)
 
-    @action(methods=['get'], detail=True,
-            url_path='certificates-detail', url_name='get-certificates-detail')
+    @action(methods=["get"], detail=True,
+            url_path="certificates-detail", url_name="get-certificates-detail")
     def get_certificates_detail(self, request, pk):
         try:
             certificates_detail_queryset = Certificate.objects.filter(job_seeker_profile_id__exact=pk).all()
@@ -126,8 +126,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         else:
             return var_res.response_data(data=certificates_detail_serializer.data)
 
-    @action(methods=['get'], detail=True,
-            url_path='language-skills', url_name='get-language-skills')
+    @action(methods=["get"], detail=True,
+            url_path="language-skills", url_name="get-language-skills")
     def get_language_skills(self, request, pk):
         try:
             language_skill_queryset = LanguageSkill.objects.filter(job_seeker_profile_id__exact=pk).all()
@@ -140,8 +140,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         else:
             return var_res.response_data(data=language_skill_serializer.data)
 
-    @action(methods=['get'], detail=True,
-            url_path='advanced-skills', url_name='get-advanced-skills')
+    @action(methods=["get"], detail=True,
+            url_path="advanced-skills", url_name="get-advanced-skills")
     def get_advanced_skills(self, request, pk):
         try:
             advanced_skill_queryset = AdvancedSkill.objects.filter(job_seeker_profile_id__exact=pk).all()
@@ -215,21 +215,41 @@ class CompanyView(viewsets.ViewSet):
 
     def get_job_posts(self, request):
         try:
-            job_post_queryset = JobPost.objects
+            user = request.user
 
-            job_post_serializer = job_serializers \
-                .JobPostSerializer(job_post_queryset,
+            job_posts_queryset = JobPost.objects.filter(user=user, company=user.company)
+
+            job_posts_serializer = job_serializers \
+                .JobPostSerializer(job_posts_queryset,
                                    many=True,
                                    fields=["id", "jobName", "createAt", "deadline",
-                                           "viewNumber", "isUrgent"])
+                                           "appliedNumber", "isUrgent"])
         except Exception as ex:
             helper.print_log_error("get_job_post", ex)
             return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return var_res.response_data(data=job_post_serializer.data)
+            return var_res.response_data(data=job_posts_serializer.data)
 
     def get_job_post_detail(self, request, pk):
-        return var_res.response_data()
+        try:
+            user = request.user
+            job_post_queryset = JobPost.objects.get(pk=pk, user=user, company=user.company)
+
+            job_post_serializer = job_serializers \
+                .JobPostSerializer(job_post_queryset,
+                                   fields=["id", "jobName", "deadline", "quantity", "genderRequired",
+                                           "jobDescription", "jobRequirement", "benefitsEnjoyed",
+                                           "position", "typeOfWorkplace", "experience",
+                                           "jobType", "salaryMin", "salaryMax", "isUrgent",
+                                           "contactPersonName", "contactPersonPhone", "contactPersonEmail",
+                                           "location"])
+        except JobPost.DoesNotExist:
+            return var_res.response_data(data=None)
+        except Exception as ex:
+            helper.print_log_error("get_job_post_detail", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.response_data(data=job_post_serializer.data)
 
 
 class CompanyViewSet(viewsets.ViewSet,
@@ -242,11 +262,11 @@ class CompanyViewSet(viewsets.ViewSet,
     renderer_classes = [renderers.MyJSONRenderer]
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ["update", "partial_update", "destroy"]:
             return [perms_custom.IsEmployerUser()]
         return self.get_permissions()
 
     def get_serializer_class(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ["update", "partial_update", "destroy"]:
             return CompanySerializer
         return self.serializer_class

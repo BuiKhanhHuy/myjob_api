@@ -17,7 +17,9 @@ from common import serializers as common_serializers
 
 class JobPostSerializer(serializers.ModelSerializer):
     jobName = serializers.CharField(source="job_name", required=True, max_length=255)
-    deadline = serializers.DateField(required=True)
+    deadline = serializers.DateField(required=True,
+                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     quantity = serializers.IntegerField(required=True)
     genderRequired = serializers.CharField(source="gender_required", required=False,
                                            max_length=1, allow_blank=True, allow_null=True)
@@ -39,9 +41,9 @@ class JobPostSerializer(serializers.ModelSerializer):
     createAt = serializers.DateTimeField(source="create_at", read_only=True)
     location = common_serializers.LocationSerializer()
 
-    viewNumber = serializers.SerializerMethodField(method_name="get_view_number", read_only=True)
+    appliedNumber = serializers.SerializerMethodField(method_name="get_applied_number", read_only=True)
 
-    def get_view_number(self, job_post):
+    def get_applied_number(self, job_post):
         return 1000
 
     def __init__(self, *args, **kwargs):
@@ -62,7 +64,7 @@ class JobPostSerializer(serializers.ModelSerializer):
                   'position', 'typeOfWorkplace', 'experience',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
-                  'location', 'createAt', 'viewNumber')
+                  'location', 'createAt', 'appliedNumber')
 
     def create(self, validated_data):
         try:
@@ -85,3 +87,38 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
         else:
             return job_post
+
+    def update(self, instance, validated_data):
+        try:
+            instance.job_name = validated_data.get('job_name', instance.job_name)
+            instance.deadline = validated_data.get('deadline', instance.deadline)
+            instance.quantity = validated_data.get('quantity', instance.quantity)
+            instance.gender_required = validated_data.get('gender_required', instance.gender_required)
+            instance.job_description = validated_data.get('job_description', instance.job_description)
+            instance.job_requirement = validated_data.get('job_requirement', instance.job_requirement)
+            instance.benefits_enjoyed = validated_data.get('benefits_enjoyed', instance.benefits_enjoyed)
+            instance.position = validated_data.get('position', instance.position)
+            instance.type_of_workplace = validated_data.get('type_of_workplace', instance.type_of_workplace)
+            instance.experience = validated_data.get('experience', instance.experience)
+            instance.job_type = validated_data.get('job_type', instance.job_type)
+            instance.salary_min = validated_data.get('salary_min', instance.salary_min)
+            instance.salary_max = validated_data.get('salary_max', instance.salary_max)
+            instance.is_urgent = validated_data.get('is_urgent', instance.is_urgent)
+            instance.contact_person_name = validated_data.get('contact_person_name', instance.contact_person_name)
+            instance.contact_person_phone = validated_data.get('contact_person_phone', instance.contact_person_phone)
+            instance.contact_person_email = validated_data.get('contact_person_email', instance.contact_person_email)
+            location_obj = instance.location
+
+            with transaction.atomic():
+                if location_obj:
+                    location_obj.city = validated_data["location"].get("city", location_obj.city)
+                    location_obj.district = validated_data["location"].get("district", location_obj.district)
+                    location_obj.address = validated_data["location"].get("address", location_obj.address)
+                    location_obj.lat = validated_data["location"].get("lat", location_obj.lat)
+                    location_obj.lng = validated_data["location"].get("lng", location_obj.lng)
+                    location_obj.save()
+                instance.save()
+                return instance
+        except Exception as ex:
+            helper.print_log_error("update job post", ex)
+            return None
