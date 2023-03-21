@@ -1,5 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
+from django.utils.text import slugify
+from django_extensions.db.fields import AutoSlugField
 from authentication.models import User
 from common.models import City, District, Location, Career
 from info.models import Company
@@ -15,6 +17,7 @@ class JobPostBaseModel(models.Model):
 
 class JobPost(JobPostBaseModel):
     job_name = models.CharField(max_length=255)
+    slug = AutoSlugField(populate_from='job_name', unique=True, slugify_function=slugify)
     deadline = models.DateField()
     quantity = models.IntegerField()
     gender_required = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES,
@@ -26,7 +29,7 @@ class JobPost(JobPostBaseModel):
     position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES)
     type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES)
     experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES)
-    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL, null=True)
+    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL)
     job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES)
     salary_min = models.IntegerField()
     salary_max = models.IntegerField()

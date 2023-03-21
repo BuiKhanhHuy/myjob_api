@@ -6,6 +6,7 @@ app_router = DefaultRouter()
 
 web_router = DefaultRouter()
 web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='job-seeker-profile')
+web_router.register(r'resumes', web_views.ResumeViewSet, basename='resume')
 web_router.register(r'experiences-detail', web_views.ExperienceDetailViewSet, basename='experience-detail')
 web_router.register(r'educations-detail', web_views.EducationDetailViewSet, basename='education-detail')
 web_router.register(r'certificates-detail', web_views.CertificateDetailViewSet, basename='certificate-detail')
@@ -20,7 +21,6 @@ urlpatterns = [
     ])),
     path('web/', include([
         path("profile/", web_views.ProfileView.as_view({'get': 'get_profile_info', 'put': 'update_profile_info'})),
-        path("profile-detail/", web_views.ProfileView.as_view({'get': 'get_profile_info_detail'})),
         path("company/", web_views.CompanyView.as_view({'get': 'get_company_info'})),
         path("company/job-posts/", web_views.CompanyView.as_view({'get': 'get_job_posts'})),
         path("company/job-posts/<int:pk>/", web_views.CompanyView.as_view({'get': 'get_job_post_detail'})),

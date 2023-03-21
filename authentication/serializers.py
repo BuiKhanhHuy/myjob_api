@@ -6,7 +6,10 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db import transaction
 from .models import User
-from info.models import JobSeekerProfile, Company
+from info.models import (
+    JobSeekerProfile, Resume,
+    Company
+)
 from common.models import Location
 from common.serializers import LocationSerializer
 
@@ -67,7 +70,9 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
                 user = User.objects.create_user_with_role_name(**validated_data,
                                                                is_active=False,
                                                                role_name=var_sys.JOB_SEEKER)
-                JobSeekerProfile.objects.create(user=user)
+                job_seeker_profile = JobSeekerProfile.objects.create(user=user)
+                Resume.objects.create(job_seeker_profile=job_seeker_profile, user=user,
+                                      type=var_sys.CV_WEBSITE)
 
                 return user
         except Exception as ex:
@@ -164,6 +169,17 @@ class UserInfoSerializer(serializers.ModelSerializer):
     jobSeekerProfileId = serializers.PrimaryKeyRelatedField(source='job_seeker_profile',
                                                             read_only=True)
     companyId = serializers.PrimaryKeyRelatedField(source='company', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
 
     class Meta:
         model = User

@@ -5,8 +5,11 @@ from rest_framework.validators import UniqueValidator
 from django.db import transaction
 from .models import (
     JobSeekerProfile,
-    EducationDetail, ExperienceDetail,
-    Certificate, LanguageSkill,
+    Resume,
+    EducationDetail,
+    ExperienceDetail,
+    Certificate,
+    LanguageSkill,
     AdvancedSkill,
     Company
 )
@@ -108,6 +111,43 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSeekerProfile
         fields = "__all__"
+
+
+class ResumeSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=True, max_length=200)
+    description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    salary_min = serializers.IntegerField(required=True)
+    salary_max = serializers.IntegerField(required=True)
+    position = serializers.IntegerField(required=True)
+    experience = serializers.IntegerField(required=True)
+    academicLevel = serializers.IntegerField(source="academic_level", required=True)
+    typeOfWorkplace = serializers.IntegerField(source="type_of_workplace", required=True)
+    jobType = serializers.IntegerField(source="job_type", required=True)
+    isActive = serializers.BooleanField(source="is_active", default=False)
+    updateAt = serializers.DateTimeField(source="update_at", read_only=True)
+    imageUrl = serializers.URLField(source="image_url")
+    fileUrl = serializers.URLField(source="file_url")
+    user = auth_serializers.UserInfoSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = Resume
+        fields = ("id", "slug", "title", "description",
+                  "salary_min", "salary_max",
+                  "position", "experience", "academicLevel",
+                  "typeOfWorkplace", "jobType", "isActive",
+                  "city", "career", "updateAt",
+                  "imageUrl", "fileUrl", "user")
 
 
 class EducationSerializer(serializers.ModelSerializer):
@@ -238,7 +278,8 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
         request = self.context['request']
 
         if AdvancedSkill.objects.filter(name__iexact=name,
-                                        job_seeker_profile=request.user.job_seeker_profile).exists():
+                                        # job_seeker_profile=request.user.job_seeker_profile
+                                        ).exists():
             raise serializers.ValidationError('Kỹ năng này đã tồn tại.')
         return name
 
@@ -273,7 +314,7 @@ class CompanySerializer(serializers.ModelSerializer):
                                            max_length=255)
     location = common_serializers.LocationSerializer()
     since = serializers.DateField(required=True, allow_null=True, input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
-                                                                   var_sys.DATE_TIME_FORMAT["Ymd"]])
+                                                                                 var_sys.DATE_TIME_FORMAT["Ymd"]])
     companyEmail = serializers.CharField(source="company_email", required=True,
                                          max_length=100, validators=[UniqueValidator(Company.objects.all(),
                                                                                      message='Email công ty đã tồn tại.')])
@@ -281,7 +322,7 @@ class CompanySerializer(serializers.ModelSerializer):
                                          max_length=15, validators=[UniqueValidator(Company.objects.all(),
                                                                                     message='Số điện thoại công ty đã tồn tại.')])
     websiteUrl = serializers.URLField(required=False, source="website_url", max_length=300,
-                                       allow_null=True, allow_blank=True)
+                                      allow_null=True, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:

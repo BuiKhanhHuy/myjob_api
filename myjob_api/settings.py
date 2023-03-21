@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # third party api service
 
     # third party packages
+    'django_extensions',
     'drf_yasg',
     'oauth2_provider',
     'social_django',

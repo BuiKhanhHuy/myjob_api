@@ -1,3 +1,4 @@
+from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers
 from helpers import helper
 from rest_framework import viewsets, generics
@@ -5,10 +6,16 @@ from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework import status
-from ..models import (JobSeekerProfile, EducationDetail, ExperienceDetail,
-                      Certificate, LanguageSkill, AdvancedSkill, Company)
-from ..serializers import (ProfileSerializer, ProfileUpdateSerializer, ProfileDetailSerializer,
-                           JobSeekerProfileSerializer, EducationSerializer,
+from ..models import (JobSeekerProfile, Resume,
+                      EducationDetail, ExperienceDetail,
+                      Certificate, LanguageSkill,
+                      AdvancedSkill, Company)
+from ..serializers import (ProfileSerializer,
+                           ProfileUpdateSerializer,
+                           ProfileDetailSerializer,
+                           JobSeekerProfileSerializer,
+                           ResumeSerializer,
+                           EducationSerializer,
                            ExperienceSerializer,
                            CertificateSerializer,
                            LanguageSkillSerializer,
@@ -40,17 +47,6 @@ class ProfileView(viewsets.ViewSet):
         else:
             return var_res.response_data(data=profile_serializer.data)
 
-    def get_profile_info_detail(self, request):
-        user = request.user
-        try:
-            profileDetail = JobSeekerProfile.objects.get(user_id__exact=user.id)
-            profile_detail_serializer = ProfileDetailSerializer(profileDetail)
-        except Exception as ex:
-            helper.print_log_error("get_profile_info_detail", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return var_res.response_data(data=profile_detail_serializer.data)
-
     def update_profile_info(self, request):
         data = request.data
 
@@ -74,6 +70,54 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                               generics.RetrieveAPIView):
     queryset = JobSeekerProfile.objects
     serializer_class = JobSeekerProfileSerializer
+    permission_classes = [perms_sys.AllowAny()]
+
+    def get_permissions(self):
+        if self.action in ["get_resumes"]:
+            return [perms_custom.IsJobSeekerUser()]
+        return self.permission_classes
+
+    @action(methods=["get"], detail=True,
+            url_path="resumes", url_name="get-resumes")
+    def get_resumes(self, request, pk):
+        try:
+            query_params = request.query_params
+            if "resumeType" not in query_params:
+                return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                             errors={"detail": "resumeType is required."})
+            resume_type = query_params["resumeType"]
+            if not (resume_type == var_sys.CV_WEBSITE) and not (resume_type == var_sys.CV_UPLOAD):
+                return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                             errors={"detail": "resumeType is invalid."})
+
+            job_seeker_profile = self.get_object()
+            if not job_seeker_profile:
+                raise Exception("User doesn't have job_seeker_profile.")
+
+            resumes = job_seeker_profile.resumes
+            resumes = resumes.filter(type=resume_type)
+            if resume_type == var_sys.CV_WEBSITE:
+                if not resumes.first():
+                    return var_res.response_data()
+                serializer = ResumeSerializer(resumes.first(),
+                                              fields=["id", "slug", "title", "experience", "position",
+                                                      "salary_min", "salary_max", "updateAt", "user"])
+            else:
+                serializer = ResumeSerializer(resumes, many=True,
+                                              fields=["id", "slug", "title", "updateAt",
+                                                      "imageUrl"])
+
+            return var_res.response_data(data=serializer.data)
+        except Exception as ex:
+            helper.print_log_error("get_resumes", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ResumeViewSet(viewsets.ViewSet,
+                    generics.ListAPIView,
+                    generics.RetrieveAPIView):
+    queryset = Resume.objects
+    serializer_class = ResumeSerializer
 
     def get_permissions(self):
         if self.action in ["get_experiences_detail",

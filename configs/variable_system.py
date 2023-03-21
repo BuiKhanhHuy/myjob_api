@@ -2,6 +2,10 @@ ADMIN = 'ADMIN'
 EMPLOYER = 'EMPLOYER'
 JOB_SEEKER = 'JOB_SEEKER'
 
+CV_WEBSITE = "WEBSITE"
+CV_UPLOAD = "UPLOAD"
+
+
 DATE_TIME_FORMAT = {
     "dmY": "%d/%m/%Y",
     "Ymd": "%Y-%m-%d",

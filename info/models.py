@@ -1,5 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
+from django.utils.text import slugify
+from django_extensions.db.fields import AutoSlugField
 from authentication.models import User
 from common.models import (
     Career, City, District, Location,
@@ -16,6 +18,7 @@ class InfoBaseModel(models.Model):
 
 class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
+    slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
     company_email = models.EmailField(max_length=100, unique=True)
     company_phone = models.CharField(max_length=15, unique=True)
@@ -50,9 +53,6 @@ class CompanyImage(InfoBaseModel):
 
 
 class JobSeekerProfile(InfoBaseModel):
-    title = models.CharField(max_length=200, null=True)
-    description = models.TextField(null=True)
-    cover_image_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["COVER_IMG"])
     phone = models.CharField(max_length=15, blank=True, null=True)
     birthday = models.DateField(null=True)
     gender = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES, null=True)
@@ -60,23 +60,41 @@ class JobSeekerProfile(InfoBaseModel):
                                       choices=var_sys.MARITAL_STATUS_CHOICES,
                                       default=var_sys.MARITAL_STATUS_CHOICES[0][0],
                                       null=True)
-    is_active = models.BooleanField(default=False)
-    salary = models.BigIntegerField(default=0)
-    position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES, null=True)
-    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
-    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL, null=True)
-    type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES, null=True)
-    job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES, null=True)
-
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="job_seeker_profile")
     # ForeignKey
-    career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="job_seeker_profiles")
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="job_seeker_profiles")
 
     class Meta:
         db_table = "myjob_info_job_seeker_profile"
+
+
+class Resume(InfoBaseModel):
+    title = models.CharField(max_length=200, null=True)
+    slug = AutoSlugField(populate_from='title', unique=True, slugify_function=slugify)
+    description = models.TextField(null=True)
+    salary_min = models.DecimalField(default=0, max_digits=12, decimal_places=0)
+    salary_max = models.DecimalField(default=0, max_digits=12, decimal_places=0)
+    position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES, null=True)
+    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
+    academic_level = models.SmallIntegerField(choices=var_sys.ACADEMIC_LEVEL, null=True)
+    type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES, null=True)
+    job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES, null=True)
+    is_active = models.BooleanField(default=False)
+
+    image_url = models.URLField(null=True)
+    file_url = models.URLField(null=True)
+    type = models.CharField(max_length=10, default=var_sys.CV_UPLOAD)
+
+    # ForeignKey
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, related_name="resumes")
+    career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="resumes")
+    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE, related_name="resumes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resumes")
+
+    class Meta:
+        db_table = "myjob_info_resume"
 
 
 class EducationDetail(InfoBaseModel):
@@ -88,7 +106,7 @@ class EducationDetail(InfoBaseModel):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     # ForeignKey
-    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE, related_name="education_details")
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name="education_details")
 
     class Meta:
         db_table = "myjob_info_education_detail"
@@ -102,8 +120,8 @@ class ExperienceDetail(InfoBaseModel):
     description = models.CharField(max_length=255, null=True, blank=True)
 
     # ForeignKey
-    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
-                                           related_name="experience_details")
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE,
+                               related_name="experience_details")
 
     class Meta:
         db_table = "myjob_info_experience_detail"
@@ -116,8 +134,8 @@ class Certificate(InfoBaseModel):
     expiration_date = models.DateField(null=True, blank=True)
 
     # ForeignKey
-    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
-                                           related_name='certificates')
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE,
+                               related_name='certificates')
 
     class Meta:
         db_table = "myjob_info_certificate"
@@ -128,8 +146,8 @@ class LanguageSkill(InfoBaseModel):
     level = models.SmallIntegerField(choices=var_sys.LANGUAGE_LEVEL_CHOICES)
 
     # ForeignKey
-    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
-                                           related_name="language_skills")
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE,
+                               related_name="language_skills")
 
     class Meta:
         db_table = "myjob_info_language_skill"
@@ -139,8 +157,8 @@ class AdvancedSkill(InfoBaseModel):
     name = models.CharField(max_length=200)
     level = models.SmallIntegerField(default=3)
 
-    job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE,
-                                           related_name='advanced_skills')
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE,
+                               related_name='advanced_skills')
 
     class Meta:
         db_table = "myjob_info_advanced_skill"
