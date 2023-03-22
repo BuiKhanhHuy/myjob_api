@@ -19,9 +19,7 @@ from .serializers import (
     ResetPasswordSerializer,
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
-    UserInfoSerializer,
     UserSerializer,
-    UserRetrieveUpdateSerializer
 )
 
 
@@ -144,7 +142,8 @@ def update_user_account(request):
         data = request.data
         user = request.user
 
-        user_account_serializer = UserRetrieveUpdateSerializer(user, data=data, partial=True)
+        user_account_serializer = UserSerializer(user, data=data, partial=True,
+                                                 fields=['id', 'fullName'])
         if not user_account_serializer.is_valid():
             return response_data(status=status.HTTP_400_BAD_REQUEST, errors=user_account_serializer.errors)
 
@@ -153,7 +152,7 @@ def update_user_account(request):
         helper.print_log_error("update_user_account", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        user_info_serializer = UserInfoSerializer(user)
+        user_info_serializer = UserSerializer(user)
         return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
 
 
@@ -199,11 +198,6 @@ def job_seeker_register(request):
 @permission_classes(permission_classes=[IsAuthenticated])
 def get_user_info(request):
     user_info = request.user
-    user_info_serializer = UserInfoSerializer(user_info)
+    user_info_serializer = UserSerializer(user_info)
     return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
 
-
-class UserViewSet(viewsets.ViewSet,
-                  generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects
-    serializer_class = UserSerializer

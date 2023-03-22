@@ -21,21 +21,7 @@ from authentication import serializers as auth_serializers
 from common import serializers as common_serializers
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    completed = serializers.SerializerMethodField()
-    coverImageUrl = serializers.URLField(source="cover_image_url")
-    isActive = serializers.BooleanField(source='is_active')
-
-    def get_completed(self, profile):
-        return 1
-
-    class Meta:
-        model = JobSeekerProfile
-        fields = ("coverImageUrl", "isActive", "completed")
-
-
-class ProfileUpdateSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(required=True, max_length=200)
+class JobSeekerProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=True, max_length=15)
     birthday = serializers.DateField(required=True, input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
@@ -43,40 +29,23 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     maritalStatus = serializers.CharField(source='marital_status',
                                           required=True,
                                           max_length=1)
-    location = common_serializers.LocationSerializer()
-    # career here
-    salary = serializers.IntegerField(required=True)
-    position = serializers.IntegerField(required=True)
-    experience = serializers.IntegerField(required=True)
-    academicLevel = serializers.IntegerField(source='academic_level', required=True)
-    typeOfWorkplace = serializers.IntegerField(source='type_of_workplace', required=True)
-    jobType = serializers.IntegerField(source='job_type', required=True)
-    description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    location = common_serializers.ProfileLocationSerializer()
+    user = auth_serializers.UserSerializer(fields=["fullName"])
 
     class Meta:
         model = JobSeekerProfile
-        fields = ('title', 'phone', 'birthday',
-                  'gender', 'maritalStatus', 'location',
-                  'career', 'salary', 'position',
-                  'experience', 'academicLevel',
-                  'typeOfWorkplace', 'jobType',
-                  'description')
+        fields = ('id', 'phone', 'birthday',
+                  'gender', 'maritalStatus',
+                  'location', 'user')
 
     def update(self, instance, validated_data):
-        instance.title = validated_data.get('title', instance.title)
         instance.birthday = validated_data.get('birthday', instance.birthday)
         instance.phone = validated_data.get('phone', instance.phone)
         instance.gender = validated_data.get('gender', instance.gender)
         instance.marital_status = validated_data.get('marital_status', instance.marital_status)
-        instance.career = validated_data.get('career', instance.career)
-        instance.salary = validated_data.get('salary', instance.salary)
-        instance.position = validated_data.get('position', instance.position)
-        instance.experience = validated_data.get('experience', instance.experience)
-        instance.academic_level = validated_data.get('academic_level', instance.academic_level)
-        instance.type_of_workplace = validated_data.get('type_of_workplace', instance.type_of_workplace)
-        instance.job_type = validated_data.get('job_type', instance.job_type)
-        instance.description = validated_data.get('description', instance.description)
         location_obj = instance.location
+        user_obj = instance.user
+
         if location_obj:
             location_obj.city = validated_data["location"].get("city", location_obj.city)
             location_obj.district = validated_data["location"].get("district", location_obj.district)
@@ -85,32 +54,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         else:
             location_new = Location.objects.create(**validated_data["location"])
             instance.location = location_new
+        user_obj.full_name = validated_data["user"].get("full_name", user_obj.full_name)
+        user_obj.save()
         instance.save()
+
         return instance
-
-
-class ProfileDetailSerializer(serializers.ModelSerializer):
-    user = auth_serializers.UserRetrieveUpdateSerializer()
-    maritalStatus = serializers.CharField(source="marital_status")
-    location = common_serializers.ProfileLocationSerializer()
-    academicLevel = serializers.IntegerField(source='academic_level')
-    typeOfWorkplace = serializers.IntegerField(source='type_of_workplace')
-    jobType = serializers.IntegerField(source='job_type')
-
-    class Meta:
-        model = JobSeekerProfile
-        fields = ('title', 'user', 'phone', 'birthday',
-                  'gender', 'maritalStatus',
-                  'location', 'career',
-                  'salary', 'position', 'experience',
-                  'academicLevel', 'typeOfWorkplace',
-                  'jobType', 'description')
-
-
-class JobSeekerProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobSeekerProfile
-        fields = "__all__"
 
 
 class ResumeSerializer(serializers.ModelSerializer):
@@ -127,7 +75,7 @@ class ResumeSerializer(serializers.ModelSerializer):
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
     imageUrl = serializers.URLField(source="image_url")
     fileUrl = serializers.URLField(source="file_url")
-    user = auth_serializers.UserInfoSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
+    user = auth_serializers.UserSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -161,25 +109,18 @@ class EducationSerializer(serializers.ModelSerializer):
                                           input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-
-    class Meta:
-        model = EducationDetail
-        fields = ('id', 'degreeName', 'major', 'trainingPlaceName',
-                  'startDate', 'completedDate', 'description')
+    resume = serializers.SlugRelatedField(required=True, write_only=True,
+                                          slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if EducationDetail.objects.count() >= 10:
             raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin học vấn'})
         return attrs
 
-    def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        if user.is_authenticated:
-            education_detail = EducationDetail.objects.create(**validated_data,
-                                                              job_seeker_profile=user.job_seeker_profile)
-            return education_detail
-        return None
+    class Meta:
+        model = EducationDetail
+        fields = ('id', 'degreeName', 'major', 'trainingPlaceName',
+                  'startDate', 'completedDate', 'description', 'resume')
 
 
 class ExperienceSerializer(serializers.ModelSerializer):
@@ -192,6 +133,8 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    resume = serializers.SlugRelatedField(required=True, write_only=True,
+                                          slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if ExperienceDetail.objects.count() >= 10:
@@ -202,16 +145,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
         model = ExperienceDetail
         fields = ('id', 'jobName', 'companyName',
                   'startDate', 'endDate',
-                  'description')
-
-    def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        if user.is_authenticated:
-            experience_detail = ExperienceDetail.objects.create(**validated_data,
-                                                                job_seeker_profile=user.job_seeker_profile)
-            return experience_detail
-        return None
+                  'description', 'resume')
 
 
 class CertificateSerializer(serializers.ModelSerializer):
@@ -223,6 +157,8 @@ class CertificateSerializer(serializers.ModelSerializer):
     expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True,
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
+    resume = serializers.SlugRelatedField(required=True, write_only=True,
+                                          slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if Certificate.objects.count() >= 10:
@@ -232,47 +168,34 @@ class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certificate
         fields = ('id', 'name', 'trainingPlace', 'startDate',
-                  'expirationDate')
-
-    def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        if user.is_authenticated:
-            certificate_detail = Certificate.objects.create(**validated_data,
-                                                            job_seeker_profile=user.job_seeker_profile)
-            return certificate_detail
-        return None
+                  'expirationDate', 'resume')
 
 
 class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
+    resume = serializers.SlugRelatedField(required=True, write_only=True,
+                                          slug_field="slug", queryset=Resume.objects.all())
 
     def validate_language(self, language):
         request = self.context['request']
 
         if LanguageSkill.objects.filter(language=language,
-                                        job_seeker_profile=request.user.job_seeker_profile).exists():
+                                        # job_seeker_profile=request.user.job_seeker_profile
+                                        ).exists():
             raise serializers.ValidationError('Ngôn ngữ này đã tồn tại.')
         return language
 
     class Meta:
         model = LanguageSkill
-        fields = ('id', 'language', 'level')
-
-    def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        if user.is_authenticated:
-            language_skill = LanguageSkill.objects.create(**validated_data,
-                                                          job_seeker_profile=user.job_seeker_profile)
-            return language_skill
-        return None
+        fields = ('id', 'language', 'level', 'resume')
 
 
 class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
+    resume = serializers.SlugRelatedField(required=True, write_only=True,
+                                          slug_field="slug", queryset=Resume.objects.all())
 
     def validate_name(self, name):
         request = self.context['request']
@@ -290,16 +213,7 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdvancedSkill
-        fields = ('id', 'name', 'level')
-
-    def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        if user.is_authenticated:
-            advanced_skill = AdvancedSkill.objects.create(**validated_data,
-                                                          job_seeker_profile=user.job_seeker_profile)
-            return advanced_skill
-        return None
+        fields = ('id', 'name', 'level', 'resume')
 
 
 class CompanySerializer(serializers.ModelSerializer):

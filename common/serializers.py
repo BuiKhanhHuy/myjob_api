@@ -19,11 +19,11 @@ class ProfileDistrictSerializers(serializers.ModelSerializer):
 
 
 class ProfileLocationSerializer(serializers.ModelSerializer):
-    district = ProfileDistrictSerializers()
+    districtDict = ProfileDistrictSerializers(source="district", read_only=True)
 
     class Meta:
         model = Location
-        fields = ('city', 'district', 'address')
+        fields = ('city', 'districtDict', 'address', 'district')
 
 
 class LocationSerializer(serializers.ModelSerializer):

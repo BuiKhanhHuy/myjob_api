@@ -16,3 +16,8 @@ class IsEmployerUser(permissions.IsAuthenticated):
         if user.is_authenticated:
             return user.role_name == var_sys.EMPLOYER
         return False
+
+
+class ResumeOwnerPerms(IsJobSeekerUser):
+    def has_object_permission(self, request, view, resume):
+        return request.user == resume.user

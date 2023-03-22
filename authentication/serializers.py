@@ -158,7 +158,7 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
         fields = ("fullName", "email", "password", "confirmPassword", "company")
 
 
-class UserInfoSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     fullName = serializers.CharField(source="full_name")
     email = serializers.CharField()
@@ -188,20 +188,3 @@ class UserInfoSerializer(serializers.ModelSerializer):
                   "avatarUrl", "roleName",
                   "jobSeekerProfileId",
                   "companyId")
-
-
-class UserRetrieveUpdateSerializer(serializers.ModelSerializer):
-    fullName = serializers.CharField(source='full_name')
-
-    class Meta:
-        model = User
-        fields = ('id', 'fullName', 'email')
-        extra_kwargs = {
-            'email': {'read_only': True},
-        }
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
