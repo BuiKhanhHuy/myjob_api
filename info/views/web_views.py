@@ -99,7 +99,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 return var_res.response_data()
             serializer = ResumeSerializer(resumes.first(),
                                           fields=["id", "slug", "title", "experience", "position",
-                                                  "salary_min", "salary_max", "updateAt", "user"])
+                                                  "salaryMin", "salaryMax", "updateAt", "user"])
         else:
             serializer = ResumeSerializer(resumes, many=True,
                                           fields=["id", "slug", "title", "updateAt",
@@ -110,13 +110,15 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
 
 class ResumeViewSet(viewsets.ViewSet,
                     generics.ListAPIView,
-                    generics.RetrieveAPIView):
+                    generics.RetrieveUpdateDestroyAPIView):
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
     lookup_field = 'slug'
 
     def get_permissions(self):
         if self.action in ["get_resume_detail_of_job_seeker",
+                           "update", "partial_update",
+                           "destroy",
                            "get_experiences_detail",
                            "get_educations_detail",
                            "get_certificates_detail",
@@ -128,8 +130,14 @@ class ResumeViewSet(viewsets.ViewSet,
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )
     def get_resume_detail_of_job_seeker(self, request, slug):
-        print(self.get_object())
-        return var_res.response_data(data=slug)
+        resume_queryset = self.get_object()
+        resume_serializer = ResumeSerializer(resume_queryset,
+                                             fields=["id", "slug", "title", "salaryMin", "salaryMax",
+                                                     "position", "experience", "academicLevel",
+                                                     "typeOfWorkplace", "jobType", "description",
+                                                     "isActive", "city", "career"])
+
+        return var_res.response_data(data=resume_serializer.data)
 
     @action(methods=["get"], detail=True,
             url_path="educations-detail", url_name="get-educations-detail")

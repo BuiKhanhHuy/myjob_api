@@ -64,8 +64,8 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
 class ResumeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True, max_length=200)
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    salary_min = serializers.IntegerField(required=True)
-    salary_max = serializers.IntegerField(required=True)
+    salaryMin = serializers.IntegerField(source="salary_min", required=True)
+    salaryMax = serializers.IntegerField(source="salary_max", required=True)
     position = serializers.IntegerField(required=True)
     experience = serializers.IntegerField(required=True)
     academicLevel = serializers.IntegerField(source="academic_level", required=True)
@@ -73,8 +73,8 @@ class ResumeSerializer(serializers.ModelSerializer):
     jobType = serializers.IntegerField(source="job_type", required=True)
     isActive = serializers.BooleanField(source="is_active", default=False)
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
-    imageUrl = serializers.URLField(source="image_url")
-    fileUrl = serializers.URLField(source="file_url")
+    imageUrl = serializers.URLField(source="image_url", required=False)
+    fileUrl = serializers.URLField(source="file_url", required=False)
     user = auth_serializers.UserSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -91,7 +91,7 @@ class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = ("id", "slug", "title", "description",
-                  "salary_min", "salary_max",
+                  "salaryMin", "salaryMax",
                   "position", "experience", "academicLevel",
                   "typeOfWorkplace", "jobType", "isActive",
                   "city", "career", "updateAt",
@@ -109,8 +109,7 @@ class EducationSerializer(serializers.ModelSerializer):
                                           input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    resume = serializers.SlugRelatedField(required=True, write_only=True,
-                                          slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if EducationDetail.objects.count() >= 10:
@@ -133,8 +132,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    resume = serializers.SlugRelatedField(required=True, write_only=True,
-                                          slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if ExperienceDetail.objects.count() >= 10:
@@ -157,8 +155,7 @@ class CertificateSerializer(serializers.ModelSerializer):
     expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True,
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
-    resume = serializers.SlugRelatedField(required=True, write_only=True,
-                                          slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def validate(self, attrs):
         if Certificate.objects.count() >= 10:
@@ -174,17 +171,16 @@ class CertificateSerializer(serializers.ModelSerializer):
 class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
-    resume = serializers.SlugRelatedField(required=True, write_only=True,
-                                          slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
-    def validate_language(self, language):
-        request = self.context['request']
-
-        if LanguageSkill.objects.filter(language=language,
-                                        # job_seeker_profile=request.user.job_seeker_profile
-                                        ).exists():
-            raise serializers.ValidationError('Ngôn ngữ này đã tồn tại.')
-        return language
+    # def validate_language(self, language):
+    #     request = self.context['request']
+    #
+    #     if LanguageSkill.objects.filter(language=language,
+    #                                     # job_seeker_profile=request.user.job_seeker_profile
+    #                                     ).exists():
+    #         raise serializers.ValidationError('Ngôn ngữ này đã tồn tại.')
+    #     return language
 
     class Meta:
         model = LanguageSkill
@@ -194,17 +190,16 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
 class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
-    resume = serializers.SlugRelatedField(required=True, write_only=True,
-                                          slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
-    def validate_name(self, name):
-        request = self.context['request']
-
-        if AdvancedSkill.objects.filter(name__iexact=name,
-                                        # job_seeker_profile=request.user.job_seeker_profile
-                                        ).exists():
-            raise serializers.ValidationError('Kỹ năng này đã tồn tại.')
-        return name
+    # def validate_name(self, name):
+    #     request = self.context['request']
+    #
+    #     if AdvancedSkill.objects.filter(name__iexact=name,
+    #                                     # job_seeker_profile=request.user.job_seeker_profile
+    #                                     ).exists():
+    #         raise serializers.ValidationError('Kỹ năng này đã tồn tại.')
+    #     return name
 
     def validate(self, attrs):
         if AdvancedSkill.objects.count() >= 15:
