@@ -20,6 +20,7 @@ from .serializers import (
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
     UserSerializer,
+    AvatarSerializer
 )
 
 
@@ -157,6 +158,18 @@ def update_user_account(request):
 
 
 @api_view(http_method_names=['post'])
+@permission_classes(permission_classes=[IsAuthenticated])
+def avatar(request):
+    files = request.FILES
+    avatar_serializer = AvatarSerializer(data=files)
+    if not avatar_serializer.is_valid():
+        return response_data(status=status.HTTP_400_BAD_REQUEST, errors=avatar_serializer.errors)
+    result = avatar_serializer.save()
+
+    return response_data(data=result)
+
+
+@api_view(http_method_names=['post'])
 def employer_register(request):
     data = request.data
     serializer = EmployerRegisterSerializer(data=data)
@@ -200,4 +213,3 @@ def get_user_info(request):
     user_info = request.user
     user_info_serializer = UserSerializer(user_info)
     return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
-

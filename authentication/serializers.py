@@ -1,5 +1,4 @@
-import datetime
-
+from myjob_api.cloudinary_custom import Cloudinary
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -188,3 +187,18 @@ class UserSerializer(serializers.ModelSerializer):
                   "avatarUrl", "roleName",
                   "jobSeekerProfileId",
                   "companyId")
+
+
+class AvatarSerializer(serializers.Serializer):
+    file = serializers.FileField(required=True)
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        file = validated_data.pop('file')
+
+        my_cloudinary = Cloudinary()
+
+        user.avatar_url = ""
+        user.avatar_public_id = ""
+        user.save()
+        return {'url': 'url'}

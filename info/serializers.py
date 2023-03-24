@@ -1,3 +1,6 @@
+from myjob_api.cloudinary_custom import Cloudinary
+
+import console.jobs.queue_cron_job
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -73,8 +76,9 @@ class ResumeSerializer(serializers.ModelSerializer):
     jobType = serializers.IntegerField(source="job_type", required=True)
     isActive = serializers.BooleanField(source="is_active", default=False)
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
-    imageUrl = serializers.URLField(source="image_url", required=False)
-    fileUrl = serializers.URLField(source="file_url", required=False)
+    imageUrl = serializers.URLField(source="image_url", required=False, read_only=True)
+    fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    file = serializers.FileField(required=True, write_only=True)
     user = auth_serializers.UserSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -94,8 +98,28 @@ class ResumeSerializer(serializers.ModelSerializer):
                   "salaryMin", "salaryMax",
                   "position", "experience", "academicLevel",
                   "typeOfWorkplace", "jobType", "isActive",
-                  "city", "career", "updateAt",
+                  "city", "career", "updateAt", "file",
                   "imageUrl", "fileUrl", "user")
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+        job_seeker_profile = user.job_seeker_profile
+        pdf_file = validated_data.pop('file')
+
+        my_cloudinary = Cloudinary()
+        pdf_upload_result = my_cloudinary.upload(pdf_file)
+        pdf_public_id = pdf_upload_result.get('public_id')
+
+        image_url = my_cloudinary.url(pdf_public_id + ".jpg")
+        resume = Resume.objects.create(**validated_data,
+                                       file_url=pdf_upload_result["secure_url"],
+                                       image_url=image_url,
+                                       public_id=pdf_public_id,
+                                       user=user,
+                                       job_seeker_profile=job_seeker_profile)
+
+        return resume
 
 
 class EducationSerializer(serializers.ModelSerializer):

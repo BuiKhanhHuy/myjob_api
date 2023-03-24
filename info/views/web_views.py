@@ -1,3 +1,8 @@
+import cloudinary.uploader
+import cloudinary.api
+from io import BytesIO
+from PIL import Image
+
 from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers
 from helpers import helper
@@ -19,7 +24,7 @@ from ..serializers import (
     CertificateSerializer,
     LanguageSkillSerializer,
     AdvancedSkillSerializer,
-    CompanySerializer
+    CompanySerializer,
 )
 from job.models import (
     JobPost
@@ -103,13 +108,13 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         else:
             serializer = ResumeSerializer(resumes, many=True,
                                           fields=["id", "slug", "title", "updateAt",
-                                                  "imageUrl"])
+                                                  "imageUrl", "fileUrl"])
 
         return var_res.response_data(data=serializer.data)
 
 
 class ResumeViewSet(viewsets.ViewSet,
-                    generics.ListAPIView,
+                    generics.ListCreateAPIView,
                     generics.RetrieveUpdateDestroyAPIView):
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
@@ -125,7 +130,23 @@ class ResumeViewSet(viewsets.ViewSet,
                            "get_language_skills",
                            "get_advanced_skills"]:
             return [perms_custom.ResumeOwnerPerms()]
+        elif self.action in ["create"]:
+            return [perms_custom.IsJobSeekerUser()]
         return [perms_sys.IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+
+        serializer = ResumeSerializer(data=data, fields=[
+            "title", "description", "salaryMin", "salaryMax",
+            "position", "experience", "academicLevel", "typeOfWorkplace",
+            "jobType", "city", "career", "file"
+        ], context={'request': request})
+        if not serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         errors=serializer.errors)
+        self.perform_create(serializer)
+        return var_res.response_data(data=serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )

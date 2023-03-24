@@ -14,6 +14,7 @@ from decouple import config
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
+import cloudinary
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     # third party api service
 
     # third party packages
+    'cloudinary',
     'django_extensions',
     'drf_yasg',
     'oauth2_provider',
@@ -129,6 +131,11 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'authentication.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'drf_social_oauth2.authentication.SocialAuthentication',
@@ -232,5 +239,13 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="*/1"),
     },
 }
+
+# Set the Cloudinary configuration
+cloudinary.config(
+    cloud_name='dtnpj540t',
+    api_key='371357798369383',
+    api_secret='9zy7ehlUetIxxl7ibee4y3tmdL4'
+)
+CLOUDINARY_DIRECTORY = 'my-job/'
 
 APP_ENVIRONMENT = config('APP_ENV')

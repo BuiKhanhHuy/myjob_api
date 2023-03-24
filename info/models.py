@@ -85,6 +85,7 @@ class Resume(InfoBaseModel):
 
     image_url = models.URLField(null=True)
     file_url = models.URLField(null=True)
+    public_id = models.CharField(null=True, max_length=255)
     type = models.CharField(max_length=10, default=var_sys.CV_UPLOAD)
 
     # ForeignKey

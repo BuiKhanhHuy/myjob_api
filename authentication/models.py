@@ -57,6 +57,7 @@ class User(AbstractUser, AuthBaseModel):
     full_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True, db_index=True)
     avatar_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["USER_AVT"])
+    avatar_public_id = models.CharField(max_length=300, null=True)
     email_notification_active = models.BooleanField(default=True)
     sms_notification_active = models.BooleanField(default=True)
     has_company = models.BooleanField(default=False)
