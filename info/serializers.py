@@ -1,6 +1,6 @@
-from myjob_api.cloudinary_custom import Cloudinary
-
+import cloudinary.uploader
 import console.jobs.queue_cron_job
+from django.conf import settings
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -107,17 +107,20 @@ class ResumeSerializer(serializers.ModelSerializer):
         job_seeker_profile = user.job_seeker_profile
         pdf_file = validated_data.pop('file')
 
-        my_cloudinary = Cloudinary()
-        pdf_upload_result = my_cloudinary.upload(pdf_file)
-        pdf_public_id = pdf_upload_result.get('public_id')
-
-        image_url = my_cloudinary.url(pdf_public_id + ".jpg")
         resume = Resume.objects.create(**validated_data,
-                                       file_url=pdf_upload_result["secure_url"],
-                                       image_url=image_url,
-                                       public_id=pdf_public_id,
                                        user=user,
                                        job_seeker_profile=job_seeker_profile)
+
+        pdf_upload_result = cloudinary.uploader.upload(pdf_file,
+                                                       folder=settings.CLOUDINARY_DIRECTORY["cv"],
+                                                       public_id=resume.id)
+        pdf_public_id = pdf_upload_result.get('public_id')
+        image_url = cloudinary.utils.cloudinary_url(pdf_public_id + ".jpg")[0]
+
+        resume.file_url = pdf_upload_result["secure_url"]
+        resume.image_url = image_url
+        resume.public_id = pdf_public_id
+        resume.save()
 
         return resume
 

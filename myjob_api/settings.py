@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from datetime import datetime
 from decouple import config
 from pathlib import Path
 from datetime import timedelta
@@ -246,6 +247,10 @@ cloudinary.config(
     api_key='371357798369383',
     api_secret='9zy7ehlUetIxxl7ibee4y3tmdL4'
 )
-CLOUDINARY_DIRECTORY = 'my-job/'
+
+CLOUDINARY_DIRECTORY = {
+    "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}/",
+    "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}/",
+}
 
 APP_ENVIRONMENT = config('APP_ENV')

@@ -1,8 +1,10 @@
-from myjob_api.cloudinary_custom import Cloudinary
+import cloudinary.uploader
+
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.conf import settings
 from django.db import transaction
 from .models import User
 from info.models import (
@@ -189,16 +191,31 @@ class UserSerializer(serializers.ModelSerializer):
                   "companyId")
 
 
-class AvatarSerializer(serializers.Serializer):
-    file = serializers.FileField(required=True)
+class AvatarSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=True, write_only=True)
+    avatarUrl = serializers.CharField(source="avatar_url",
+                                      required=False,
+                                      max_length=300,
+                                      read_only=True)
 
-    def create(self, validated_data):
-        user = self.context['request'].user
+    def update(self, user, validated_data):
         file = validated_data.pop('file')
 
-        my_cloudinary = Cloudinary()
+        try:
+            avatar_upload_result = cloudinary.uploader.upload(file,
+                                                              folder=settings.CLOUDINARY_DIRECTORY["avatar"],
+                                                              public_id=user.id)
+            avatar_public_id = avatar_upload_result.get('public_id')
+        except:
+            return None
+        else:
+            avatar_url = avatar_upload_result.get('secure_url')
+            user.avatar_url = avatar_url
+            user.avatar_public_id = avatar_public_id
+            user.save()
 
-        user.avatar_url = ""
-        user.avatar_public_id = ""
-        user.save()
-        return {'url': 'url'}
+            return user
+
+    class Meta:
+        model = User
+        fields = ('file', 'avatarUrl')
