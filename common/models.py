@@ -41,6 +41,7 @@ class Location(CommonBaseModel):
 
 class Career(CommonBaseModel):
     name = models.CharField(max_length=150)
+    icon_url = models.URLField(max_length=300)
 
     class Meta:
         db_table = "myjob_common_career"

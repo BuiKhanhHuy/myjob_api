@@ -64,6 +64,43 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CvSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=True, max_length=200)
+    fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    file = serializers.FileField(required=True, write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = Resume
+        fields = ("id", "slug", "title", "fileUrl", "file")
+
+    def update(self, instance, validated_data):
+        pdf_file = validated_data.pop('file')
+
+        pdf_upload_result = cloudinary.uploader.upload(pdf_file,
+                                                       folder=settings.CLOUDINARY_DIRECTORY["cv"],
+                                                       public_id=instance.id)
+        pdf_public_id = pdf_upload_result.get('public_id')
+        image_url = cloudinary.utils.cloudinary_url(pdf_public_id + ".jpg")[0]
+
+        instance.file_url = pdf_upload_result["secure_url"]
+        instance.image_url = image_url
+        instance.public_id = pdf_public_id
+        instance.save()
+
+        return instance
+
+
 class ResumeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True, max_length=200)
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -91,6 +128,13 @@ class ResumeSerializer(serializers.ModelSerializer):
             existing = set(self.fields)
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
+
+    def get_fields(self, *args, **kwargs):
+        fields = super(ResumeSerializer, self).get_fields(*args, **kwargs)
+        request = self.context.get('request', None)
+        if request and getattr(request, 'method', None) in ["PUT"]:
+            fields['file'].required = False
+        return fields
 
     class Meta:
         model = Resume

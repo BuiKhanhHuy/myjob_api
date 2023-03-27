@@ -19,6 +19,7 @@ from ..models import (
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
+    CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
     CertificateSerializer,
@@ -159,6 +160,29 @@ class ResumeViewSet(viewsets.ViewSet,
                                                      "isActive", "city", "career"])
 
         return var_res.response_data(data=resume_serializer.data)
+
+    @action(methods=["get"], detail=True,
+            url_path='cv', url_name="get-cv", )
+    def get_cv(self, request, slug):
+        resume_queryset = self.get_object()
+        resume_serializer = CvSerializer(resume_queryset,
+                                         fields=["id", "slug", "title", "fileUrl"])
+
+        return var_res.response_data(data=resume_serializer.data)
+
+    @get_cv.mapping.put
+    def update_cv_file(self, request, slug):
+        files = request.FILES
+        cv_serializer = CvSerializer(self.get_object(), data=files, fields=["file"])
+        if not cv_serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         errors=cv_serializer.errors)
+        try:
+            cv_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("update_cv_file", error=ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return var_res.response_data()
 
     @action(methods=["get"], detail=True,
             url_path="educations-detail", url_name="get-educations-detail")

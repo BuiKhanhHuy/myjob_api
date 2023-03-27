@@ -249,8 +249,8 @@ cloudinary.config(
 )
 
 CLOUDINARY_DIRECTORY = {
-    "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}/",
-    "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}/",
+    "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/",
+    "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/",
 }
 
 APP_ENVIRONMENT = config('APP_ENV')
