@@ -33,6 +33,7 @@ from job.models import (
 from job import serializers as job_serializers
 
 
+
 class ProfileView(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["get_profile_info",
