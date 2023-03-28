@@ -305,12 +305,26 @@ class CompanySerializer(serializers.ModelSerializer):
                                       allow_null=True, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
+    companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     class Meta:
         model = Company
-        fields = ('id', 'taxCode', 'companyName',
+        fields = ('id', 'slug', 'taxCode', 'companyName',
                   'employeeSize', 'fieldOperation', 'location',
                   'since', 'companyEmail', 'companyPhone',
-                  'websiteUrl', 'description')
+                  'websiteUrl', 'description',
+                  'companyImageUrl')
 
     def update(self, instance, validated_data):
         try:

@@ -13,6 +13,7 @@ from common.models import (
 )
 from authentication import serializers as auth_serializers
 from common import serializers as common_serializers
+from info import serializers as info_serializers
 
 
 class JobPostSerializer(serializers.ModelSerializer):
@@ -42,10 +43,30 @@ class JobPostSerializer(serializers.ModelSerializer):
     createAt = serializers.DateTimeField(source="create_at", read_only=True)
     location = common_serializers.LocationSerializer()
 
+    companyDict = info_serializers.CompanySerializer(source='company',
+                                                     fields=['companyImageUrl', 'companyName'],
+                                                     read_only=True)
+    locationDict = common_serializers.LocationSerializer(source="location",
+                                                         fields=['city'],
+                                                         read_only=True)
+
     appliedNumber = serializers.SerializerMethodField(method_name="get_applied_number", read_only=True)
+    viewedNumber = serializers.SerializerMethodField(method_name="get_viewed_number", read_only=True)
+
+    isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
+    isApplied = serializers.SerializerMethodField(method_name='check_applied', read_only=True)
 
     def get_applied_number(self, job_post):
         return 1000
+
+    def get_viewed_number(self, job_post):
+        return 500
+
+    def check_saved(self, job_post):
+        return True
+
+    def check_applied(self, job_post):
+        return True
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -60,12 +81,13 @@ class JobPostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobPost
-        fields = ('id', 'jobName', 'deadline', 'quantity', 'genderRequired',
-                  'jobDescription', 'jobRequirement', 'benefitsEnjoyed',
+        fields = ('id', 'slug', 'jobName', 'deadline', 'quantity', 'genderRequired',
+                  'jobDescription', 'jobRequirement', 'benefitsEnjoyed', 'career',
                   'position', 'typeOfWorkplace', 'experience', 'academicLevel',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
-                  'location', 'createAt', 'appliedNumber')
+                  'location', 'createAt', 'appliedNumber', 'viewedNumber',
+                  'isSaved', 'isApplied', 'companyDict', 'locationDict')
 
     def create(self, validated_data):
         try:

@@ -16,42 +16,6 @@ class InfoBaseModel(models.Model):
     update_at = models.DateTimeField(auto_now=True)
 
 
-class Company(InfoBaseModel):
-    company_name = models.CharField(max_length=255, unique=True)
-    slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
-    company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
-    company_email = models.EmailField(max_length=100, unique=True)
-    company_phone = models.CharField(max_length=15, unique=True)
-    website_url = models.URLField(max_length=300, null=True, blank=True)
-    tax_code = models.CharField(max_length=30, unique=True)
-    since = models.DateField(null=True)
-    field_operation = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    employee_size = models.SmallIntegerField(choices=var_sys.EMPLOYEE_SIZE_CHOICES, null=True)
-
-    # OneToOneField
-    user = models.OneToOneField(User, on_delete=models.CASCADE,
-                                related_name="company")
-    # ForeignKey
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
-                                 related_name="companies")
-
-    class Meta:
-        db_table = "myjob_info_company"
-
-
-class CompanyImage(InfoBaseModel):
-    image_url = models.URLField(max_length=300)
-    index = models.SmallIntegerField()
-
-    # ForeignKey
-    company = models.ForeignKey("Company", on_delete=models.CASCADE,
-                                related_name="company_images")
-
-    class Meta:
-        db_table = "myjob_info_company_image"
-
-
 class JobSeekerProfile(InfoBaseModel):
     phone = models.CharField(max_length=15, blank=True, null=True)
     birthday = models.DateField(null=True)
@@ -93,6 +57,10 @@ class Resume(InfoBaseModel):
     career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="resumes")
     job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE, related_name="resumes")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resumes")
+
+    # ManyToManyField
+    viewers = models.ManyToManyField(User, through='ResumeViewed', related_name="resumes_viewed")
+    savers = models.ManyToManyField(User, through='ResumeSaved', related_name="resumes_saved")
 
     class Meta:
         db_table = "myjob_info_resume"
@@ -163,3 +131,73 @@ class AdvancedSkill(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_advanced_skill"
+
+
+class CompanyFollowed(InfoBaseModel):
+    is_followed = models.BooleanField(default=True)
+
+    # ForeignKey
+    company = models.ForeignKey("Company", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "myjob_info_company_followed"
+
+
+class Company(InfoBaseModel):
+    company_name = models.CharField(max_length=255, unique=True)
+    slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
+    company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
+    company_email = models.EmailField(max_length=100, unique=True)
+    company_phone = models.CharField(max_length=15, unique=True)
+    website_url = models.URLField(max_length=300, null=True, blank=True)
+    tax_code = models.CharField(max_length=30, unique=True)
+    since = models.DateField(null=True)
+    field_operation = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    employee_size = models.SmallIntegerField(choices=var_sys.EMPLOYEE_SIZE_CHOICES, null=True)
+
+    # OneToOneField
+    user = models.OneToOneField(User, on_delete=models.CASCADE,
+                                related_name="company")
+    # ForeignKey
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
+                                 related_name="companies")
+
+    # ManyToManyField
+    followers = models.ManyToManyField(User, through='CompanyFollowed', related_name="companies_followed")
+
+    class Meta:
+        db_table = "myjob_info_company"
+
+
+class CompanyImage(InfoBaseModel):
+    image_url = models.URLField(max_length=300)
+    index = models.SmallIntegerField()
+
+    # ForeignKey
+    company = models.ForeignKey("Company", on_delete=models.CASCADE,
+                                related_name="company_images")
+
+    class Meta:
+        db_table = "myjob_info_company_image"
+
+
+class ResumeSaved(InfoBaseModel):
+    # ForeignKey
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "myjob_info_resume_saved"
+
+
+class ResumeViewed(InfoBaseModel):
+    views = models.BigIntegerField(default=0)
+
+    # ForeignKey
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "myjob_info_resume_viewed"

@@ -28,7 +28,8 @@ urlpatterns = [
             path('auth/', include('authentication.urls')),
             path('info/', include('info.urls')),
             path('job/', include('job.urls')),
-            path('post/', include('post.urls'))
+            path('post/', include('post.urls')),
+            path('myjob/', include('myjob.urls'))
         ]
     ))
 ]

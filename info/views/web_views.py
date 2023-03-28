@@ -304,7 +304,7 @@ class CompanyView(viewsets.ViewSet):
                 .JobPostSerializer(job_posts_queryset,
                                    many=True,
                                    fields=["id", "jobName", "createAt", "deadline",
-                                           "appliedNumber", "isUrgent"])
+                                           "appliedNumber", "viewedNumber", "isUrgent"])
         except Exception as ex:
             helper.print_log_error("get_job_post", ex)
             return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -319,7 +319,7 @@ class CompanyView(viewsets.ViewSet):
             job_post_serializer = job_serializers \
                 .JobPostSerializer(job_post_queryset,
                                    fields=["id", "jobName", "academicLevel", "deadline", "quantity", "genderRequired",
-                                           "jobDescription", "jobRequirement", "benefitsEnjoyed",
+                                           "jobDescription", "jobRequirement", "benefitsEnjoyed", "career",
                                            "position", "typeOfWorkplace", "experience",
                                            "jobType", "salaryMin", "salaryMax", "isUrgent",
                                            "contactPersonName", "contactPersonPhone", "contactPersonEmail",

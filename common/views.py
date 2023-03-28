@@ -1,12 +1,14 @@
-from configs import variable_system as var_sys
+from configs import variable_system as var_sys, renderers
 from helpers import utils, helper
 from configs import variable_response as var_res
 from rest_framework.decorators import api_view
+from rest_framework import viewsets
+from rest_framework import generics
 from rest_framework import status
 from .models import (
     Career,
     City,
-    District
+    District,
 )
 
 
@@ -152,3 +154,5 @@ def get_districts(request):
                                      data=None)
     else:
         return var_res.response_data(data=district_options)
+
+

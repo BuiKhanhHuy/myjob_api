@@ -39,17 +39,18 @@ class JobPost(JobPostBaseModel):
     contact_person_phone = models.CharField(max_length=15)
     contact_person_email = models.EmailField(max_length=100)
 
+    views = models.BigIntegerField(default=0)
+    shares = models.BigIntegerField(default=0)
+
     # ForeignKey
+    career = models.ForeignKey(Career, on_delete=models.SET_NULL,
+                               related_name="job_posts", null=True)
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="job_posts")
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              related_name="job_posts")
     company = models.ForeignKey(Company, on_delete=models.CASCADE,
                                 related_name="job_posts")
-
-    # ManyToManyField
-    careers = models.ManyToManyField(Career, through="JobPostCareer",
-                                     related_name="job_posts")
 
     class Meta:
         db_table = "myjob_job_job_post"
@@ -75,14 +76,3 @@ class JobPostActivity(JobPostBaseModel):
 
     class Meta:
         db_table = "myjob_job_job_post_activity"
-
-
-class JobPostCareer(JobPostBaseModel):
-    # ForeignKey
-    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE,
-                                 related_name="job_post_careers")
-    career = models.ForeignKey(Career, on_delete=models.CASCADE,
-                               related_name="job_post_careers")
-
-    class Meta:
-        db_table = "myjob_job_job_post_career"

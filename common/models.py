@@ -1,4 +1,5 @@
 from django.db import models
+from authentication.models import User
 
 
 class CommonBaseModel(models.Model):
@@ -41,7 +42,8 @@ class Location(CommonBaseModel):
 
 class Career(CommonBaseModel):
     name = models.CharField(max_length=150)
-    icon_url = models.URLField(max_length=300)
+    # phai not null
+    icon_url = models.URLField(max_length=300, null=True)
 
     class Meta:
         db_table = "myjob_common_career"

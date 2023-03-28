@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # third party api service
+    'cloudinary',
 
     # third party packages
-    'cloudinary',
+    'rest_framework',
+    'django_filters',
     'django_extensions',
     'drf_yasg',
     'oauth2_provider',
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
     'info',
     'job',
     'post',
+    'myjob',
 
     'corsheaders'
 ]
@@ -132,6 +135,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'authentication.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'configs.paginations.CustomPagination',
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
@@ -141,6 +145,7 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'drf_social_oauth2.authentication.SocialAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 OAUTH2_PROVIDER = {
