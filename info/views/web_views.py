@@ -303,7 +303,7 @@ class CompanyView(viewsets.ViewSet):
             job_posts_serializer = job_serializers \
                 .JobPostSerializer(job_posts_queryset,
                                    many=True,
-                                   fields=["id", "jobName", "createAt", "deadline",
+                                   fields=["id", "slug", "jobName", "createAt", "deadline",
                                            "appliedNumber", "viewedNumber", "isUrgent"])
         except Exception as ex:
             helper.print_log_error("get_job_post", ex)

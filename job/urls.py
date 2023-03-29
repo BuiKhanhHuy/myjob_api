@@ -6,6 +6,7 @@ app_router = DefaultRouter()
 # app_router.register('job-posts', app_views.JobPostViewSet, basename="job-posts")
 
 web_router = DefaultRouter()
+web_router.register('private-job-posts', web_views.PrivateJobPostViewSet, basename='private-web-job-posts')
 web_router.register('job-posts', web_views.JobPostViewSet, basename="web-job-posts")
 
 urlpatterns = [

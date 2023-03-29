@@ -44,7 +44,8 @@ class JobPostSerializer(serializers.ModelSerializer):
     location = common_serializers.LocationSerializer()
 
     companyDict = info_serializers.CompanySerializer(source='company',
-                                                     fields=['companyImageUrl', 'companyName'],
+                                                     fields=['id', 'slug', 'employeeSize',
+                                                             'companyImageUrl', 'companyName'],
                                                      read_only=True)
     locationDict = common_serializers.LocationSerializer(source="location",
                                                          fields=['city'],
