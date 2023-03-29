@@ -33,6 +33,7 @@ class CareerSerializer(serializers.ModelSerializer):
     def get_job_post_total(self, career):
         return career.job_posts.count()
 
+
     class Meta:
         model = Career
         fields = ('id', 'name', 'iconUrl', 'createAt', 'updateAt', 'jobPostTotal')
