@@ -1,6 +1,7 @@
 from configs import variable_system as var_sys, renderers
 from helpers import utils, helper
 from configs import variable_response as var_res
+from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from rest_framework import generics
@@ -9,6 +10,9 @@ from .models import (
     Career,
     City,
     District,
+)
+from .serializers import (
+    CareerSerializer
 )
 
 
@@ -156,3 +160,12 @@ def get_districts(request):
         return var_res.response_data(data=district_options)
 
 
+@api_view(http_method_names=["GET"])
+def get_top_10_careers(request):
+    try:
+        queryset = Career.objects.annotate(num_job_posts=Count('job_posts')).order_by('-num_job_posts')[:10]
+        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+    except Exception as ex:
+        helper.print_log_error("get_top_careers", ex)
+        return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return var_res.response_data(data=serializer.data)
