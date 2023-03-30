@@ -13,6 +13,7 @@ web_router.register(r'certificates-detail', web_views.CertificateDetailViewSet, 
 web_router.register(r'language-skills', web_views.LanguageSkillViewSet, basename='language-skill')
 web_router.register(r'advanced-skills', web_views.AdvancedSkillViewSet, basename='advanced-skill')
 
+web_router.register(r'private-companies', web_views.PrivateCompanyViewSet, basename='private-company')
 web_router.register(r'companies', web_views.CompanyViewSet, basename='company')
 
 urlpatterns = [

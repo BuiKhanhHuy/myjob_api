@@ -148,6 +148,7 @@ class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
     slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
+    company_cover_image_url = models.URLField(null=True, blank=True)
     company_email = models.EmailField(max_length=100, unique=True)
     company_phone = models.CharField(max_length=15, unique=True)
     website_url = models.URLField(max_length=300, null=True, blank=True)

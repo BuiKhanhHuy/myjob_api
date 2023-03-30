@@ -306,6 +306,14 @@ class CompanySerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
+    companyCoverImageUrl = serializers.URLField(source='company_cover_image_url', read_only=True)
+    locationDict = common_serializers.LocationSerializer(source="location",
+                                                         fields=['city'],
+                                                         read_only=True)
+
+    followNumber = serializers.SerializerMethodField(method_name="get_follow_number", read_only=True)
+    jobPostNumber = serializers.SerializerMethodField(method_name="get_job_post_number", read_only=True)
+    isFollowed = serializers.SerializerMethodField(method_name='check_followed', read_only=True)
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -318,13 +326,23 @@ class CompanySerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
+    def get_follow_number(self, company):
+        return 100
+
+    def get_job_post_number(self, company):
+        return 50
+
+    def check_followed(self, company):
+        return True
+
     class Meta:
         model = Company
         fields = ('id', 'slug', 'taxCode', 'companyName',
                   'employeeSize', 'fieldOperation', 'location',
                   'since', 'companyEmail', 'companyPhone',
                   'websiteUrl', 'description',
-                  'companyImageUrl')
+                  'companyImageUrl', 'companyCoverImageUrl', 'locationDict',
+                  'followNumber', 'jobPostNumber', 'isFollowed')
 
     def update(self, instance, validated_data):
         try:

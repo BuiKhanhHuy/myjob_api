@@ -1,10 +1,6 @@
-import cloudinary.uploader
-import cloudinary.api
-from io import BytesIO
-from PIL import Image
-
 from configs import variable_system as var_sys
-from configs import variable_response as var_res, renderers
+from configs import variable_response as var_res, renderers, paginations
+from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -16,6 +12,9 @@ from ..models import (
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company)
+from ..filters import (
+    CompanyFilter
+)
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
@@ -31,7 +30,6 @@ from job.models import (
     JobPost
 )
 from job import serializers as job_serializers
-
 
 
 class ProfileView(viewsets.ViewSet):
@@ -333,21 +331,39 @@ class CompanyView(viewsets.ViewSet):
             return var_res.response_data(data=job_post_serializer.data)
 
 
-class CompanyViewSet(viewsets.ViewSet,
-                     generics.ListAPIView,
-                     generics.RetrieveUpdateDestroyAPIView):
+class PrivateCompanyViewSet(viewsets.ViewSet,
+                            generics.UpdateAPIView):
     queryset = Company.objects
-    # mai mốt đổi lại của list
     serializer_class = CompanySerializer
-    permission_classes = [perms_sys.AllowAny()]
+    permission_classes = [perms_custom.IsEmployerUser]
     renderer_classes = [renderers.MyJSONRenderer]
 
-    def get_permissions(self):
-        if self.action in ["update", "partial_update", "destroy"]:
-            return [perms_custom.IsEmployerUser()]
-        return self.get_permissions()
 
-    def get_serializer_class(self):
-        if self.action in ["update", "partial_update", "destroy"]:
-            return CompanySerializer
-        return self.serializer_class
+class CompanyViewSet(viewsets.ViewSet,
+                     generics.ListAPIView,
+                     generics.RetrieveAPIView):
+    queryset = Company.objects
+    serializer_class = CompanySerializer
+    permission_classes = [perms_sys.AllowAny]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+    filterset_class = CompanyFilter
+    filter_backends = [DjangoFilterBackend]
+    lookup_field = "slug"
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .order_by('-id', 'update_at', 'create_at'))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                'id', 'slug', 'companyName', 'companyImageUrl',
+                'companyCoverImageUrl',
+                'fieldOperation', 'employeeSize', 'locationDict',
+                'followNumber', 'jobPostNumber', 'isFollowed'
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)

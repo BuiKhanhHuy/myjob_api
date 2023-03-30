@@ -12,17 +12,17 @@ class JobPostFilter(django_filters.FilterSet):
     cityId = django_filters.NumberFilter(field_name='location__city')
     positionId = django_filters.ChoiceFilter(choices=var_sys.POSITION_CHOICES, field_name='position')
     experienceId = django_filters.ChoiceFilter(choices=var_sys.EXPERIENCE_CHOICES, field_name='experience')
-    typOfWorkplaceId = django_filters.ChoiceFilter(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES,
+    typeOfWorkplaceId = django_filters.ChoiceFilter(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES,
                                                    field_name='type_of_workplace')
-    typeJobId = django_filters.ChoiceFilter(choices=var_sys.JOB_TYPE_CHOICES, field_name='type_job')
-    genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES, field_name='gender')
+    jobTypeId = django_filters.ChoiceFilter(choices=var_sys.JOB_TYPE_CHOICES, field_name='job_type')
+    genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES, field_name='gender_required')
     isUrgent = django_filters.BooleanFilter(field_name='is_urgent')
     excludeSlug = django_filters.CharFilter(method="exclude_slug")
 
     class Meta:
         model = JobPost
         fields = ['kw', 'careerId', 'cityId', 'positionId',
-                  'experienceId', 'typOfWorkplaceId', 'typeJobId',
+                  'experienceId', 'typeOfWorkplaceId', 'jobTypeId',
                   'genderId', 'isUrgent', 'excludeSlug']
 
     def job_name_or_career_name(self, queryset, name, value):
