@@ -303,6 +303,12 @@ class CompanySerializer(serializers.ModelSerializer):
                                                                                     message='Số điện thoại công ty đã tồn tại.')])
     websiteUrl = serializers.URLField(required=False, source="website_url", max_length=300,
                                       allow_null=True, allow_blank=True)
+    facebookUrl = serializers.URLField(required=False, source="facebook_url", max_length=300,
+                                        allow_null=True, allow_blank=True)
+    youtubeUrl = serializers.URLField(required=False, source="youtube_url", max_length=300,
+                                       allow_null=True, allow_blank=True)
+    linkedinUrl = serializers.URLField(required=False, source="linkedin_url", max_length=300,
+                                        allow_null=True, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
@@ -327,20 +333,27 @@ class CompanySerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
 
     def get_follow_number(self, company):
-        return 100
+        return company.companyfollowed_set.filter(is_followed=True).count()
 
     def get_job_post_number(self, company):
-        return 50
+        return company.job_posts.count()
 
     def check_followed(self, company):
-        return True
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        user = request.user
+        if user.is_authenticated:
+            return company.companyfollowed_set.filter(user=user, is_followed=True).count() > 0
+        return None
 
     class Meta:
         model = Company
         fields = ('id', 'slug', 'taxCode', 'companyName',
                   'employeeSize', 'fieldOperation', 'location',
                   'since', 'companyEmail', 'companyPhone',
-                  'websiteUrl', 'description',
+                  'websiteUrl', 'facebookUrl', 'youtubeUrl', 'linkedinUrl',
+                  'description',
                   'companyImageUrl', 'companyCoverImageUrl', 'locationDict',
                   'followNumber', 'jobPostNumber', 'isFollowed')
 
@@ -354,7 +367,10 @@ class CompanySerializer(serializers.ModelSerializer):
             instance.company_email = validated_data.get('company_email', instance.company_email)
             instance.company_phone = validated_data.get('company_phone', instance.company_phone)
             instance.website_url = validated_data.get('website_url', instance.website_url)
-            instance.description = validated_data.get('company_phone', instance.description)
+            instance.facebook_url = validated_data.get('facebook_url', instance.facebook_url)
+            instance.youtube_url = validated_data.get('youtube_url', instance.youtube_url)
+            instance.linkedin_url = validated_data.get('linkedin_url', instance.linkedin_url)
+            instance.description = validated_data.get('description', instance.description)
             location_obj = instance.location
 
             with transaction.atomic():

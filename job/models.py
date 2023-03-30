@@ -35,6 +35,7 @@ class JobPost(JobPostBaseModel):
     salary_max = models.IntegerField()
     is_hot = models.BooleanField(default=False)
     is_urgent = models.BooleanField(default=False)
+    is_verify = models.BooleanField(default=False)
     contact_person_name = models.CharField(max_length=100)
     contact_person_phone = models.CharField(max_length=15)
     contact_person_email = models.EmailField(max_length=100)
@@ -57,6 +58,7 @@ class JobPost(JobPostBaseModel):
 
 
 class SavedJobPost(JobPostBaseModel):
+    is_saved = models.BooleanField(default=False)
     # ForeignKey
     job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE,
                                  related_name="saved_job_posts")

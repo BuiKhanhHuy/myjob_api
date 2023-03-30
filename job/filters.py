@@ -18,12 +18,13 @@ class JobPostFilter(django_filters.FilterSet):
     genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES, field_name='gender_required')
     isUrgent = django_filters.BooleanFilter(field_name='is_urgent')
     excludeSlug = django_filters.CharFilter(method="exclude_slug")
+    companyId = django_filters.NumberFilter(field_name="company")
 
     class Meta:
         model = JobPost
         fields = ['kw', 'careerId', 'cityId', 'positionId',
                   'experienceId', 'typeOfWorkplaceId', 'jobTypeId',
-                  'genderId', 'isUrgent', 'excludeSlug']
+                  'genderId', 'isUrgent', 'excludeSlug', 'companyId']
 
     def job_name_or_career_name(self, queryset, name, value):
         return queryset.filter(Q(job_name__icontains=value) | Q(career__name__icontains=value))

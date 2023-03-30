@@ -4,6 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework import status
@@ -11,7 +12,8 @@ from ..models import (
     JobSeekerProfile, Resume,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
-    AdvancedSkill, Company)
+    AdvancedSkill, Company,
+    CompanyFollowed)
 from ..filters import (
     CompanyFilter
 )
@@ -351,6 +353,11 @@ class CompanyViewSet(viewsets.ViewSet,
     filter_backends = [DjangoFilterBackend]
     lookup_field = "slug"
 
+    def get_permissions(self):
+        if self.action in ["followed"]:
+            return [perms_custom.IsJobSeekerUser()]
+        return [perms_sys.AllowAny()]
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()
                                         .order_by('-id', 'update_at', 'create_at'))
@@ -367,3 +374,37 @@ class CompanyViewSet(viewsets.ViewSet,
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, fields=[
+            'id', 'slug', 'taxCode', 'companyName',
+            'employeeSize', 'fieldOperation', 'location',
+            'since', 'companyEmail', 'companyPhone',
+            'websiteUrl', 'facebookUrl', 'youtubeUrl',
+            'linkedinUrl', 'description',
+            'companyImageUrl', 'companyCoverImageUrl',
+            'followNumber', 'isFollowed'
+        ])
+        return Response(data=serializer.data)
+
+    @action(methods=["post"], detail=True,
+            url_path="followed", url_name="followed")
+    def followed(self, request, slug):
+        companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
+        if companies_followed.exists():
+            company_followed = companies_followed.first()
+
+            is_followed_current = company_followed.is_followed
+            company_followed.is_followed = not is_followed_current
+
+            company_followed.save()
+        else:
+            company_followed = CompanyFollowed.objects.create(
+                user=request.user,
+                company=self.get_object(),
+                is_followed=True
+            )
+        return Response(data={
+            "isFollowed": company_followed.is_followed
+        })

@@ -51,23 +51,32 @@ class JobPostSerializer(serializers.ModelSerializer):
                                                          fields=['city'],
                                                          read_only=True)
 
+    views = serializers.IntegerField(read_only=True)
     appliedNumber = serializers.SerializerMethodField(method_name="get_applied_number", read_only=True)
-    viewedNumber = serializers.SerializerMethodField(method_name="get_viewed_number", read_only=True)
 
     isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
     isApplied = serializers.SerializerMethodField(method_name='check_applied', read_only=True)
 
     def get_applied_number(self, job_post):
-        return 1000
-
-    def get_viewed_number(self, job_post):
-        return 500
+        return job_post.job_posts_activity.count()
 
     def check_saved(self, job_post):
-        return True
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        user = request.user
+        if user.is_authenticated:
+            return job_post.saved_job_posts.filter(is_saved=True, user=user).exists()
+        return None
 
     def check_applied(self, job_post):
-        return True
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        user = request.user
+        if user.is_authenticated:
+            return job_post.job_posts_activity.filter(user=user).count() > 0
+        return None
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -87,8 +96,8 @@ class JobPostSerializer(serializers.ModelSerializer):
                   'position', 'typeOfWorkplace', 'experience', 'academicLevel',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
-                  'location', 'createAt', 'appliedNumber', 'viewedNumber',
-                  'isSaved', 'isApplied', 'companyDict', 'locationDict')
+                  'location', 'createAt', 'appliedNumber',
+                  'isSaved', 'isApplied', 'companyDict', 'locationDict', 'views')
 
     def create(self, validated_data):
         try:
