@@ -25,6 +25,8 @@ urlpatterns = [
         path("company/", web_views.CompanyView.as_view({'get': 'get_company_info'})),
         path("company/job-posts/", web_views.CompanyView.as_view({'get': 'get_job_posts'})),
         path("company/job-posts/<int:pk>/", web_views.CompanyView.as_view({'get': 'get_job_post_detail'})),
-        path("", include(web_router.urls))
+        path("", include(web_router.urls)),
+        path("resume-views/", web_views.ResumeViewedAPIView.as_view()),
+        path("companies-follow/", web_views.CompanyFollowedAPIView.as_view())
     ]))
 ]

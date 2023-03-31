@@ -58,7 +58,7 @@ class JobPostSerializer(serializers.ModelSerializer):
     isApplied = serializers.SerializerMethodField(method_name='check_applied', read_only=True)
 
     def get_applied_number(self, job_post):
-        return job_post.job_posts_activity.count()
+        return job_post.peoples_applied.count()
 
     def check_saved(self, job_post):
         request = self.context.get('request', None)
@@ -66,7 +66,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
         user = request.user
         if user.is_authenticated:
-            return job_post.saved_job_posts.filter(is_saved=True, user=user).exists()
+            return job_post.savedjobpost_set.filter(user=user).exists()
         return None
 
     def check_applied(self, job_post):
@@ -75,7 +75,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
         user = request.user
         if user.is_authenticated:
-            return job_post.job_posts_activity.filter(user=user).count() > 0
+            return job_post.jobpostactivity_set.filter(user=user).count() > 0
         return None
 
     def __init__(self, *args, **kwargs):

@@ -59,8 +59,8 @@ class Resume(InfoBaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resumes")
 
     # ManyToManyField
-    viewers = models.ManyToManyField(User, through='ResumeViewed', related_name="resumes_viewed")
-    savers = models.ManyToManyField(User, through='ResumeSaved', related_name="resumes_saved")
+    company_viewers = models.ManyToManyField("Company", through='ResumeViewed', related_name="resumes_viewed")
+    company_savers = models.ManyToManyField("Company", through='ResumeSaved', related_name="resumes_saved")
 
     class Meta:
         db_table = "myjob_info_resume"
@@ -190,7 +190,7 @@ class CompanyImage(InfoBaseModel):
 class ResumeSaved(InfoBaseModel):
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "myjob_info_resume_saved"
@@ -201,7 +201,7 @@ class ResumeViewed(InfoBaseModel):
 
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "myjob_info_resume_viewed"

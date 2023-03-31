@@ -2,24 +2,27 @@ from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers, paginations
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, views
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework import status
 from ..models import (
-    JobSeekerProfile, Resume,
+    JobSeekerProfile,
+    Resume, ResumeViewed,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company,
-    CompanyFollowed)
+    CompanyFollowed
+)
 from ..filters import (
     CompanyFilter
 )
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
+    ResumeViewedSerializer,
     CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -27,6 +30,7 @@ from ..serializers import (
     LanguageSkillSerializer,
     AdvancedSkillSerializer,
     CompanySerializer,
+    CompanyFollowedSerializer
 )
 from job.models import (
     JobPost
@@ -236,6 +240,30 @@ class ResumeViewSet(viewsets.ViewSet,
         return var_res.response_data(data=advanced_skill_serializer.data)
 
 
+class ResumeViewedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    # danh sach luot xem cua NTD doi voi ung vien hien tai
+    def get(self, request):
+        user = request.user
+
+        queryset = ResumeViewed.objects.filter(
+            resume__is_active=True,
+            resume__user=user
+        ).order_by('-update_at', '-create_at')
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = ResumeViewedSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = ResumeViewedSerializer(queryset, many=True)
+        return Response(data=serializer.data)
+
+
 class EducationDetailViewSet(viewsets.ViewSet,
                              generics.CreateAPIView,
                              generics.RetrieveUpdateDestroyAPIView):
@@ -408,3 +436,27 @@ class CompanyViewSet(viewsets.ViewSet,
         return Response(data={
             "isFollowed": company_followed.is_followed
         })
+
+
+class CompanyFollowedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    # danh sach cong ty dang follow
+    def get(self, request):
+        user = request.user
+
+        queryset = CompanyFollowed.objects.filter(
+            user=user,
+            is_followed=True
+        ).order_by("-update_at", "-create_at")
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = CompanyFollowedSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = CompanyFollowedSerializer(queryset, many=True)
+        return Response(data=serializer.data)

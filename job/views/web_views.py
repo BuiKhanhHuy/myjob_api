@@ -41,7 +41,9 @@ class JobPostViewSet(viewsets.ViewSet,
     lookup_field = "slug"
 
     def get_permissions(self):
-        if self.action in ["job_saved"]:
+        if self.action in ["get_job_posts_saved",
+                           "get_job_posts_applied",
+                           "job_saved"]:
             return [perms_custom.IsJobSeekerUser()]
         return [perms_sys.AllowAny()]
 
@@ -74,23 +76,46 @@ class JobPostViewSet(viewsets.ViewSet,
         ])
         return Response(data=serializer.data)
 
+    @action(methods=["get"], detail=False,
+            url_path="job-posts-saved", url_name="job-posts-saved")
+    def get_job_posts_saved(self, request):
+        user = request.user
+        queryset = user.saved_job_posts.filter(is_verify=True)\
+            .order_by('update_at', 'create_at')
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+                'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+                'locationDict'
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="job-posts-applied", url_name="job-posts-applied")
+    def get_job_posts_applied(self, request):
+        return var_res.response_data()
+
     @action(methods=["post"], detail=True,
             url_path="job-saved", url_name="job-saved")
     def job_saved(self, request, slug):
         saved_job_posts = SavedJobPost.objects.filter(user=request.user, job_post=self.get_object())
+        is_saved = False
         if saved_job_posts.exists():
             saved_job_post = saved_job_posts.first()
 
-            is_saved_current = saved_job_post.is_saved
-            saved_job_post.is_saved = not is_saved_current
-
-            saved_job_post.save()
+            saved_job_post.delete()
         else:
-            saved_job_post = SavedJobPost.objects.create(
+            SavedJobPost.objects.create(
                 user=request.user,
-                job_post=self.get_object(),
-                is_saved=True
+                job_post=self.get_object()
             )
+            is_saved = True
         return Response(data={
-            "isSaved": saved_job_post.is_saved
+            "isSaved": is_saved
         })

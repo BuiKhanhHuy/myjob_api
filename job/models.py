@@ -53,17 +53,18 @@ class JobPost(JobPostBaseModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE,
                                 related_name="job_posts")
 
+    # ManyToManyField
+    peoples_saved = models.ManyToManyField(User, through='SavedJobPost', related_name="saved_job_posts")
+    peoples_applied = models.ManyToManyField(User, through='JobPostActivity', related_name="job_posts_activity")
+
     class Meta:
         db_table = "myjob_job_job_post"
 
 
 class SavedJobPost(JobPostBaseModel):
-    is_saved = models.BooleanField(default=False)
     # ForeignKey
-    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE,
-                                 related_name="saved_job_posts")
-    user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             related_name="saved_job_posts")
+    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "myjob_job_saved_job_post"
@@ -71,10 +72,8 @@ class SavedJobPost(JobPostBaseModel):
 
 class JobPostActivity(JobPostBaseModel):
     # ForeignKey
-    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE,
-                                 related_name="job_posts_activity")
-    user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             related_name="job_posts_activity")
+    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "myjob_job_job_post_activity"
