@@ -30,8 +30,6 @@ djangorestframework==3.14.0
 drf-social-oauth2==1.2.1
 drf-yasg==1.21.4
 ecdsa==0.18.0
-elasticsearch==7.17.9
-elasticsearch-dsl==7.4.1
 firebase-admin==6.1.0
 google-api-core==2.11.0
 google-api-python-client==2.76.0

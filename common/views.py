@@ -169,3 +169,13 @@ def get_top_10_careers(request):
         helper.print_log_error("get_top_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return var_res.response_data(data=serializer.data)
+
+
+from console.jobs import queue_mail
+
+
+@api_view(http_method_names=["GET"])
+def demo(request):
+
+    queue_mail.send_email_verify_email_task.delay(['khuy220@gmail.com'])
+    return var_res.response_data()

@@ -1,10 +1,11 @@
 from celery import shared_task
-from celery.utils.log import get_task_logger
-
-logger = get_task_logger(__name__)
 
 
 @shared_task
-def sample_task():
-    print("hihi")
-    logger.info("The sample task just ran.")
+def send_email_job_post_for_job_seeker_task(subject, recipient, template_name, data=None, cc=None, bcc=None):
+    pass
+
+
+@shared_task
+def send_email_resume_for_employer_task(subject, recipient, template_name, data=None, cc=None, bcc=None):
+    pass
