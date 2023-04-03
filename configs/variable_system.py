@@ -5,7 +5,6 @@ JOB_SEEKER = 'JOB_SEEKER'
 CV_WEBSITE = "WEBSITE"
 CV_UPLOAD = "UPLOAD"
 
-
 DATE_TIME_FORMAT = {
     "dmY": "%d/%m/%Y",
     "Ymd": "%Y-%m-%d",
@@ -15,11 +14,9 @@ DATE_TIME_FORMAT = {
 AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
 
 AVATAR_DEFAULT = {
-    "USER_AVT": "https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80",
-    "COVER_IMG": "https://img.freepik.com/free-vector/abstract-banner-with-low-poly-connections-design_1048-13077.jpg?w=1800&t=st=1678203802~exp=1678204402~hmac=7661583ba3279862674922af1193b8023fda9b1c08a34b9d756ee92a08238f5f",
-    "LOGO": "https://cloudinary.com/console/c-7145a9883ab06f170cab39cb3463a5/media_library/folders" \
-            "/c16d59372d09573f486adb6bf8d49e1cb3 ",
-
+    "AVATAR": "https://img.icons8.com/external-creatype-blue-field-colourcreatype/1x/external-avatar-office-and-business-creatype-blue-field-colourcreatype.png",
+    "COMPANY_LOGO": "https://img.icons8.com/external-xnimrodx-lineal-gradient-xnimrodx/1x/external-company-town-xnimrodx-lineal-gradient-xnimrodx-4.png",
+    "COMPANY_COVER_IMAGE": "https://img.freepik.com/free-vector/purple-abstract-background_1340-17009.jpg?w=1380&t=st=1680457096~exp=1680457696~hmac=dce6634b13f28ecbe48a8de53421b99783d4b3f9dd4286d6ea2e68176cbfc083",
 }
 
 PLATFORM_CHOICES = (

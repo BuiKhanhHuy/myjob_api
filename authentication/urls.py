@@ -9,10 +9,13 @@ urlpatterns = [
     path('', include('drf_social_oauth2.urls', namespace='drf')),
     path('email-exists/', views.check_email_exists),
     path('check-creds/', views.check_creds),
-    path('verify-email/', views.verify_email),
+
+    path('active-email/<str:encoded_data>/<str:token>/', views.user_active),
+
     path('forgot-password/', views.forgot_password),
     path('reset-password/', views.reset_password),
     path('change-password/', views.change_password),
+
     path('update-user/', views.update_user_account),
     path('avatar/', views.avatar),
     path('user-info/', views.get_user_info),

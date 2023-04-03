@@ -306,8 +306,7 @@ class AdvancedSkillViewSet(viewsets.ViewSet,
 
 class CompanyView(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action in ["get_company_info", "get_job_posts",
-                           "get_job_post_detail"]:
+        if self.action in ["get_company_info"]:
             return [perms_custom.IsEmployerUser()]
         return perms_sys.IsAuthenticated()
 
@@ -321,23 +320,6 @@ class CompanyView(viewsets.ViewSet):
             return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return var_res.response_data(data=company_serializer.data)
-
-    def get_job_posts(self, request):
-        try:
-            user = request.user
-
-            job_posts_queryset = JobPost.objects.filter(user=user, company=user.company)
-
-            job_posts_serializer = job_serializers \
-                .JobPostSerializer(job_posts_queryset,
-                                   many=True,
-                                   fields=["id", "slug", "jobName", "createAt", "deadline",
-                                           "appliedNumber", "viewedNumber", "isUrgent"])
-        except Exception as ex:
-            helper.print_log_error("get_job_post", ex)
-            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return var_res.response_data(data=job_posts_serializer.data)
 
     def get_job_post_detail(self, request, pk):
         try:

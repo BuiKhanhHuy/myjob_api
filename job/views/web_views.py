@@ -1,7 +1,8 @@
-from configs import variable_response as var_res, renderers, paginations
+from configs import variable_response as var_res, renderers, paginations, table_export
+from helpers import utils
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
@@ -11,7 +12,8 @@ from ..models import (
     SavedJobPost
 )
 from ..filters import (
-    JobPostFilter
+    JobPostFilter,
+    AliasedOrderingFilter
 )
 from ..serializers import (
     JobPostSerializer
@@ -19,13 +21,72 @@ from ..serializers import (
 
 
 class PrivateJobPostViewSet(viewsets.ViewSet,
+                            generics.ListAPIView,
                             generics.CreateAPIView,
                             generics.UpdateAPIView,
                             generics.DestroyAPIView):
-    queryset = JobPost.objects
+    queryset = JobPost.objects.annotate(
+        applied_total=Count('peoples_applied'),
+    )
     serializer_class = JobPostSerializer
     renderer_classes = [renderers.MyJSONRenderer]
-    permission_classes = [perms_custom.IsEmployerUser]
+    pagination_class = paginations.CustomPagination
+    permission_classes = [perms_custom.JobPostOwnerPerms]
+    filterset_class = JobPostFilter
+    filter_backends = [DjangoFilterBackend, AliasedOrderingFilter]
+    ordering_fields = (
+        ('jobName', 'job_name'),
+        ('createAt', 'create_at'),
+        ('deadline', 'deadline'),
+        ('viewedTotal', 'views'),
+        ('appliedTotal', 'applied_total')
+    )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(is_verify=True, user=request.user,
+                                                company=request.user.company)
+                                        .order_by('-id', 'update_at', 'create_at'))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "slug", "jobName", "createAt", "deadline",
+                "appliedNumber", "views", "isUrgent"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="export", url_name="job-posts-export")
+    def export_job_posts(self, request):
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(is_verify=True, user=request.user,
+                                                company=request.user.company)
+                                        .order_by('-id', 'update_at', 'create_at'))
+        serializer = self.get_serializer(queryset, many=True, fields=[
+            "id", "jobName", "views",
+            "createAt", "deadline", "appliedNumber"
+        ])
+        result_data = utils.convert_data_with_en_key_to_vn_kew(serializer.data, table_export.JOB_POSTS_EXPORT_FIELD)
+
+        return Response(data=result_data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, fields=[
+            "id", "jobName", "academicLevel", "deadline", "quantity",
+            "genderRequired",
+            "jobDescription", "jobRequirement", "benefitsEnjoyed",
+            "career",
+            "position", "typeOfWorkplace", "experience",
+            "jobType", "salaryMin", "salaryMax", "isUrgent",
+            "contactPersonName", "contactPersonPhone",
+            "contactPersonEmail",
+            "location"])
+        return Response(data=serializer.data)
 
 
 class JobPostViewSet(viewsets.ViewSet,
@@ -80,7 +141,7 @@ class JobPostViewSet(viewsets.ViewSet,
             url_path="job-posts-saved", url_name="job-posts-saved")
     def get_job_posts_saved(self, request):
         user = request.user
-        queryset = user.saved_job_posts.filter(is_verify=True)\
+        queryset = user.saved_job_posts.filter(is_verify=True) \
             .order_by('update_at', 'create_at')
 
         page = self.paginate_queryset(queryset)

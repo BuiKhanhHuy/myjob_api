@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     'authentication',
     'info',
     'job',
-    'post',
     'myjob',
 
     'corsheaders'
@@ -253,6 +252,21 @@ cloudinary.config(
 CLOUDINARY_DIRECTORY = {
     "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/",
     "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/",
+}
+
+DOMAIN_CLIENT = {
+    "local": "http://localhost:3000/",
+    "production": "https://myjobb.netlify.app/",
+}
+
+REDIRECT_LOGIN_CLIENT = {
+    "JOB_SEEKER": "dang-nhap-ung-vien",
+    "EMPLOYER": "dang-nhap-nha-tuyen-dung"
+}
+
+MYJOB_AUTH = {
+    "VERIFY_EMAIL_LINK_EXPIRE_SECONDS": 7200,
+    "RESET_PASSWORD_LINK_EXPIRE_SECONDS": 7200
 }
 
 APP_ENVIRONMENT = config('APP_ENV')

@@ -1,11 +1,11 @@
 import json
+import time
+from django.conf import settings
+from configs import variable_system as var_sys
 from configs.variable_response import response_data
-from console.jobs import queue_mail, thread_mail
-from .email_verification_token_generator import email_verification_token
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
+from .tokens_custom import email_verification_token
+from django.http import HttpResponseRedirect, HttpResponseNotFound
 from helpers import helper
-from rest_framework import viewsets, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -16,6 +16,7 @@ from .models import User
 from .serializers import (
     CheckCredsSerializer,
     ForgotPasswordSerializer,
+    UpdatePasswordSerializer,
     ResetPasswordSerializer,
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
@@ -90,11 +91,43 @@ def check_creds(request):
     return response_data(data=res_data)
 
 
-@api_view(http_method_names=["POST"])
-def verify_email(request):
-    data = request.data
+@api_view(http_method_names=["GET"])
+def user_active(request, encoded_data, token):
+    if "redirectLogin" not in request.GET:
+        return HttpResponseNotFound()
 
-    return response_data(data=request.data)
+    redirect_login = request.GET.get("redirectLogin")
+    if redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.JOB_SEEKER] and \
+            redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.EMPLOYER]:
+        return HttpResponseNotFound()
+
+    try:
+        uid, expiration_time = helper.urlsafe_base64_decode_with_encoded_data(encoded_data)
+        if uid is None or expiration_time is None:
+            return HttpResponseRedirect(
+                helper.get_full_client_url(
+                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+
+        if not helper.check_expiration_time(expiration_time):
+            return HttpResponseRedirect(
+                helper.get_full_client_url(
+                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."))
+
+        user = User.objects.get(pk=uid)
+    except Exception as ex:
+        user = None
+        helper.print_log_error("user_active", ex)
+    if user is not None and email_verification_token.check_token(user, token):
+        user.is_active = True
+        user.is_verify_email = True
+        user.save()
+
+        return HttpResponseRedirect(
+            helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
+    else:
+        return HttpResponseRedirect(
+            helper.get_full_client_url(
+                f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
 
 
 @api_view(http_method_names=["post"])
@@ -102,17 +135,60 @@ def forgot_password(request):
     data = request.data
     forgot_password_serializer = ForgotPasswordSerializer(data=data)
     if not forgot_password_serializer.is_valid():
-        pass
+        return response_data(errors=forgot_password_serializer.errors)
+
+    email = forgot_password_serializer.validated_data.get("email")
+    user = User.objects.filter(email=email).first()
+    if user:
+        try:
+            # send mail reset password
+            helper.send_email_reset_password(user)
+        except Exception as ex:
+            helper.print_log_error("forgot_password", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return response_data()
 
 
-@api_view(http_method_names=['get'])
+@api_view(http_method_names=["post"])
 def reset_password(request):
     data = request.data
-    reset_password_serializer = ResetPasswordSerializer(data=data)
-    if not reset_password_serializer.is_valid():
-        pass
-    return response_data(data="DA GUI")
+    serializer = ResetPasswordSerializer(data=data)
+    if not serializer.is_valid():
+        return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
+
+    try:
+        new_password = serializer.data.get("newPassword")
+        encoded_data = serializer.data.get("token")
+
+        uid, expiration_time = helper.urlsafe_base64_decode_with_encoded_data(encoded_data)
+        if uid is None or expiration_time is None:
+            return response_data(
+                status=status.HTTP_400_BAD_REQUEST,
+                errors={"errorMessage": ["Rất tiếc, có như liên kết đặt lại mật khẩu không chính xác."]}
+            )
+
+        if not helper.check_expiration_time(expiration_time):
+            return response_data(
+                status=status.HTTP_400_BAD_REQUEST,
+                errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết đặt lại mật khẩu đã hết hạn."]}
+            )
+
+        user = User.objects.filter(id=uid).first()
+        if not user:
+            return response_data(
+                status=status.HTTP_400_BAD_REQUEST,
+                errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết đặt lại mật khẩu không chính xác."]}
+            )
+        # set password
+        user.set_password(new_password)
+        user.save()
+        role_name = user.role_name
+
+        redirect_login_url = settings.REDIRECT_LOGIN_CLIENT[role_name]
+        return response_data(data={"redirectLoginUrl": f"/{redirect_login_url}"})
+    except Exception as ex:
+        helper.print_log_error("reset_password", ex)
+        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(http_method_names=['put'])
@@ -122,7 +198,7 @@ def change_password(request):
         data = request.data
         user = request.user
 
-        reset_pass_serializer = ResetPasswordSerializer(user, data=data, context={
+        reset_pass_serializer = UpdatePasswordSerializer(user, data=data, context={
             'user': request.user
         })
         if not reset_pass_serializer.is_valid():
@@ -180,7 +256,9 @@ def employer_register(request):
     if not serializer.is_valid():
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
     try:
-        serializer.save()
+        user = serializer.save()
+        if user:
+            helper.send_email_verify_email(request, user)
     except Exception as ex:
         helper.print_log_error("employer_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -196,15 +274,7 @@ def job_seeker_register(request):
     try:
         user = serializer.save()
         if user:
-            # send mail verify email
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            token = email_verification_token.make_token(user=user)
-            data = {
-                "email_subject": "Xác thực email",
-                "email_body": f'http://localhost:3000/verify-email/{uidb64}/{token}/',
-                "to_email": user.email
-            }
-            thread_mail.Util.send_email(data=data)
+            helper.send_email_verify_email(request, user)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

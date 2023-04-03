@@ -21,3 +21,8 @@ class IsEmployerUser(permissions.IsAuthenticated):
 class ResumeOwnerPerms(IsJobSeekerUser):
     def has_object_permission(self, request, view, resume):
         return request.user == resume.user
+
+
+class JobPostOwnerPerms(IsEmployerUser):
+    def has_object_permission(self, request, view, job_post):
+        return request.user == job_post.user

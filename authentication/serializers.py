@@ -23,10 +23,9 @@ class CheckCredsSerializer(serializers.Serializer):
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=100)
-    roleName = serializers.CharField(required=True, max_length=10)
 
 
-class ResetPasswordSerializer(serializers.Serializer):
+class UpdatePasswordSerializer(serializers.Serializer):
     oldPassword = serializers.CharField(required=True, max_length=128)
     newPassword = serializers.CharField(required=True, max_length=128)
     confirmPassword = serializers.CharField(required=True, max_length=128)
@@ -49,6 +48,19 @@ class ResetPasswordSerializer(serializers.Serializer):
         instance.save()
 
         return instance
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    newPassword = serializers.CharField(required=True, max_length=128)
+    confirmPassword = serializers.CharField(required=True, max_length=128)
+    token = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        new_pass = attrs.get('newPassword', '')
+        confirm_pass = attrs.get('confirmPassword', '')
+        if not new_pass == confirm_pass:
+            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+        return attrs
 
 
 class JobSeekerRegisterSerializer(serializers.ModelSerializer):
@@ -149,7 +161,7 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
                                                                role_name=var_sys.EMPLOYER)
                 Company.objects.create(user=user, **company, location=location_obj)
 
-                return validated_data
+                return user
         except Exception as ex:
             helper.print_log_error("create user in JobSeekerRegisterSerializer", ex)
             return None

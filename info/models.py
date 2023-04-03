@@ -147,8 +147,8 @@ class CompanyFollowed(InfoBaseModel):
 class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
     slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
-    company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["LOGO"])
-    company_cover_image_url = models.URLField(null=True, blank=True)
+    company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_LOGO"])
+    company_cover_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"])
     facebook_url = models.URLField(null=True, blank=True)
     youtube_url = models.URLField(null=True, blank=True)
     linkedin_url = models.URLField(null=True, blank=True)
@@ -190,7 +190,7 @@ class CompanyImage(InfoBaseModel):
 class ResumeSaved(InfoBaseModel):
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "myjob_info_resume_saved"
@@ -201,7 +201,7 @@ class ResumeViewed(InfoBaseModel):
 
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "myjob_info_resume_viewed"

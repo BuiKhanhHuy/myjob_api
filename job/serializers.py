@@ -20,7 +20,8 @@ class JobPostSerializer(serializers.ModelSerializer):
     jobName = serializers.CharField(source="job_name", required=True, max_length=255)
     deadline = serializers.DateField(required=True,
                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
-                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]],
+                                     )
     quantity = serializers.IntegerField(required=True)
     genderRequired = serializers.CharField(source="gender_required", required=False,
                                            max_length=1, allow_blank=True, allow_null=True)

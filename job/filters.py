@@ -1,6 +1,11 @@
+from django.core.exceptions import ValidationError
+from requests.compat import basestring
+
 from configs import variable_system as var_sys
+from helpers import utils
 from django.db.models import Q
 import django_filters
+from rest_framework.filters import OrderingFilter
 from .models import (
     JobPost
 )
@@ -13,7 +18,7 @@ class JobPostFilter(django_filters.FilterSet):
     positionId = django_filters.ChoiceFilter(choices=var_sys.POSITION_CHOICES, field_name='position')
     experienceId = django_filters.ChoiceFilter(choices=var_sys.EXPERIENCE_CHOICES, field_name='experience')
     typeOfWorkplaceId = django_filters.ChoiceFilter(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES,
-                                                   field_name='type_of_workplace')
+                                                    field_name='type_of_workplace')
     jobTypeId = django_filters.ChoiceFilter(choices=var_sys.JOB_TYPE_CHOICES, field_name='job_type')
     genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES, field_name='gender_required')
     isUrgent = django_filters.BooleanFilter(field_name='is_urgent')
@@ -31,3 +36,33 @@ class JobPostFilter(django_filters.FilterSet):
 
     def exclude_slug(self, queryset, name, value):
         return queryset.exclude(slug=value)
+
+
+class AliasedOrderingFilter(OrderingFilter):
+    """ this allows us to "alias" fields on our model to ensure consistency at the API level
+        We do so by allowing the ordering_fields attribute to accept a list of tuples.
+        You can mix and match, i.e.:
+        ordering_fields = (('alias1', 'field1'), 'field2', ('alias2', 'field2')) """
+
+    def remove_invalid_fields(self, queryset, fields, view, request):
+        valid_fields = getattr(view, 'ordering_fields', self.ordering_fields)
+        if valid_fields is None or valid_fields == '__all__':
+            return super(AliasedOrderingFilter, self).remove_invalid_fields(queryset, fields, view)
+
+        aliased_fields = {}
+        for field in valid_fields:
+            if isinstance(field, basestring):
+                aliased_fields[field] = field
+            else:
+                aliased_fields[field[0]] = field[1]
+
+        ordering = []
+        for raw_field in fields:
+            invert = raw_field[0] == '-'
+            field = raw_field.lstrip('-')
+            if field in aliased_fields:
+                if invert:
+                    ordering.append('-{}'.format(aliased_fields[field]))
+                else:
+                    ordering.append(aliased_fields[field])
+        return ordering
