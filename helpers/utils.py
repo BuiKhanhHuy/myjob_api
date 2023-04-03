@@ -21,11 +21,11 @@ def convert_tuple_or_list_to_options(values):
 def convert_data_with_en_key_to_vn_kew(data, key_dict, show_status_number=True):
     listNew = []
     try:
-        i = 1
-        while i <= len(data) and i <= table_export.MAX_ROWS:
+        i = 0
+        while i < len(data) and i <= table_export.MAX_ROWS:
             dictNew = {}
             if show_status_number:
-                dictNew[key_dict["stt"]] = i
+                dictNew[key_dict["stt"]] = i + 1
             for key, value in data[i].items():
                 dictNew[key_dict[key]] = value
             listNew.append(dictNew)

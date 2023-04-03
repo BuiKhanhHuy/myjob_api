@@ -11,12 +11,14 @@ from rest_framework import status
 from ..models import (
     JobSeekerProfile,
     Resume, ResumeViewed,
+    ResumeSaved,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company,
     CompanyFollowed
 )
 from ..filters import (
+    ResumeFilter,
     CompanyFilter
 )
 from ..serializers import (
@@ -119,9 +121,9 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         return var_res.response_data(data=serializer.data)
 
 
-class ResumeViewSet(viewsets.ViewSet,
-                    generics.ListCreateAPIView,
-                    generics.RetrieveUpdateDestroyAPIView):
+class PrivateResumeViewSet(viewsets.ViewSet,
+                           generics.UpdateAPIView,
+                           generics.DestroyAPIView):
     queryset = Resume.objects.all()
     serializer_class = ResumeSerializer
     lookup_field = 'slug'
@@ -153,6 +155,28 @@ class ResumeViewSet(viewsets.ViewSet,
                                          errors=serializer.errors)
         self.perform_create(serializer)
         return var_res.response_data(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial,
+                                         fields=[
+                                             "id", "slug", "title", "description",
+                                             "salaryMin", "salaryMax",
+                                             "position", "experience", "academicLevel",
+                                             "typeOfWorkplace", "jobType", "isActive",
+                                             "city", "career", "updateAt", "file",
+                                             "imageUrl", "fileUrl", "user", "city",
+                                         ])
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )
@@ -238,6 +262,76 @@ class ResumeViewSet(viewsets.ViewSet,
             many=True)
 
         return var_res.response_data(data=advanced_skill_serializer.data)
+
+
+class ResumeViewSet(viewsets.ViewSet,
+                    generics.ListAPIView,
+                    generics.RetrieveAPIView):
+    queryset = Resume.objects
+    serializer_class = ResumeSerializer
+    permission_classes = [perms_custom.IsEmployerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+    filterset_class = ResumeFilter
+    filter_backends = [DjangoFilterBackend]
+    lookup_field = "slug"
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset().filter(is_active=True)
+                                        .order_by('-id', 'update_at', 'create_at'))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                'id', 'slug', 'title', 'salaryMin', 'salaryMax',
+                'experience', 'viewEmployerNumber', 'updateAt',
+                'userDict', 'jobSeekerProfileDict', 'city',
+                'isSaved', 'type'
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="resumes-saved", url_name="resumes-saved")
+    def get_resumes_saved(self, request):
+        # user = request.user
+        # queryset = user.saved_job_posts.filter(is_verify=True) \
+        #     .order_by('update_at', 'create_at')
+        #
+        # page = self.paginate_queryset(queryset)
+        #
+        # if page is not None:
+        #     serializer = self.get_serializer(page, many=True, fields=[
+        #         'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+        #         'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+        #         'locationDict'
+        #     ])
+        #     return self.get_paginated_response(serializer.data)
+        #
+        # serializer = self.get_serializer(queryset, many=True)
+        # return var_res.Response(serializer.data)
+        return var_res.Response()
+
+    @action(methods=["post"], detail=True,
+            url_path="resume-saved", url_name="resume-saved")
+    def resume_saved(self, request, slug):
+        saved_resumes = ResumeSaved.objects.filter(company=request.user.company, resume=self.get_object())
+        is_saved = False
+        if saved_resumes.exists():
+            saved_resume = saved_resumes.first()
+
+            saved_resume.delete()
+        else:
+            ResumeSaved.objects.create(
+                company=request.user.company,
+                resume=self.get_object()
+            )
+            is_saved = True
+        return Response(data={
+            "isSaved": is_saved
+        })
 
 
 class ResumeViewedAPIView(views.APIView):

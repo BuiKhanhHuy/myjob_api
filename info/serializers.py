@@ -1,6 +1,8 @@
+from datetime import date
 import cloudinary.uploader
-import console.jobs.queue_cron_job
 from django.conf import settings
+from jsonschema._validators import required
+
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -157,12 +159,32 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
                                           max_length=1)
     location = common_serializers.ProfileLocationSerializer()
     user = auth_serializers.UserSerializer(fields=["fullName"])
+    old = serializers.SerializerMethodField(method_name="get_old", read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    def get_old(self, job_seeker_profile):
+        birthdate = job_seeker_profile.birthday
+        if birthdate:
+            today = date.today()
+            age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+            return age
+        return None
 
     class Meta:
         model = JobSeekerProfile
         fields = ('id', 'phone', 'birthday',
                   'gender', 'maritalStatus',
-                  'location', 'user')
+                  'location', 'user', 'old')
 
     def update(self, instance, validated_data):
         instance.birthday = validated_data.get('birthday', instance.birthday)
@@ -241,6 +263,14 @@ class ResumeSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, write_only=True)
     user = auth_serializers.UserSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
 
+    isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
+    viewEmployerNumber = serializers.SerializerMethodField(method_name="get_view_number", read_only=True)
+    userDict = auth_serializers.UserSerializer(source='user', fields=["id", "fullName"], read_only=True)
+    jobSeekerProfileDict = JobSeekerProfileSerializer(source="job_seeker_profile",
+                                                      fields=["id", "old"],
+                                                      read_only=True)
+    type = serializers.CharField(required=False, read_only=True)
+
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
 
@@ -259,6 +289,18 @@ class ResumeSerializer(serializers.ModelSerializer):
             fields['file'].required = False
         return fields
 
+    def get_view_number(self, resume):
+        return 0
+
+    def check_saved(self, resume):
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        user = request.user
+        if user.is_authenticated and user.role_name == var_sys.EMPLOYER:
+            return resume.resumesaved_set.filter(company=user.company).exists()
+        return None
+
     class Meta:
         model = Resume
         fields = ("id", "slug", "title", "description",
@@ -266,7 +308,9 @@ class ResumeSerializer(serializers.ModelSerializer):
                   "position", "experience", "academicLevel",
                   "typeOfWorkplace", "jobType", "isActive",
                   "city", "career", "updateAt", "file",
-                  "imageUrl", "fileUrl", "user")
+                  "imageUrl", "fileUrl", "user", "city", 'isSaved',
+                  "viewEmployerNumber", "userDict", "jobSeekerProfileDict",
+                  "type")
 
     def create(self, validated_data):
         request = self.context['request']

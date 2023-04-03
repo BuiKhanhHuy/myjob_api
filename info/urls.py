@@ -6,6 +6,7 @@ app_router = DefaultRouter()
 
 web_router = DefaultRouter()
 web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='job-seeker-profile')
+web_router.register(r'private-resumes', web_views.PrivateResumeViewSet, basename='private-resume')
 web_router.register(r'resumes', web_views.ResumeViewSet, basename='resume')
 web_router.register(r'experiences-detail', web_views.ExperienceDetailViewSet, basename='experience-detail')
 web_router.register(r'educations-detail', web_views.EducationDetailViewSet, basename='education-detail')

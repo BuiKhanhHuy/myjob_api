@@ -127,8 +127,9 @@ EMPLOYEE_SIZE_CHOICES = (
 )
 
 APPLICATION_STATUS = (
-    (1, 'Chưa cập nhật'),
-    (2, 'Chờ duyệt'),
-    (3, 'Đã duyệt'),
-    (4, 'Từ chối')
+    (1, 'Hồ sơ chờ duyệt'),
+    (2, 'Hồ sơ đã test'),
+    (3, 'Hồ sơ đã phỏng vấn'),
+    (4, 'Hồ sơ trúng tuyển'),
+    (5, 'Hồ sơ không trúng tuyển')
 )

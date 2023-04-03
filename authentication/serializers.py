@@ -200,7 +200,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "isActive", "isVerifyEmail",
                   "avatarUrl", "roleName",
                   "jobSeekerProfileId",
-                  "companyId")
+                  "companyId" )
 
 
 class AvatarSerializer(serializers.ModelSerializer):
