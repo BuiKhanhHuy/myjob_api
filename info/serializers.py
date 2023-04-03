@@ -373,6 +373,17 @@ class EducationSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     def validate(self, attrs):
         if EducationDetail.objects.count() >= 10:
             raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin học vấn'})
@@ -396,6 +407,17 @@ class ExperienceSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     def validate(self, attrs):
         if ExperienceDetail.objects.count() >= 10:
             raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin kinh nghiệm làm việc'})
@@ -418,6 +440,17 @@ class CertificateSerializer(serializers.ModelSerializer):
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
     resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
 
     def validate(self, attrs):
         if Certificate.objects.count() >= 10:
@@ -444,6 +477,17 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
     #         raise serializers.ValidationError('Ngôn ngữ này đã tồn tại.')
     #     return language
 
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     class Meta:
         model = LanguageSkill
         fields = ('id', 'language', 'level', 'resume')
@@ -463,6 +507,17 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
     #         raise serializers.ValidationError('Kỹ năng này đã tồn tại.')
     #     return name
 
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
     def validate(self, attrs):
         if AdvancedSkill.objects.count() >= 15:
             raise serializers.ValidationError({'errorMessage': 'Tối đa 15 thông tin kỹ năng chuyên môn'})
@@ -471,3 +526,76 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdvancedSkill
         fields = ('id', 'name', 'level', 'resume')
+
+
+class ResumeDetailSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=True, max_length=200)
+    description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    salaryMin = serializers.IntegerField(source="salary_min", required=True)
+    salaryMax = serializers.IntegerField(source="salary_max", required=True)
+    position = serializers.IntegerField(required=True)
+    experience = serializers.IntegerField(required=True)
+    academicLevel = serializers.IntegerField(source="academic_level", required=True)
+    typeOfWorkplace = serializers.IntegerField(source="type_of_workplace", required=True)
+    jobType = serializers.IntegerField(source="job_type", required=True)
+    isActive = serializers.BooleanField(source="is_active", default=False)
+    updateAt = serializers.DateTimeField(source="update_at", read_only=True)
+    fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    type = serializers.CharField(required=False, read_only=True)
+
+    isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
+    user = auth_serializers.UserSerializer(fields=["id", "fullName", "email", "avatarUrl"],
+                                           read_only=True)
+    jobSeekerProfile = JobSeekerProfileSerializer(source="job_seeker_profile",
+                                                  fields=[
+                                                      "id", "phone", "birthday",
+                                                      "gender", "maritalStatus", "location"
+                                                  ],
+                                                  read_only=True)
+    experiencesDetails = ExperienceSerializer(source="experience_details",
+                                              fields=[
+                                                  'id', 'jobName', 'companyName',
+                                                  'startDate', 'endDate',
+                                                  'description',
+                                              ],
+                                              read_only=True, many=True)
+    educationDetails = EducationSerializer(source="education_details",
+                                           fields=[
+                                               'id', 'degreeName', 'major', 'trainingPlaceName',
+                                               'startDate', 'completedDate', 'description'
+                                           ], read_only=True, many=True)
+    certificates = CertificateSerializer(fields=[
+        'id', 'name', 'trainingPlace', 'startDate',
+        'expirationDate'
+    ], read_only=True, many=True)
+    languageSkills = LanguageSkillSerializer(source="language_skills",
+                                             fields=[
+                                                 'id', 'language', 'level'
+                                             ], read_only=True, many=True)
+    advancedSkills = AdvancedSkillSerializer(source="advanced_skills",
+                                             fields=[
+                                                 'id', 'name', 'level'
+                                             ],
+                                             read_only=True, many=True)
+
+    def check_saved(self, resume):
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        user = request.user
+        if user.is_authenticated and user.role_name == var_sys.EMPLOYER:
+            return resume.resumesaved_set.filter(company=user.company).exists()
+        return None
+
+    class Meta:
+        model = Resume
+        fields = ("id", "slug", "title", "description",
+                  "salaryMin", "salaryMax",
+                  "position", "experience", "academicLevel",
+                  "typeOfWorkplace", "jobType", "isActive",
+                  "city", "career", "updateAt", "fileUrl",
+                  "city", 'isSaved', "type",
+                  "user", "jobSeekerProfile",
+                  "experiencesDetails", "educationDetails",
+                  "certificates", "languageSkills", "advancedSkills"
+                  )

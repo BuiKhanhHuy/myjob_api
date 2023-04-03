@@ -24,6 +24,7 @@ from ..filters import (
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
+    ResumeDetailSerializer,
     ResumeViewedSerializer,
     CvSerializer,
     EducationSerializer,
@@ -122,6 +123,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
 
 
 class PrivateResumeViewSet(viewsets.ViewSet,
+                           generics.CreateAPIView,
                            generics.UpdateAPIView,
                            generics.DestroyAPIView):
     queryset = Resume.objects.all()
@@ -275,6 +277,11 @@ class ResumeViewSet(viewsets.ViewSet,
     filterset_class = ResumeFilter
     filter_backends = [DjangoFilterBackend]
     lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve"]:
+            return ResumeDetailSerializer
+        return self.serializer_class
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset().filter(is_active=True)
