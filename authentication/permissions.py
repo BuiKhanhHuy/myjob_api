@@ -26,3 +26,8 @@ class ResumeOwnerPerms(IsJobSeekerUser):
 class JobPostOwnerPerms(IsEmployerUser):
     def has_object_permission(self, request, view, job_post):
         return request.user == job_post.user
+
+
+class CompanyImageOwnerPerms(IsEmployerUser):
+    def has_object_permission(self, request, view, company_image):
+        return request.user.company == company_image.company

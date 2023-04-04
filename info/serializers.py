@@ -18,7 +18,8 @@ from .models import (
     LanguageSkill,
     AdvancedSkill,
     Company,
-    CompanyFollowed
+    CompanyFollowed,
+    CompanyImage
 )
 from common.models import (
     Location
@@ -147,6 +148,61 @@ class CompanyFollowedSerializer(serializers.ModelSerializer):
             'id',
             'company',
         )
+
+
+class LogoCompanySerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=True, write_only=True)
+    companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
+
+    class Meta:
+        model = Company
+        fields = ('file', 'companyImageUrl')
+
+    def update(self, company, validated_data):
+        file = validated_data.pop('file')
+
+        try:
+            logo_upload_result = cloudinary.uploader.upload(file,
+                                                            folder=settings.CLOUDINARY_DIRECTORY["logo"],
+                                                            public_id=company.id)
+            logo_public_id = logo_upload_result.get('public_id')
+        except:
+            return None
+        else:
+            logo_url = logo_upload_result.get('secure_url')
+            company.company_image_url = logo_url
+            company.company_image_public_id = logo_public_id
+            company.save()
+
+            return company
+
+
+class CompanyCoverImageSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=True, write_only=True)
+    companyCoverImageUrl = serializers.CharField(source='company_cover_image_url', read_only=True)
+
+    class Meta:
+        model = Company
+        fields = ('file', 'companyCoverImageUrl')
+
+    def update(self, company, validated_data):
+        file = validated_data.pop('file')
+
+        try:
+            company_cover_image_upload_result = cloudinary.uploader.upload(file,
+                                                                           folder=settings.CLOUDINARY_DIRECTORY[
+                                                                               "coverImage"],
+                                                                           public_id=company.id)
+            company_cover_image_public_id = company_cover_image_upload_result.get('public_id')
+        except:
+            return None
+        else:
+            company_cover_image_url = company_cover_image_upload_result.get('secure_url')
+            company.company_cover_image_url = company_cover_image_url
+            company.company_cover_image_public_id = company_cover_image_public_id
+            company.save()
+
+            return company
 
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
@@ -541,6 +597,7 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
     isActive = serializers.BooleanField(source="is_active", default=False)
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
     fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    filePublicId = serializers.CharField(source="public_id", read_only=True)
     type = serializers.CharField(required=False, read_only=True)
 
     isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
@@ -594,8 +651,38 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
                   "position", "experience", "academicLevel",
                   "typeOfWorkplace", "jobType", "isActive",
                   "city", "career", "updateAt", "fileUrl",
-                  "city", 'isSaved', "type",
+                  "filePublicId", "city", 'isSaved', "type",
                   "user", "jobSeekerProfile",
                   "experiencesDetails", "educationDetails",
                   "certificates", "languageSkills", "advancedSkills"
                   )
+
+
+class CompanyImageSerializer(serializers.ModelSerializer):
+    imageUrl = serializers.CharField(source='image_url', required=False, read_only=True)
+    files = serializers.ListField(required=True, write_only=True)
+
+    class Meta:
+        model = CompanyImage
+        fields = ('id', 'imageUrl', 'files')
+
+    def create(self, validated_data):
+        files = validated_data.pop('files', [])
+        request = self.context["request"]
+
+        for file in files:
+            company_image = CompanyImage.objects.create(company=request.user.company)
+            company_image_upload_result = cloudinary.uploader.upload(
+                file,
+                folder=settings.CLOUDINARY_DIRECTORY[
+                    "company_image"],
+                public_id=company_image.id
+            )
+            company_image_public_id = company_image_upload_result.get('public_id')
+            company_image_url = company_image_upload_result["secure_url"]
+
+            company_image.image_url = company_image_url
+            company_image.image_public_id = company_image_public_id
+            company_image.save()
+
+        return validated_data

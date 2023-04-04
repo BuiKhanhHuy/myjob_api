@@ -252,6 +252,9 @@ cloudinary.config(
 CLOUDINARY_DIRECTORY = {
     "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/",
     "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/",
+    "logo": f"my-job/logo/{datetime.now().year}/{datetime.now().month}/",
+    "coverImage": f"my-job/cover-image/{datetime.now().year}/{datetime.now().month}/",
+    "company_image": f"my-job/company-image/{datetime.now().year}/{datetime.now().month}/",
 }
 
 DOMAIN_CLIENT = {

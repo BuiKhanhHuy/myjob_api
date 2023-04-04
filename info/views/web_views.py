@@ -1,3 +1,5 @@
+import cloudinary.uploader
+
 from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers, paginations
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +17,7 @@ from ..models import (
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company,
-    CompanyFollowed
+    CompanyFollowed, CompanyImage
 )
 from ..filters import (
     ResumeFilter,
@@ -33,7 +35,10 @@ from ..serializers import (
     LanguageSkillSerializer,
     AdvancedSkillSerializer,
     CompanySerializer,
-    CompanyFollowedSerializer
+    CompanyFollowedSerializer,
+    LogoCompanySerializer,
+    CompanyCoverImageSerializer,
+    CompanyImageSerializer
 )
 from job.models import (
     JobPost
@@ -451,6 +456,36 @@ class PrivateCompanyViewSet(viewsets.ViewSet,
     permission_classes = [perms_custom.IsEmployerUser]
     renderer_classes = [renderers.MyJSONRenderer]
 
+    @action(methods=["put"], detail=False,
+            url_path="company-image-url", url_name="company-image-url")
+    def update_company_image_url(self, request):
+        files = request.FILES
+        company_image_url_serializer = LogoCompanySerializer(request.user.company, data=files)
+        if not company_image_url_serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            company_image_url_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("update_company_image_url", ex)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(status=status.HTTP_200_OK, data=company_image_url_serializer.data)
+
+    @action(methods=["put"], detail=False,
+            url_path="company-cover-image-url", url_name="company-cover-image-url")
+    def update_company_cover_image_url(self, request):
+        files = request.FILES
+        company_cover_image_url_serializer = CompanyCoverImageSerializer(request.user.company, data=files)
+        if not company_cover_image_url_serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            company_cover_image_url_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("update_company_cover_image_url", ex)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(status=status.HTTP_200_OK, data=company_cover_image_url_serializer.data)
+
 
 class CompanyViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
@@ -543,3 +578,38 @@ class CompanyFollowedAPIView(views.APIView):
 
         serializer = CompanyFollowedSerializer(queryset, many=True)
         return Response(data=serializer.data)
+
+
+class CompanyImageViewSet(viewsets.ViewSet,
+                          generics.CreateAPIView,
+                          generics.ListAPIView,
+                          generics.DestroyAPIView):
+    queryset = CompanyImage.objects
+    serializer_class = CompanyImageSerializer
+    pagination_class = paginations.CustomPagination
+    renderer_classes = [renderers.MyJSONRenderer]
+    permission_classes = [perms_custom.CompanyImageOwnerPerms]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        queryset = queryset.filter(company=self.request.user.company) \
+            .order_by('-update_at', '-create_at')
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        files = request.FILES
+        serializer = self.get_serializer(data=files)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        image_public_id = instance.image_public_id
+        if image_public_id:
+            cloudinary.uploader.destroy(image_public_id)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)

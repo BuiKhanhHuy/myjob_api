@@ -148,7 +148,9 @@ class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
     slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_LOGO"])
+    company_image_public_id = models.CharField(max_length=300, null=True)
     company_cover_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"])
+    company_cover_image_public_id = models.CharField(max_length=300, null=True)
     facebook_url = models.URLField(null=True, blank=True)
     youtube_url = models.URLField(null=True, blank=True)
     linkedin_url = models.URLField(null=True, blank=True)
@@ -177,7 +179,7 @@ class Company(InfoBaseModel):
 
 class CompanyImage(InfoBaseModel):
     image_url = models.URLField(max_length=300)
-    index = models.SmallIntegerField()
+    image_public_id = models.CharField(max_length=300, null=True)
 
     # ForeignKey
     company = models.ForeignKey("Company", on_delete=models.CASCADE,

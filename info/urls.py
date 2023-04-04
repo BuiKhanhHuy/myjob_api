@@ -16,6 +16,7 @@ web_router.register(r'advanced-skills', web_views.AdvancedSkillViewSet, basename
 
 web_router.register(r'private-companies', web_views.PrivateCompanyViewSet, basename='private-company')
 web_router.register(r'companies', web_views.CompanyViewSet, basename='company')
+web_router.register(r'company-images', web_views.CompanyImageViewSet, basename='company-image')
 
 urlpatterns = [
     path('app/', include([
