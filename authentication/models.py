@@ -12,7 +12,7 @@ class AuthBaseModel(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, full_name="name", password=None, **extra_fields):
+    def create_user(self, email, full_name, password=None, **extra_fields):
         if email is None:
             raise ValueError('Users should have a email')
         if full_name is None:

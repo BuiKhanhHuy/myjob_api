@@ -29,6 +29,59 @@ from authentication import serializers as auth_serializers
 from common import serializers as common_serializers
 
 
+class CompanyImageSerializer(serializers.ModelSerializer):
+    imageUrl = serializers.CharField(source='image_url', required=False, read_only=True)
+    files = serializers.ListField(required=True, write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    def validate(self, attrs):
+        files = attrs.get("files", [])
+        count_upload_file = len(files)
+
+        request = self.context['request']
+        user = request.user
+        if user.role_name == var_sys.EMPLOYER:
+            company = user.company
+            if CompanyImage.objects.filter(company=company).count() + count_upload_file > 12:
+                raise serializers.ValidationError({'errorMessage': 'Tối đa 12 ảnh'})
+        return attrs
+
+    def create(self, validated_data):
+        files = validated_data.pop('files', [])
+        request = self.context["request"]
+
+        for file in files:
+            company_image = CompanyImage.objects.create(company=request.user.company)
+            company_image_upload_result = cloudinary.uploader.upload(
+                file,
+                folder=settings.CLOUDINARY_DIRECTORY[
+                    "company_image"],
+                public_id=company_image.id
+            )
+            company_image_public_id = company_image_upload_result.get('public_id')
+            company_image_url = company_image_upload_result["secure_url"]
+
+            company_image.image_url = company_image_url
+            company_image.image_public_id = company_image_public_id
+            company_image.save()
+
+        return validated_data
+
+    class Meta:
+        model = CompanyImage
+        fields = ('id', 'imageUrl', 'files')
+
+
 class CompanySerializer(serializers.ModelSerializer):
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
                                     validators=[UniqueValidator(Company.objects.all(),
@@ -46,8 +99,10 @@ class CompanySerializer(serializers.ModelSerializer):
                                          max_length=100, validators=[UniqueValidator(Company.objects.all(),
                                                                                      message='Email công ty đã tồn tại.')])
     companyPhone = serializers.CharField(source="company_phone", required=True,
-                                         max_length=15, validators=[UniqueValidator(Company.objects.all(),
-                                                                                    message='Số điện thoại công ty đã tồn tại.')])
+                                         max_length=15, validators=[
+            UniqueValidator(Company.objects.all(),
+                            message='Số điện thoại công ty đã tồn tại.')
+        ])
     websiteUrl = serializers.URLField(required=False, source="website_url", max_length=300,
                                       allow_null=True, allow_blank=True)
     facebookUrl = serializers.URLField(required=False, source="facebook_url", max_length=300,
@@ -67,6 +122,8 @@ class CompanySerializer(serializers.ModelSerializer):
     followNumber = serializers.SerializerMethodField(method_name="get_follow_number", read_only=True)
     jobPostNumber = serializers.SerializerMethodField(method_name="get_job_post_number", read_only=True)
     isFollowed = serializers.SerializerMethodField(method_name='check_followed', read_only=True)
+    companyImages = CompanyImageSerializer(source='company_images', many=True, read_only=True,
+                                           fields=['id', 'imageUrl'])
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -102,7 +159,8 @@ class CompanySerializer(serializers.ModelSerializer):
                   'websiteUrl', 'facebookUrl', 'youtubeUrl', 'linkedinUrl',
                   'description',
                   'companyImageUrl', 'companyCoverImageUrl', 'locationDict',
-                  'followNumber', 'jobPostNumber', 'isFollowed')
+                  'followNumber', 'jobPostNumber', 'isFollowed',
+                  'companyImages')
 
     def update(self, instance, validated_data):
         try:
@@ -656,33 +714,3 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
                   "experiencesDetails", "educationDetails",
                   "certificates", "languageSkills", "advancedSkills"
                   )
-
-
-class CompanyImageSerializer(serializers.ModelSerializer):
-    imageUrl = serializers.CharField(source='image_url', required=False, read_only=True)
-    files = serializers.ListField(required=True, write_only=True)
-
-    class Meta:
-        model = CompanyImage
-        fields = ('id', 'imageUrl', 'files')
-
-    def create(self, validated_data):
-        files = validated_data.pop('files', [])
-        request = self.context["request"]
-
-        for file in files:
-            company_image = CompanyImage.objects.create(company=request.user.company)
-            company_image_upload_result = cloudinary.uploader.upload(
-                file,
-                folder=settings.CLOUDINARY_DIRECTORY[
-                    "company_image"],
-                public_id=company_image.id
-            )
-            company_image_public_id = company_image_upload_result.get('public_id')
-            company_image_url = company_image_upload_result["secure_url"]
-
-            company_image.image_url = company_image_url
-            company_image.image_public_id = company_image_public_id
-            company_image.save()
-
-        return validated_data

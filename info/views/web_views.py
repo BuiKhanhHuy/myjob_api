@@ -530,7 +530,7 @@ class CompanyViewSet(viewsets.ViewSet,
             'websiteUrl', 'facebookUrl', 'youtubeUrl',
             'linkedinUrl', 'description',
             'companyImageUrl', 'companyCoverImageUrl',
-            'followNumber', 'isFollowed'
+            'followNumber', 'isFollowed', 'companyImages'
         ])
         return Response(data=serializer.data)
 

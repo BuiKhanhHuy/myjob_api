@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework.response import Response
+from info.models import Resume
 from ..models import (
     JobPost,
     SavedJobPost
@@ -41,6 +42,37 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         ('viewedTotal', 'views'),
         ('appliedTotal', 'applied_total')
     )
+
+    def get_permissions(self):
+        if self.action in ["get_suggested_job_posts"]:
+            return [perms_sys.IsAuthenticated()]
+        return [perms_custom.JobPostOwnerPerms()]
+
+    @action(methods=["get"], detail=False,
+            url_path="suggested-job-posts", url_name="suggested-job-posts")
+    def get_suggested_job_posts(self, request):
+        queryset = {}
+        resumes = Resume.objects.filter(is_active=True, user=request.user)
+        if resumes.exists():
+            resume = resumes.first()
+            queryset = JobPost.objects.filter(is_verify=True)
+            if resume.career:
+                queryset = queryset.filter(career=resume.career)
+            if resume.city:
+                queryset = queryset.filter(location__city=resume.city)
+
+        queryset = queryset.order_by("-create_at", "-update_at")
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+                'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+                'locationDict'
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()

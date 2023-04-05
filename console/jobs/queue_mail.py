@@ -37,8 +37,8 @@ def send_email_reset_password_task(to, data=None, cc=None, bcc=None):
 
 
 @shared_task
-def send_email_apply_job_task(subject, recipient, template_name, data=None, cc=None, bcc=None):
-    pass
+def send_email_apply_job_task():
+    return "AHIHI"
 
 
 @shared_task

@@ -1,5 +1,4 @@
 import json
-import time
 from django.conf import settings
 from configs import variable_system as var_sys
 from configs.variable_response import response_data
