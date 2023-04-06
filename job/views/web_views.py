@@ -51,7 +51,6 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
     @action(methods=["get"], detail=False,
             url_path="suggested-job-posts", url_name="suggested-job-posts")
     def get_suggested_job_posts(self, request):
-        queryset = {}
         resumes = Resume.objects.filter(is_active=True, user=request.user)
         if resumes.exists():
             resume = resumes.first()
@@ -61,18 +60,19 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             if resume.city:
                 queryset = queryset.filter(location__city=resume.city)
 
-        queryset = queryset.order_by("-create_at", "-update_at")
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True, fields=[
-                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-                'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
-                'locationDict'
-            ])
-            return self.get_paginated_response(serializer.data)
+            queryset = queryset.order_by("-create_at", "-update_at")
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True, fields=[
+                    'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+                    'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+                    'locationDict'
+                ])
+                return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return var_res.Response(serializer.data)
+            serializer = self.get_serializer(queryset, many=True)
+            return var_res.Response(serializer.data)
+        return var_res.Response()
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()

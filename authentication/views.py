@@ -8,7 +8,8 @@ from helpers import helper
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from drf_social_oauth2.views import TokenView
+from django.core.exceptions import BadRequest
+from drf_social_oauth2.views import TokenView, ConvertTokenView
 from oauth2_provider.models import get_access_token_model
 
 from .models import User
@@ -29,7 +30,7 @@ class CustomTokenView(TokenView):
         mutable_data = request.data.copy()
         role_name_input = mutable_data.get("role_name", None)
         if mutable_data["grant_type"] == "password" and not role_name_input:
-            return response_data(status=status.HTTP_400_BAD_REQUEST, message="Thất bại!")
+            return response_data(status=status.HTTP_400_BAD_REQUEST)
 
         request._request.POST = request._request.POST.copy()
         for key, value in mutable_data.items():
@@ -47,8 +48,30 @@ class CustomTokenView(TokenView):
                     if not role_name == role_name_input:
                         return response_data(status=status.HTTP_400_BAD_REQUEST)
             return response_data(status=stt, data=json.loads(body))
+        if stt == status.HTTP_400_BAD_REQUEST:
+            return response_data(status=stt, errors={
+                "errorMessage": ["Email hoặc mật khẩu không chính xác.sdfdsf"]
+            })
         else:
             return response_data(status=stt)
+
+
+class CustomConvertTokenView(ConvertTokenView):
+    def post(self, request, *args, **kwargs):
+        try:
+            mutable_data = request.data.copy()
+            request._request.POST = request._request.POST.copy()
+            for key, value in mutable_data.items():
+                request._request.POST[key] = value
+
+            url, headers, body, stt = self.create_token_response(request._request)
+            return response_data(status=stt, data=json.loads(body))
+        except BadRequest as ex:
+            str_ex = str(ex)
+            return response_data(
+                status=status.HTTP_400_BAD_REQUEST,
+                errors={"errorMessage": [str_ex]}
+            )
 
 
 @api_view(http_method_names=['post'])

@@ -32,7 +32,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
-ALLOWED_HOSTS = ['192.168.1.5', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.1.5', '192.168.1.13', '127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -216,7 +216,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 
 # GOOGLE
 # Google configuration
-SOCIAL_AUTH_GOOGLE_OAUTH2_URL = ''
+SOCIAL_AUTH_GOOGLE_OAUTH2_URL = 'https://accounts.google.com/o/oauth2/auth'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 # Define SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE to get extra permissions from Google.
@@ -229,8 +229,9 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
     'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'authentication.pipeline.create_user',
+    'authentication.pipeline.custom_social_user',
+    'authentication.pipeline.custom_create_user',
+    'info.pipeline.save_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details'
