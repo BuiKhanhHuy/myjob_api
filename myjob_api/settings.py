@@ -17,6 +17,8 @@ from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 import cloudinary
+import firebase_admin
+from firebase_admin import credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -284,5 +286,12 @@ MYJOB_AUTH = {
     "VERIFY_EMAIL_LINK_EXPIRE_SECONDS": 7200,
     "RESET_PASSWORD_LINK_EXPIRE_SECONDS": 7200
 }
+
+# FIREBASE
+FIREBASE_CONFIG = os.path.join(BASE_DIR, 'configs', 'firebase-config.json')
+cred = credentials.Certificate(FIREBASE_CONFIG)
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://myjobpro-6283b-default-rtdb.asia-southeast1.firebasedatabase.app/'
+})
 
 APP_ENVIRONMENT = config('APP_ENV')

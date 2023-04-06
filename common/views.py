@@ -171,11 +171,10 @@ def get_top_10_careers(request):
     return var_res.response_data(data=serializer.data)
 
 
-from console.jobs import queue_mail
+from firebase_admin import db
 
 
 @api_view(http_method_names=["GET"])
 def demo(request):
-
-    queue_mail.send_email_verify_email_task.delay(['khuy220@gmail.com'])
-    return var_res.response_data()
+    ref = db.reference()
+    return var_res.response_data(data=ref.get())

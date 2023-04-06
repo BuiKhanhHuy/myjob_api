@@ -50,7 +50,7 @@ class CustomTokenView(TokenView):
             return response_data(status=stt, data=json.loads(body))
         if stt == status.HTTP_400_BAD_REQUEST:
             return response_data(status=stt, errors={
-                "errorMessage": ["Email hoặc mật khẩu không chính xác.sdfdsf"]
+                "errorMessage": ["Email hoặc mật khẩu không chính xác."]
             })
         else:
             return response_data(status=stt)
