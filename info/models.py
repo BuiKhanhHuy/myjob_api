@@ -134,8 +134,6 @@ class AdvancedSkill(InfoBaseModel):
 
 
 class CompanyFollowed(InfoBaseModel):
-    is_followed = models.BooleanField(default=True)
-
     # ForeignKey
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

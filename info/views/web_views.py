@@ -2,6 +2,7 @@ import cloudinary.uploader
 
 from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers, paginations
+from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
@@ -195,7 +196,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
             resume.save()
         else:
             Resume.objects.filter(user=self.request.user) \
-                .exclude(slug=resume.slug)\
+                .exclude(slug=resume.slug) \
                 .update(is_active=False)
             resume.is_active = True
             resume.save()
@@ -372,7 +373,6 @@ class ResumeViewedAPIView(views.APIView):
         user = request.user
 
         queryset = ResumeViewed.objects.filter(
-            resume__is_active=True,
             resume__user=user
         ).order_by('-update_at', '-create_at')
 
@@ -550,6 +550,28 @@ class CompanyViewSet(viewsets.ViewSet,
         ])
         return Response(data=serializer.data)
 
+    @action(methods=["get"], detail=False,
+            url_path="top", url_name="companies-top")
+    def get_top_companies(self, request):
+        try:
+            queryset = Company.objects.annotate(num_follow=Count('companyfollowed'),
+                                                num_job_post=Count('job_posts')
+                                                ) \
+                           .exclude(Q(company_image_public_id__isnull=True)
+                                    | Q(website_url__isnull=True)
+                                    | Q(field_operation__isnull=True)
+                                    | Q(employee_size__isnull=True)
+                                    | Q(since__isnull=True)) \
+                           .order_by('-num_follow', '-num_job_post')[:10]
+            serializer = CompanySerializer(queryset, many=True,
+                                           fields=[
+                                               'id', 'slug', 'companyName', 'companyImageUrl'
+                                           ])
+        except Exception as ex:
+            helper.print_log_error("get_top_companies", ex)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(data=serializer.data)
+
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
     def followed(self, request, slug):
@@ -581,10 +603,8 @@ class CompanyFollowedAPIView(views.APIView):
     def get(self, request):
         user = request.user
 
-        queryset = CompanyFollowed.objects.filter(
-            user=user,
-            is_followed=True
-        ).order_by("-update_at", "-create_at")
+        queryset = CompanyFollowed.objects.filter(user=user) \
+            .order_by("-update_at", "-create_at")
 
         paginator = self.pagination_class
         page = paginator.paginate_queryset(queryset, request)

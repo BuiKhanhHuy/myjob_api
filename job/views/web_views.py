@@ -1,6 +1,6 @@
 from configs import variable_response as var_res, renderers, paginations, table_export
 from helpers import utils
-from django.db.models import Count
+from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -51,28 +51,26 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
     @action(methods=["get"], detail=False,
             url_path="suggested-job-posts", url_name="suggested-job-posts")
     def get_suggested_job_posts(self, request):
-        resumes = Resume.objects.filter(is_active=True, user=request.user)
-        if resumes.exists():
-            resume = resumes.first()
-            queryset = JobPost.objects.filter(is_verify=True)
-            if resume.career:
-                queryset = queryset.filter(career=resume.career)
-            if resume.city:
-                queryset = queryset.filter(location__city=resume.city)
+        resumes = Resume.objects.filter(user=request.user) \
+            .values_list("career", "city")
+        careers_id = [x[0] for x in resumes]
+        cities_id = [x[1] for x in resumes]
 
-            queryset = queryset.order_by("-create_at", "-update_at")
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True, fields=[
-                    'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-                    'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
-                    'locationDict'
-                ])
-                return self.get_paginated_response(serializer.data)
+        queryset = JobPost.objects.filter(is_verify=True) \
+            .filter(career__in=careers_id, location__city__in=cities_id)
 
-            serializer = self.get_serializer(queryset, many=True)
-            return var_res.Response(serializer.data)
-        return var_res.Response()
+        queryset = queryset.order_by("-create_at", "-update_at")
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+                'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+                'locationDict'
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()

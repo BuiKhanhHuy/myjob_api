@@ -12,6 +12,7 @@ urlpatterns = [
         path('', include(app_router.urls))
     ])),
     path('web/', include([
-        path("", include(web_router.urls))
+        path("", include(web_router.urls)),
+        path("sms-download-app/", views.send_sms_download_app)
     ]))
 ]

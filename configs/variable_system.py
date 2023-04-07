@@ -24,6 +24,9 @@ PLATFORM_CHOICES = (
     ('APP', 'Ứng dụng')
 )
 
+LINK_GOOGLEPLAY = ""
+LINK_APPSTORE = ""
+
 ROLE_CHOICES = (
     (ADMIN, 'Quản trị viên'),
     (EMPLOYER, 'Nhà tuyển dụng'),

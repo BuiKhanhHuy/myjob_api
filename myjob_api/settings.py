@@ -287,11 +287,18 @@ MYJOB_AUTH = {
     "RESET_PASSWORD_LINK_EXPIRE_SECONDS": 7200
 }
 
+# TWILIO
+TWILIO_ACCOUNT_SID = "ACd3da0224a922434d28fb3f268d37c2ab"
+TWILIO_AUTH_TOKEN = "b1878132d4cbeaf99605c5d98ce7598a"
+TWILIO_PHONE = "+15856393430"
+
 # FIREBASE
 FIREBASE_CONFIG = os.path.join(BASE_DIR, 'configs', 'firebase-config.json')
 cred = credentials.Certificate(FIREBASE_CONFIG)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://myjobpro-6283b-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
+
+COMPANY_NAME = "MyJob"
 
 APP_ENVIRONMENT = config('APP_ENV')

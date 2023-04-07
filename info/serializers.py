@@ -137,7 +137,7 @@ class CompanySerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
 
     def get_follow_number(self, company):
-        return company.companyfollowed_set.filter(is_followed=True).count()
+        return company.companyfollowed_set.filter().count()
 
     def get_job_post_number(self, company):
         return company.job_posts.count()
@@ -148,7 +148,7 @@ class CompanySerializer(serializers.ModelSerializer):
             return None
         user = request.user
         if user.is_authenticated:
-            return company.companyfollowed_set.filter(user=user, is_followed=True).count() > 0
+            return company.companyfollowed_set.filter(user=user).count() > 0
         return None
 
     class Meta:
