@@ -118,11 +118,11 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 return var_res.response_data()
             serializer = ResumeSerializer(resumes.first(),
                                           fields=["id", "slug", "title", "experience", "position",
-                                                  "salaryMin", "salaryMax", "updateAt", "user"])
+                                                  "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
         else:
             serializer = ResumeSerializer(resumes, many=True,
                                           fields=["id", "slug", "title", "updateAt",
-                                                  "imageUrl", "fileUrl"])
+                                                  "imageUrl", "fileUrl", "isActive"])
 
         return var_res.response_data(data=serializer.data)
 
@@ -138,6 +138,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
     def get_permissions(self):
         if self.action in ["get_resume_detail_of_job_seeker",
                            "update", "partial_update",
+                           "resume_active",
                            "destroy",
                            "get_experiences_detail",
                            "get_educations_detail",
@@ -184,6 +185,21 @@ class PrivateResumeViewSet(viewsets.ViewSet,
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    @action(methods=["get"], detail=True,
+            url_path='resume-active', url_name="resume-active", )
+    def active_resume(self, request, slug):
+        resume = self.get_object()
+        if resume.is_active:
+            resume.is_active = False
+            resume.save()
+        else:
+            Resume.objects.filter(user=self.request.user) \
+                .exclude(slug=resume.slug)\
+                .update(is_active=False)
+            resume.is_active = True
+            resume.save()
+        return var_res.response_data()
 
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )

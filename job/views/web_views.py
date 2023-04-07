@@ -76,7 +76,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()
-                                        .filter(is_verify=True, user=request.user,
+                                        .filter(user=request.user,
                                                 company=request.user.company)
                                         .order_by('-id', 'update_at', 'create_at'))
 
@@ -84,7 +84,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
                 "id", "slug", "jobName", "createAt", "deadline",
-                "appliedNumber", "views", "isUrgent"
+                "appliedNumber", "views", "isUrgent", "isVerify"
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -112,7 +112,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             "id", "jobName", "academicLevel", "deadline", "quantity",
             "genderRequired",
             "jobDescription", "jobRequirement", "benefitsEnjoyed",
-            "career",
+            "career", 'isVerify',
             "position", "typeOfWorkplace", "experience",
             "jobType", "salaryMin", "salaryMax", "isUrgent",
             "contactPersonName", "contactPersonPhone",
