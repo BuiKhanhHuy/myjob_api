@@ -9,3 +9,15 @@ JOB_POSTS_EXPORT_FIELD = {
     "appliedNumber": "Số Hồ Sơ Ứng Tuyển",
     "views": "Lượt Xem"
 }
+
+RESUMES_EXPORT_FIELD = {
+    "stt": "STT",
+    "title": "Tên hồ sơ",
+    "fullName": "Họ và tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "gender": "Giới tính",
+    "birthday": "Ngày sinh",
+    "address": "Địa chỉ",
+    "createAt": "Ngày lưu"
+}

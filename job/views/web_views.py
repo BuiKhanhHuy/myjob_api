@@ -15,11 +15,13 @@ from ..models import (
 )
 from ..filters import (
     JobPostFilter,
-    AliasedOrderingFilter
+    AliasedOrderingFilter,
+    EmployerJobPostActivityFilter
 )
 from ..serializers import (
     JobPostSerializer,
-    JobPostActivitySerializer
+    JobSeekerJobPostActivitySerializer,
+    EmployerJobPostActivitySerializer
 )
 
 
@@ -213,7 +215,7 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
                                       generics.ListAPIView,
                                       generics.CreateAPIView):
     queryset = JobPostActivity.objects
-    serializer_class = JobPostActivitySerializer
+    serializer_class = JobSeekerJobPostActivitySerializer
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
@@ -239,5 +241,25 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                                      generics.ListAPIView,
                                      generics.UpdateAPIView):
     queryset = JobPostActivity.objects
-    serializer_class = JobPostActivitySerializer
+    serializer_class = EmployerJobPostActivitySerializer
     permission_classes = [perms_custom.IsEmployerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+    filterset_class = EmployerJobPostActivityFilter
+    filter_backends = [DjangoFilterBackend]
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+
+        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company)
+                                        .order_by('-id', 'create_at'))
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "fullName", "title", "type", "jobName", "status", "createAt"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)

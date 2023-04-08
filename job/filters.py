@@ -7,7 +7,8 @@ from django.db.models import Q
 import django_filters
 from rest_framework.filters import OrderingFilter
 from .models import (
-    JobPost
+    JobPost,
+    JobPostActivity
 )
 
 
@@ -66,3 +67,35 @@ class AliasedOrderingFilter(OrderingFilter):
                 else:
                     ordering.append(aliased_fields[field])
         return ordering
+
+
+class EmployerJobPostActivityFilter(django_filters.FilterSet):
+    cityId = django_filters.NumberFilter(field_name='resume__city')
+    careerId = django_filters.NumberFilter(field_name='resume__career')
+    experienceId = django_filters.ChoiceFilter(choices=var_sys.EXPERIENCE_CHOICES,
+                                               field_name='resume__experience')
+    positionId = django_filters.ChoiceFilter(choices=var_sys.POSITION_CHOICES,
+                                             field_name='resume__position')
+    academicLevelId = django_filters.ChoiceFilter(choices=var_sys.POSITION_CHOICES,
+                                                  field_name='resume__academic_level')
+    typeOfWorkplaceId = django_filters.ChoiceFilter(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES,
+                                                    field_name='resume__type_of_workplace')
+    jobTypeId = django_filters.ChoiceFilter(choices=var_sys.JOB_TYPE_CHOICES,
+                                            field_name='resume__job_type')
+
+    genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES,
+                                           field_name='resume__job_seeker_profile__gender')
+    maritalStatusId = django_filters.ChoiceFilter(choices=var_sys.MARITAL_STATUS_CHOICES,
+                                                  field_name="resume__job_seeker_profile__marital_status")
+
+    jobPostId = django_filters.NumberFilter(field_name='job_post')
+
+    class Meta:
+        model = JobPostActivity
+        fields = [
+            'cityId', 'careerId',
+            'experienceId', 'positionId',
+            'academicLevelId', 'typeOfWorkplaceId',
+            'jobTypeId', 'genderId', 'maritalStatusId',
+            'jobPostId'
+        ]

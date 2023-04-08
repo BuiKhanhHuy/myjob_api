@@ -75,6 +75,7 @@ class JobPostActivity(JobPostBaseModel):
     email = models.EmailField(max_length=100, null=True)
     phone = models.CharField(max_length=15, null=True)
 
+    status = models.IntegerField(choices=var_sys.APPLICATION_STATUS, null=True)
     # ForeignKey
     job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

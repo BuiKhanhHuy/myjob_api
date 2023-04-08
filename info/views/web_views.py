@@ -1,6 +1,7 @@
 import cloudinary.uploader
 
-from configs import variable_system as var_sys
+from helpers import utils
+from configs import variable_system as var_sys, table_export
 from configs import variable_response as var_res, renderers, paginations
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
@@ -31,6 +32,7 @@ from ..serializers import (
     ResumeDetailSerializer,
     ResumeViewedSerializer,
     ResumeSavedSerializer,
+    ResumeSavedExportSerializer,
     CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -398,6 +400,20 @@ class ResumeSavedViewSet(viewsets.ViewSet,
 
         serializer = ResumeSavedSerializer(queryset, many=True)
         return Response(data=serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="export", url_name="resumes-export")
+    def export_resumes(self, request):
+        user = request.user
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(company=user.company,
+                                                resume__is_active=True)
+                                        .order_by("-create_at"))
+        serializer = ResumeSavedExportSerializer(queryset, many=True)
+
+        result_data = utils.convert_data_with_en_key_to_vn_kew(serializer.data,
+                                                               table_export.RESUMES_EXPORT_FIELD)
+        return Response(data=result_data)
 
 
 class EducationDetailViewSet(viewsets.ViewSet,

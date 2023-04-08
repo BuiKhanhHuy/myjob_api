@@ -161,7 +161,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
 
 
-class JobPostActivitySerializer(serializers.ModelSerializer):
+class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100)
     phone = serializers.CharField(required=True, max_length=15)
@@ -202,3 +202,29 @@ class JobPostActivitySerializer(serializers.ModelSerializer):
         except Exception as ex:
             helper.print_log_error("create job post activity", ex)
             return None
+
+
+class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
+    fullName = serializers.CharField(source="full_name", required=True, max_length=100)
+    email = serializers.EmailField(required=True, max_length=100)
+    phone = serializers.CharField(required=True, max_length=15)
+    title = serializers.PrimaryKeyRelatedField(source="resume.title", read_only=True)
+    type = serializers.PrimaryKeyRelatedField(source="resume.type", read_only=True)
+    jobName = serializers.PrimaryKeyRelatedField(source="job_post.job_name", read_only=True)
+    createAt = serializers.DateTimeField(source='create_at', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = JobPostActivity
+        fields = ("id", "fullName", "email", "phone", "title", "type",
+                  "jobName", "status", "createAt")

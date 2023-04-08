@@ -476,7 +476,8 @@ class ResumeViewedSerializer(serializers.ModelSerializer):
 
 class ResumeSavedSerializer(serializers.ModelSerializer):
     resume = ResumeSerializer(fields=[
-        "id", "slug", "title", "salaryMin", "salaryMax", "experience", "city", "userDict", "jobSeekerProfileDict"
+        "id", "slug", "title", "salaryMin", "salaryMax",
+        "experience", "city", "userDict", "jobSeekerProfileDict", "type"
     ])
     createAt = serializers.DateTimeField(source='create_at', read_only=True)
     updateAt = serializers.DateTimeField(source='update_at', read_only=True)
@@ -495,6 +496,35 @@ class ResumeSavedSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeSaved
         fields = ("id", "resume", "createAt", "updateAt")
+
+
+class ResumeSavedExportSerializer(serializers.ModelSerializer):
+    title = serializers.PrimaryKeyRelatedField(source="resume.title", read_only=True)
+    fullName = serializers.PrimaryKeyRelatedField(source="resume.user.full_name", read_only=True)
+    email = serializers.PrimaryKeyRelatedField(source="resume.user.email", read_only=True)
+    phone = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.phone", read_only=True)
+    gender = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.gender", read_only=True)
+
+    birthday = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.birthday", read_only=True)
+    address = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.location.city.name", read_only=True)
+    createAt = serializers.DateTimeField(source='create_at', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = ResumeSaved
+        fields = ("title", "fullName", "email", "phone",
+                  "gender", "birthday", "address",
+                  "createAt")
 
 
 class EducationSerializer(serializers.ModelSerializer):
