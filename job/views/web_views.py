@@ -21,7 +21,8 @@ from ..filters import (
 from ..serializers import (
     JobPostSerializer,
     JobSeekerJobPostActivitySerializer,
-    EmployerJobPostActivitySerializer
+    EmployerJobPostActivitySerializer,
+    EmployerJobPostActivityExportSerializer
 )
 
 
@@ -51,6 +52,19 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         if self.action in ["get_suggested_job_posts"]:
             return [perms_sys.IsAuthenticated()]
         return [perms_custom.JobPostOwnerPerms()]
+
+    @action(methods=["get"], detail=False,
+            url_path="job-posts-options", url_name="job-posts-options")
+    def get_job_post_options(self, request):
+        user = request.user
+        queryset = self.queryset.filter(user=user, company=user.company)
+
+        serializer = JobPostSerializer(queryset, many=True,
+                                       fields=[
+                                           "id",
+                                           "jobName"
+                                       ])
+        return var_res.Response(serializer.data)
 
     @action(methods=["get"], detail=False,
             url_path="suggested-job-posts", url_name="suggested-job-posts")
@@ -263,3 +277,21 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="export", url_name="job-posts-activity-export")
+    def export_job_posts_activity(self, request):
+        user = request.user
+
+        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company)
+                                        .order_by('-id', 'create_at'))
+        serializer = EmployerJobPostActivityExportSerializer(queryset, many=True, fields=[
+            "title", "fullName", "email", "phone",
+            "gender", "birthday", "address",
+            "jobName",
+            "createAt", "statusApply"
+        ])
+        result_data = utils.convert_data_with_en_key_to_vn_kew(serializer.data,
+                                                               table_export.JOB_POST_ACTIVITY_FIELD)
+
+        return Response(data=result_data)

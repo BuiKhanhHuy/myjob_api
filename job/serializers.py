@@ -228,3 +228,44 @@ class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
         model = JobPostActivity
         fields = ("id", "fullName", "email", "phone", "title", "type",
                   "jobName", "status", "createAt")
+
+
+class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):
+    title = serializers.PrimaryKeyRelatedField(source="resume.title", read_only=True)
+    fullName = serializers.PrimaryKeyRelatedField(source="full_name", read_only=True)
+    email = serializers.PrimaryKeyRelatedField(read_only=True)
+    phone = serializers.PrimaryKeyRelatedField(read_only=True)
+    gender = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.gender", read_only=True)
+
+    birthday = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.birthday", read_only=True)
+    address = serializers.PrimaryKeyRelatedField(source="resume.job_seeker_profile.location.city.name", read_only=True)
+    jobName = serializers.PrimaryKeyRelatedField(source="job_post.job_name", read_only=True)
+    createAt = serializers.DateTimeField(source='create_at', read_only=True)
+    statusApply = serializers.SerializerMethodField(method_name="get_status_apply")
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    def get_status_apply(self, job_post_activity):
+        status = job_post_activity.status
+        result = "Chờ xác nhận"
+        for x in var_sys.APPLICATION_STATUS:
+            if x[0] == status:
+                result = x[1]
+                break
+        return result
+
+    class Meta:
+        model = JobPostActivity
+        fields = ("title", "fullName", "email", "phone",
+                  "gender", "birthday", "address",
+                  "jobName", "createAt", "statusApply")
+

@@ -21,3 +21,17 @@ RESUMES_EXPORT_FIELD = {
     "address": "Địa chỉ",
     "createAt": "Ngày lưu"
 }
+
+JOB_POST_ACTIVITY_FIELD = {
+    "stt": "STT",
+    "title": "Tên hồ sơ",
+    "fullName": "Họ và tên",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "gender": "Giới tính",
+    "birthday": "Ngày sinh",
+    "address": "Địa chỉ",
+    "jobName": "Vị trí ứng tuyển",
+    "createAt": "Ngày ứng tuyển",
+    "statusApply": "Kết quả tuyển dụng"
+}
