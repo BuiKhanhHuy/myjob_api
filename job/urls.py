@@ -8,6 +8,10 @@ app_router = DefaultRouter()
 web_router = DefaultRouter()
 web_router.register('private-job-posts', web_views.PrivateJobPostViewSet, basename='private-web-job-posts')
 web_router.register('job-posts', web_views.JobPostViewSet, basename="web-job-posts")
+web_router.register('job-seeker-job-posts-activity', web_views.JobSeekerJobPostActivityViewSet,
+                    basename='web-job-seeker-job-posts-activity')
+web_router.register('employer-job-posts-activity', web_views.EmployerJobPostActivityViewSet,
+                    basename='web-employer-job-posts-activity')
 
 urlpatterns = [
     # path('app/', include([

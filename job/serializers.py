@@ -1,7 +1,6 @@
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from django.db import transaction
 from .models import (
     JobPost,
@@ -159,4 +158,47 @@ class JobPostSerializer(serializers.ModelSerializer):
                 return instance
         except Exception as ex:
             helper.print_log_error("update job post", ex)
+            return None
+
+
+class JobPostActivitySerializer(serializers.ModelSerializer):
+    fullName = serializers.CharField(source="full_name", required=True, max_length=100)
+    email = serializers.EmailField(required=True, max_length=100)
+    phone = serializers.CharField(required=True, max_length=15)
+
+    createAt = serializers.DateTimeField(source='create_at', read_only=True)
+    updateAt = serializers.DateTimeField(source='update_at', read_only=True)
+    jobPostDict = JobPostSerializer(source="job_post", fields=[
+        'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
+        'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+        'locationDict'
+    ], read_only=True)
+    resumeDict = info_serializers.ResumeSerializer(source="resume", fields=[
+        'id', 'slug', 'title', 'type'
+    ], read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = JobPostActivity
+        fields = ("id", "job_post", "resume", "fullName", "email", "phone",
+                  "createAt", "updateAt", "jobPostDict", "resumeDict")
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        try:
+            with transaction.atomic():
+                job_post_activity = JobPostActivity.objects.create(**validated_data, user=request.user)
+            return job_post_activity
+        except Exception as ex:
+            helper.print_log_error("create job post activity", ex)
             return None

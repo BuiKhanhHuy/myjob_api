@@ -22,6 +22,7 @@ from ..models import (
 )
 from ..filters import (
     ResumeFilter,
+    ResumeSavedFilter,
     CompanyFilter
 )
 from ..serializers import (
@@ -29,6 +30,7 @@ from ..serializers import (
     ResumeSerializer,
     ResumeDetailSerializer,
     ResumeViewedSerializer,
+    ResumeSavedSerializer,
     CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -100,30 +102,35 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
             url_path="resumes", url_name="get-resumes")
     def get_resumes(self, request, pk):
         query_params = request.query_params
-        if "resumeType" not in query_params:
-            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
-                                         errors={"detail": "resumeType is required."})
-        resume_type = query_params["resumeType"]
-        if not (resume_type == var_sys.CV_WEBSITE) and not (resume_type == var_sys.CV_UPLOAD):
-            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
-                                         errors={"detail": "resumeType is invalid."})
+        resume_type = query_params.get("resumeType", None)
 
         job_seeker_profile = self.get_object()
         if not job_seeker_profile:
             raise Exception("User doesn't have job_seeker_profile.")
 
         resumes = job_seeker_profile.resumes
-        resumes = resumes.filter(type=resume_type)
-        if resume_type == var_sys.CV_WEBSITE:
-            if not resumes.first():
-                return var_res.response_data()
-            serializer = ResumeSerializer(resumes.first(),
-                                          fields=["id", "slug", "title", "experience", "position",
-                                                  "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
+        # get all
+        if resume_type is None:
+            serializer = ResumeSerializer(resumes, many=True, fields=[
+                "id", "slug", "title", "type"
+            ])
         else:
-            serializer = ResumeSerializer(resumes, many=True,
-                                          fields=["id", "slug", "title", "updateAt",
-                                                  "imageUrl", "fileUrl", "isActive"])
+            # get by type
+            if not (resume_type == var_sys.CV_WEBSITE) and not (resume_type == var_sys.CV_UPLOAD):
+                return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                             errors={"detail": "resumeType is invalid."})
+
+            resumes = resumes.filter(type=resume_type)
+            if resume_type == var_sys.CV_WEBSITE:
+                if not resumes.first():
+                    return var_res.response_data()
+                serializer = ResumeSerializer(resumes.first(),
+                                              fields=["id", "slug", "title", "experience", "position",
+                                                      "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
+            else:
+                serializer = ResumeSerializer(resumes, many=True,
+                                              fields=["id", "slug", "title", "updateAt",
+                                                      "imageUrl", "fileUrl", "isActive"])
 
         return var_res.response_data(data=serializer.data)
 
@@ -322,27 +329,6 @@ class ResumeViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
 
-    @action(methods=["get"], detail=False,
-            url_path="resumes-saved", url_name="resumes-saved")
-    def get_resumes_saved(self, request):
-        # user = request.user
-        # queryset = user.saved_job_posts.filter(is_verify=True) \
-        #     .order_by('update_at', 'create_at')
-        #
-        # page = self.paginate_queryset(queryset)
-        #
-        # if page is not None:
-        #     serializer = self.get_serializer(page, many=True, fields=[
-        #         'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-        #         'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
-        #         'locationDict'
-        #     ])
-        #     return self.get_paginated_response(serializer.data)
-        #
-        # serializer = self.get_serializer(queryset, many=True)
-        # return var_res.Response(serializer.data)
-        return var_res.Response()
-
     @action(methods=["post"], detail=True,
             url_path="resume-saved", url_name="resume-saved")
     def resume_saved(self, request, slug):
@@ -383,6 +369,34 @@ class ResumeViewedAPIView(views.APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = ResumeViewedSerializer(queryset, many=True)
+        return Response(data=serializer.data)
+
+
+class ResumeSavedViewSet(viewsets.ViewSet,
+                         generics.ListAPIView):
+    queryset = ResumeSaved.objects
+    permission_classes = [perms_custom.IsEmployerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+    filterset_class = ResumeSavedFilter
+    filter_backends = [DjangoFilterBackend]
+
+    def list(self, request, *args, **kwargs):
+        # danh sach ho so da luu cua nha tuyen dung
+        user = request.user
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(company=user.company, resume__is_active=True)
+                                        .order_by("-create_at"))
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = ResumeSavedSerializer(page, many=True, fields=[
+                "id", "resume", "createAt"
+            ])
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = ResumeSavedSerializer(queryset, many=True)
         return Response(data=serializer.data)
 
 
@@ -575,22 +589,19 @@ class CompanyViewSet(viewsets.ViewSet,
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
     def followed(self, request, slug):
+        is_followed = False
         companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
         if companies_followed.exists():
             company_followed = companies_followed.first()
-
-            is_followed_current = company_followed.is_followed
-            company_followed.is_followed = not is_followed_current
-
-            company_followed.save()
+            company_followed.delete()
         else:
-            company_followed = CompanyFollowed.objects.create(
+            CompanyFollowed.objects.create(
                 user=request.user,
                 company=self.get_object(),
-                is_followed=True
             )
+            is_followed = True
         return Response(data={
-            "isFollowed": company_followed.is_followed
+            "isFollowed": is_followed
         })
 
 

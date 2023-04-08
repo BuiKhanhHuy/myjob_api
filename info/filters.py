@@ -3,7 +3,8 @@ from django.db.models import Q
 import django_filters
 from .models import (
     Company,
-    Resume
+    Resume,
+    ResumeSaved
 )
 
 
@@ -38,6 +39,22 @@ class ResumeFilter(django_filters.FilterSet):
             'academicLevelId', 'typeOfWorkplaceId',
             'jobTypeId', 'genderId', 'maritalStatusId'
         ]
+
+
+class ResumeSavedFilter(django_filters.FilterSet):
+    kw = django_filters.CharFilter(method="job_name_or_full_name")
+    salaryMax = django_filters.NumberFilter(field_name="resume__salary_max",
+                                            lookup_expr="lte")
+    experienceId = django_filters.ChoiceFilter(choices=var_sys.EXPERIENCE_CHOICES,
+                                               field_name='resume__experience')
+    cityId = django_filters.NumberFilter(field_name='resume__city')
+
+    def job_name_or_full_name(self, queryset, name, value):
+        return queryset.filter(Q(resume__title__icontains=value) | Q(resume__user__full_name__icontains=value))
+
+    class Meta:
+        model = ResumeSaved
+        fields = ['kw', 'salaryMax', 'experienceId', 'cityId']
 
 
 class CompanyFilter(django_filters.FilterSet):

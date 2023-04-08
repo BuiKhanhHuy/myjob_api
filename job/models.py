@@ -4,7 +4,7 @@ from django.utils.text import slugify
 from django_extensions.db.fields import AutoSlugField
 from authentication.models import User
 from common.models import City, District, Location, Career
-from info.models import Company
+from info.models import Company, Resume
 
 
 class JobPostBaseModel(models.Model):
@@ -71,9 +71,14 @@ class SavedJobPost(JobPostBaseModel):
 
 
 class JobPostActivity(JobPostBaseModel):
+    full_name = models.CharField(max_length=100, null=True)
+    email = models.EmailField(max_length=100, null=True)
+    phone = models.CharField(max_length=15, null=True)
+
     # ForeignKey
     job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "myjob_job_job_post_activity"

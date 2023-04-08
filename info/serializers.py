@@ -421,7 +421,7 @@ class ResumeSerializer(serializers.ModelSerializer):
                   "salaryMin", "salaryMax",
                   "position", "experience", "academicLevel",
                   "typeOfWorkplace", "jobType", "isActive",
-                  "city", "career", "updateAt", "file",
+                  "career", "updateAt", "file",
                   "imageUrl", "fileUrl", "user", "city", 'isSaved',
                   "viewEmployerNumber", "userDict", "jobSeekerProfileDict",
                   "type")
@@ -472,6 +472,29 @@ class ResumeViewedSerializer(serializers.ModelSerializer):
             'company',
             'isSavedResume'
         )
+
+
+class ResumeSavedSerializer(serializers.ModelSerializer):
+    resume = ResumeSerializer(fields=[
+        "id", "slug", "title", "salaryMin", "salaryMax", "experience", "city", "userDict", "jobSeekerProfileDict"
+    ])
+    createAt = serializers.DateTimeField(source='create_at', read_only=True)
+    updateAt = serializers.DateTimeField(source='update_at', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = ResumeSaved
+        fields = ("id", "resume", "createAt", "updateAt")
 
 
 class EducationSerializer(serializers.ModelSerializer):

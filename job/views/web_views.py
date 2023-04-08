@@ -10,14 +10,16 @@ from rest_framework.response import Response
 from info.models import Resume
 from ..models import (
     JobPost,
-    SavedJobPost
+    SavedJobPost,
+    JobPostActivity
 )
 from ..filters import (
     JobPostFilter,
     AliasedOrderingFilter
 )
 from ..serializers import (
-    JobPostSerializer
+    JobPostSerializer,
+    JobPostActivitySerializer
 )
 
 
@@ -179,18 +181,13 @@ class JobPostViewSet(viewsets.ViewSet,
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
                 'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-                'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
+                'jobName', 'isHot', 'isUrgent', 'isApplied', 'salary', 'city', 'deadline',
                 'locationDict'
             ])
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
-
-    @action(methods=["get"], detail=False,
-            url_path="job-posts-applied", url_name="job-posts-applied")
-    def get_job_posts_applied(self, request):
-        return var_res.response_data()
 
     @action(methods=["post"], detail=True,
             url_path="job-saved", url_name="job-saved")
@@ -210,3 +207,37 @@ class JobPostViewSet(viewsets.ViewSet,
         return Response(data={
             "isSaved": is_saved
         })
+
+
+class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
+                                      generics.ListAPIView,
+                                      generics.CreateAPIView):
+    queryset = JobPostActivity.objects
+    serializer_class = JobPostActivitySerializer
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = user.jobpostactivity_set \
+            .order_by('-create_at', '-update_at')
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "createAt", "jobPostDict", "resumeDict"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+
+class EmployerJobPostActivityViewSet(viewsets.ViewSet,
+                                     generics.ListAPIView,
+                                     generics.UpdateAPIView):
+    queryset = JobPostActivity.objects
+    serializer_class = JobPostActivitySerializer
+    permission_classes = [perms_custom.IsEmployerUser]
