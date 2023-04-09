@@ -19,6 +19,7 @@ from celery.schedules import crontab
 import cloudinary
 import firebase_admin
 from firebase_admin import credentials
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,7 +33,8 @@ SECRET_KEY = 'django-insecure-m)n0iq(0d55p5$xc7t)wmn5$9-dv8zw1a3k9nwnf#v86&mu=gt
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
