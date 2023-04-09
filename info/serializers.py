@@ -767,3 +767,12 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
                   "experiencesDetails", "educationDetails",
                   "certificates", "languageSkills", "advancedSkills"
                   )
+
+
+class SendMailReplyToJobSeekerSerializer(serializers.Serializer):
+    fullName = serializers.CharField(max_length=100, required=True)
+    title = serializers.CharField(max_length=200, required=True)
+    content = serializers.CharField(required=True)
+
+    email = serializers.EmailField(max_length=100, required=True)
+    isSendMe = serializers.BooleanField(default=False)

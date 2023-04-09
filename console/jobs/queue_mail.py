@@ -1,3 +1,5 @@
+from configs import variable_system as var_sys
+from datetime import datetime
 from helpers import utils
 from celery import shared_task
 from django.template.loader import render_to_string
@@ -9,6 +11,12 @@ def send_email_verify_email_task(to, data=None, cc=None, bcc=None):
     if data is None:
         data = {}
     subject = "Xác thực email"
+
+    data["my_email"] = var_sys.COMPANY_INFO["EMAIL"]
+    data["my_phone"] = var_sys.COMPANY_INFO["PHONE"]
+    data["my_logo_link"] = var_sys.COMPANY_INFO["DARK_LOGO_LINK"]
+    data["my_address"] = var_sys.COMPANY_INFO["ADDRESS"]
+    data["now"] = datetime.now().date().strftime(var_sys.DATE_TIME_FORMAT["dmY"])
 
     email_html = render_to_string('verify-email.html', data)
     text_content = strip_tags(email_html)
@@ -26,9 +34,15 @@ def send_email_reset_password_task(to, data=None, cc=None, bcc=None):
         data = {}
     subject = "Đặt lại mật khẩu"
 
+    data["my_email"] = var_sys.COMPANY_INFO["EMAIL"]
+    data["my_phone"] = var_sys.COMPANY_INFO["PHONE"]
+    data["my_logo_link"] = var_sys.COMPANY_INFO["DARK_LOGO_LINK"]
+    data["my_address"] = var_sys.COMPANY_INFO["ADDRESS"]
+    data["now"] = datetime.now().date().strftime(var_sys.DATE_TIME_FORMAT["dmY"])
+
     email_html = render_to_string('forgot-password.html', data)
     text_content = strip_tags(email_html)
-    sent = utils.send_mail(subject, text_content, email_html, to=to)
+    sent = utils.send_mail(subject, text_content, email_html, to=to, cc=cc, bcc=bcc)
 
     if sent:
         return 'Email reset password sent successfully.'
@@ -37,10 +51,20 @@ def send_email_reset_password_task(to, data=None, cc=None, bcc=None):
 
 
 @shared_task
-def send_email_apply_job_task():
-    return "AHIHI"
+def send_email_reply_job_seeker_task(to, subject, data=None, cc=None, bcc=None):
+    if data is None:
+        data = {}
+    data["my_email"] = var_sys.COMPANY_INFO["EMAIL"]
+    data["my_phone"] = var_sys.COMPANY_INFO["PHONE"]
+    data["my_logo_link"] = var_sys.COMPANY_INFO["DARK_LOGO_LINK"]
+    data["my_address"] = var_sys.COMPANY_INFO["ADDRESS"]
+    data["now"] = datetime.now().date().strftime(var_sys.DATE_TIME_FORMAT["dmY"])
 
+    email_html = render_to_string('send-email-reply-to-job-seeker.html', data)
+    text_content = strip_tags(email_html)
+    sent = utils.send_mail(subject, text_content, email_html, to=to, cc=cc, bcc=bcc)
 
-@shared_task
-def send_email_reply_job_seeker_task(subject, recipient, template_name, data=None, cc=None, bcc=None):
-    pass
+    if sent:
+        return 'Email reply to job seeker sent successfully.'
+    else:
+        return 'Email reply to job seeker sent failed!'

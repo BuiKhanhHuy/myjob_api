@@ -19,6 +19,14 @@ AVATAR_DEFAULT = {
     "COMPANY_COVER_IMAGE": "https://img.freepik.com/free-vector/purple-abstract-background_1340-17009.jpg?w=1380&t=st=1680457096~exp=1680457696~hmac=dce6634b13f28ecbe48a8de53421b99783d4b3f9dd4286d6ea2e68176cbfc083",
 }
 
+COMPANY_INFO = {
+    "DARK_LOGO_LINK": "https://res.cloudinary.com/dtnpj540t/image/upload/v1681050602/my-job/my-company-media/myjob-dark-logo.png",
+    "LIGHT_LOGO_LINK": "https://res.cloudinary.com/dtnpj540t/image/upload/v1681050660/my-job/my-company-media/myjob-light-logo.png",
+    "EMAIL": "myjob.contact00000@gmail.com",
+    "PHONE": "0888-425-094",
+    "ADDRESS": "1242 QL1A, Tân Tạo A, Bình Tân, TP. Hồ Chí Minh"
+}
+
 PLATFORM_CHOICES = (
     ('WEB', 'Website'),
     ('APP', 'Ứng dụng')

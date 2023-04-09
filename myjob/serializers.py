@@ -24,6 +24,11 @@ class FeedbackSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
+    def create(self, validated_data):
+        request = self.context['request']
+        feedback = Feedback.objects.create(**validated_data, user=request.user)
+        return feedback
+
     class Meta:
         model = Feedback
         fields = ('id', 'content', 'rating', 'isActive', 'userDict')

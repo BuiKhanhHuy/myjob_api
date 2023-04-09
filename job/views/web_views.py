@@ -272,7 +272,7 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
-                "id", "fullName", "title", "type", "jobName", "status", "createAt"
+                "id", "fullName", "email", "title", "resumeSlug", "type", "jobName", "status", "createAt"
             ])
             return self.get_paginated_response(serializer.data)
 

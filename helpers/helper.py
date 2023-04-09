@@ -85,3 +85,7 @@ def send_email_reset_password(user):
 
     # send mail reset password
     queue_mail.send_email_reset_password_task.delay(to=[user.email], data=data)
+
+
+def send_email_reply_to_job_seeker(to, subject, data):
+    queue_mail.send_email_reply_job_seeker_task.delay(to=to, subject=subject, data=data)

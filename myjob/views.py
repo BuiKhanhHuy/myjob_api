@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework import generics
+from rest_framework import permissions as perms_sys
 from .models import (
     Feedback
 )
@@ -17,10 +18,16 @@ from .serializers import (
 
 
 class FeedbackViewSet(viewsets.ViewSet,
+                      generics.CreateAPIView,
                       generics.ListAPIView):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackSerializer
     renderer_classes = [renderers.MyJSONRenderer]
+
+    def get_permissions(self):
+        if self.action in ["create"]:
+            return [perms_sys.IsAuthenticated()]
+        return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()

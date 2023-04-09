@@ -210,6 +210,7 @@ class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=True, max_length=15)
     title = serializers.PrimaryKeyRelatedField(source="resume.title", read_only=True)
     type = serializers.PrimaryKeyRelatedField(source="resume.type", read_only=True)
+    resumeSlug = serializers.PrimaryKeyRelatedField(source="resume.slug", read_only=True)
     jobName = serializers.PrimaryKeyRelatedField(source="job_post.job_name", read_only=True)
     createAt = serializers.DateTimeField(source='create_at', read_only=True)
 
@@ -227,7 +228,7 @@ class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPostActivity
         fields = ("id", "fullName", "email", "phone", "title", "type",
-                  "jobName", "status", "createAt")
+                  "resumeSlug", "jobName", "status", "createAt")
 
 
 class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):
