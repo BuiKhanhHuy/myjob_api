@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework.response import Response
+from rest_framework import status
 from info.models import Resume
 from ..models import (
     JobPost,
@@ -295,3 +296,17 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                                                                table_export.JOB_POST_ACTIVITY_FIELD)
 
         return Response(data=result_data)
+
+    @action(methods=["put"], detail=True,
+            url_path="application-status", url_name="application-status")
+    def change_application_status(self, request, pk):
+        data = request.data
+
+        if data.get("status", None):
+            stt = data["status"]
+            job_post_activity = self.get_object()
+            job_post_activity.status = stt
+            job_post_activity.save()
+
+            return var_res.Response(status=status.HTTP_200_OK)
+        return var_res.Response(status=status.HTTP_400_BAD_REQUEST)

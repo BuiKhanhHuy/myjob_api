@@ -89,6 +89,8 @@ class EmployerJobPostActivityFilter(django_filters.FilterSet):
                                                   field_name="resume__job_seeker_profile__marital_status")
 
     jobPostId = django_filters.NumberFilter(field_name='job_post')
+    status = django_filters.ChoiceFilter(choices=var_sys.APPLICATION_STATUS,
+                                         field_name='status')
 
     class Meta:
         model = JobPostActivity
@@ -97,5 +99,5 @@ class EmployerJobPostActivityFilter(django_filters.FilterSet):
             'experienceId', 'positionId',
             'academicLevelId', 'typeOfWorkplaceId',
             'jobTypeId', 'genderId', 'maritalStatusId',
-            'jobPostId'
+            'jobPostId', 'status'
         ]

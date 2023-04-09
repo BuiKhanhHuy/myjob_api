@@ -130,9 +130,10 @@ EMPLOYEE_SIZE_CHOICES = (
 )
 
 APPLICATION_STATUS = (
-    (1, 'Đã liên hệ'),
-    (2, 'Đã test'),
-    (3, 'Đã phỏng vấn'),
-    (4, 'Trúng tuyển'),
-    (5, 'Không trúng tuyển')
+    (1, 'Chờ xác nhận'),
+    (2, 'Đã liên hệ'),
+    (3, 'Đã test'),
+    (4, 'Đã phỏng vấn'),
+    (5, 'Trúng tuyển'),
+    (6, 'Không trúng tuyển')
 )
