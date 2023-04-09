@@ -1,0 +1,11 @@
+{
+  "build": {
+    "cache_dependancies": true
+  },
+  "deploy": {
+    "module": "myjob_api.wsgi:application",
+    "managetasks": [
+      "collectstatic --noinput"
+    ]
+  }
+}
