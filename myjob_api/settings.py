@@ -32,8 +32,7 @@ SECRET_KEY = 'django-insecure-m)n0iq(0d55p5$xc7t)wmn5$9-dv8zw1a3k9nwnf#v86&mu=gt
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
-ALLOWED_HOSTS = ['192.168.1.5', '192.168.1.13', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
 
