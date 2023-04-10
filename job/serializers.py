@@ -41,6 +41,7 @@ class JobPostSerializer(serializers.ModelSerializer):
     contactPersonName = serializers.CharField(source="contact_person_name", required=True, max_length=100)
     contactPersonPhone = serializers.CharField(source="contact_person_phone", required=True, max_length=15)
     contactPersonEmail = serializers.EmailField(source="contact_person_email", required=True, max_length=100)
+    updateAt = serializers.DateTimeField(source="update_at", read_only=True)
     createAt = serializers.DateTimeField(source="create_at", read_only=True)
     location = common_serializers.LocationSerializer()
 
@@ -97,7 +98,7 @@ class JobPostSerializer(serializers.ModelSerializer):
                   'position', 'typeOfWorkplace', 'experience', 'academicLevel',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent', 'isVerify',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
-                  'location', 'createAt', 'appliedNumber',
+                  'location', 'createAt', 'updateAt', 'appliedNumber',
                   'isSaved', 'isApplied', 'companyDict', 'locationDict', 'views')
 
     def create(self, validated_data):
