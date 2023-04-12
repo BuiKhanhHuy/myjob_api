@@ -1,8 +1,9 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import web_views
+from .views import web_views, app_views
 
 app_router = DefaultRouter()
+app_router.register(r'companies', app_views.CompanyViewSet, basename='app-company')
 
 web_router = DefaultRouter()
 web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='job-seeker-profile')
@@ -16,7 +17,7 @@ web_router.register(r'language-skills', web_views.LanguageSkillViewSet, basename
 web_router.register(r'advanced-skills', web_views.AdvancedSkillViewSet, basename='advanced-skill')
 
 web_router.register(r'private-companies', web_views.PrivateCompanyViewSet, basename='private-company')
-web_router.register(r'companies', web_views.CompanyViewSet, basename='company')
+web_router.register(r'companies', web_views.CompanyViewSet, basename='web-company')
 web_router.register(r'company-images', web_views.CompanyImageViewSet, basename='company-image')
 
 urlpatterns = [
