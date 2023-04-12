@@ -28,7 +28,6 @@ class JobPostViewSet(viewsets.ViewSet,
     permission_classes = [perms_sys.AllowAny]
     filterset_class = JobPostFilter
     filter_backends = [DjangoFilterBackend]
-    lookup_field = "slug"
 
     def get_permissions(self):
         if self.action in ["get_job_posts_saved",
@@ -91,7 +90,7 @@ class JobPostViewSet(viewsets.ViewSet,
             'jobType', 'salaryMin', 'salaryMax', 'contactPersonName',
             'contactPersonPhone', 'contactPersonEmail',
             'location', 'createAt',
-            'isSaved', 'isApplied', 'companyDict', 'views'
+            'isSaved', 'isApplied', 'mobileCompanyDict', 'views'
         ])
         return Response(data=serializer.data)
 
@@ -117,7 +116,7 @@ class JobPostViewSet(viewsets.ViewSet,
 
     @action(methods=["post"], detail=True,
             url_path="job-saved", url_name="job-saved")
-    def job_saved(self, request, slug):
+    def job_saved(self, request, pk):
         saved_job_posts = SavedJobPost.objects.filter(user=request.user, job_post=self.get_object())
         is_saved = False
         if saved_job_posts.exists():
