@@ -30,7 +30,6 @@ class CompanyViewSet(viewsets.ViewSet,
     pagination_class = paginations.CustomPagination
     filterset_class = CompanyFilter
     filter_backends = [DjangoFilterBackend]
-    lookup_field = "slug"
 
     def get_permissions(self):
         if self.action in ["followed"]:
@@ -55,7 +54,7 @@ class CompanyViewSet(viewsets.ViewSet,
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, fields=[
-            'id', 'slug', 'taxCode', 'companyName',
+            'id', 'taxCode', 'companyName',
             'employeeSize', 'fieldOperation', 'location',
             'since', 'companyEmail', 'companyPhone',
             'websiteUrl', 'facebookUrl', 'youtubeUrl',
@@ -80,7 +79,8 @@ class CompanyViewSet(viewsets.ViewSet,
                            .order_by('-num_follow', '-num_job_post')[:10]
             serializer = CompanySerializer(queryset, many=True,
                                            fields=[
-                                               'id', 'slug', 'companyName', 'companyImageUrl'
+                                               'id', 'companyName', 'companyImageUrl',
+                                               'followNumber', 'jobPostNumber', 'isFollowed'
                                            ])
         except Exception as ex:
             helper.print_log_error("get_top_companies", ex)
