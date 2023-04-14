@@ -128,11 +128,11 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 if not resumes.first():
                     return var_res.response_data()
                 serializer = ResumeSerializer(resumes.first(),
-                                              fields=["id", "slug", "title", "experience", "position",
+                                              fields=["id", "title", "experience", "position",
                                                       "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
             else:
                 serializer = ResumeSerializer(resumes, many=True,
-                                              fields=["id", "slug", "title", "updateAt",
+                                              fields=["id", "title", "updateAt",
                                                       "imageUrl", "fileUrl", "isActive"])
 
         return var_res.response_data(data=serializer.data)

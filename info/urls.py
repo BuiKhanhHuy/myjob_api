@@ -3,10 +3,12 @@ from rest_framework.routers import DefaultRouter
 from .views import web_views, app_views
 
 app_router = DefaultRouter()
+app_router.register(r'job-seeker-profiles', app_views.JobSeekerProfileViewSet, basename='app-job-seeker-profile')
+app_router.register(r'private-resumes', app_views.PrivateResumeViewSet, basename='app-private-resume')
 app_router.register(r'companies', app_views.CompanyViewSet, basename='app-company')
 
 web_router = DefaultRouter()
-web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='job-seeker-profile')
+web_router.register(r'job-seeker-profiles', web_views.JobSeekerProfileViewSet, basename='web-job-seeker-profile')
 web_router.register(r'private-resumes', web_views.PrivateResumeViewSet, basename='private-resume')
 web_router.register(r'resumes', web_views.ResumeViewSet, basename='resume')
 web_router.register(r'resumes-saved', web_views.ResumeSavedViewSet, basename='resume-saved')

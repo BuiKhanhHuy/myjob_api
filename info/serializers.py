@@ -265,7 +265,8 @@ class CompanyCoverImageSerializer(serializers.ModelSerializer):
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=True, max_length=15)
-    birthday = serializers.DateField(required=True, input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+    birthday = serializers.DateField(required=True,
+                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     gender = serializers.CharField(required=True, max_length=1)
     maritalStatus = serializers.CharField(source='marital_status',
