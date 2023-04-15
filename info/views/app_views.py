@@ -261,6 +261,46 @@ class PrivateResumeViewSet(viewsets.ViewSet,
         return var_res.response_data(data=advanced_skill_serializer.data)
 
 
+class EducationDetailViewSet(viewsets.ViewSet,
+                             generics.CreateAPIView,
+                             generics.RetrieveUpdateDestroyAPIView):
+    queryset = EducationDetail.objects
+    serializer_class = EducationSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
+class ExperienceDetailViewSet(viewsets.ViewSet,
+                              generics.CreateAPIView,
+                              generics.RetrieveUpdateDestroyAPIView):
+    queryset = ExperienceDetail.objects
+    serializer_class = ExperienceSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
+class CertificateDetailViewSet(viewsets.ViewSet,
+                               generics.CreateAPIView,
+                               generics.RetrieveUpdateDestroyAPIView):
+    queryset = Certificate.objects
+    serializer_class = CertificateSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
+class LanguageSkillViewSet(viewsets.ViewSet,
+                           generics.CreateAPIView,
+                           generics.RetrieveUpdateDestroyAPIView):
+    queryset = LanguageSkill.objects
+    serializer_class = LanguageSkillSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
+class AdvancedSkillViewSet(viewsets.ViewSet,
+                           generics.CreateAPIView,
+                           generics.RetrieveUpdateDestroyAPIView):
+    queryset = AdvancedSkill.objects
+    serializer_class = AdvancedSkillSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+
+
 class CompanyViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
