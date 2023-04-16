@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import web_views, app_views
 
 app_router = DefaultRouter()
-# app_router.register('job-posts', app_views.JobPostViewSet, basename="job-posts")
+app_router.register('job-posts', app_views.JobPostViewSet, basename="app-job-posts")
 
 web_router = DefaultRouter()
 web_router.register('private-job-posts', web_views.PrivateJobPostViewSet, basename='private-web-job-posts')
@@ -14,9 +14,9 @@ web_router.register('employer-job-posts-activity', web_views.EmployerJobPostActi
                     basename='web-employer-job-posts-activity')
 
 urlpatterns = [
-    # path('app/', include([
-    #     path('', include(app_router.urls))
-    # ])),
+    path('app/', include([
+        path('', include(app_router.urls))
+    ])),
     path('web/', include([
         path('', include(web_router.urls))
     ]))

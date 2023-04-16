@@ -171,6 +171,17 @@ def get_top_10_careers(request):
     return var_res.response_data(data=serializer.data)
 
 
+@api_view(http_method_names=["GET"])
+def get_all_careers(request):
+    try:
+        queryset = Career.objects.all().order_by('id')
+        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+    except Exception as ex:
+        helper.print_log_error("get_all_careers", ex)
+        return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return var_res.response_data(data=serializer.data)
+
+
 from firebase_admin import db
 
 

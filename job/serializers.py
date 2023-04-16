@@ -41,6 +41,7 @@ class JobPostSerializer(serializers.ModelSerializer):
     contactPersonName = serializers.CharField(source="contact_person_name", required=True, max_length=100)
     contactPersonPhone = serializers.CharField(source="contact_person_phone", required=True, max_length=15)
     contactPersonEmail = serializers.EmailField(source="contact_person_email", required=True, max_length=100)
+    updateAt = serializers.DateTimeField(source="update_at", read_only=True)
     createAt = serializers.DateTimeField(source="create_at", read_only=True)
     location = common_serializers.LocationSerializer()
 
@@ -48,6 +49,14 @@ class JobPostSerializer(serializers.ModelSerializer):
                                                      fields=['id', 'slug', 'employeeSize',
                                                              'companyImageUrl', 'companyName'],
                                                      read_only=True)
+    mobileCompanyDict = info_serializers.CompanySerializer(source='company',
+                                                           fields=['id', 'slug', 'taxCode', 'companyName',
+                                                                   'employeeSize', 'fieldOperation', 'location',
+                                                                   'since', 'companyEmail', 'companyPhone',
+                                                                   'websiteUrl', 'facebookUrl', 'youtubeUrl',
+                                                                   'linkedinUrl', 'description',
+                                                                   'companyImageUrl', 'companyImages'],
+                                                           read_only=True)
     locationDict = common_serializers.LocationSerializer(source="location",
                                                          fields=['city'],
                                                          read_only=True)
@@ -97,8 +106,8 @@ class JobPostSerializer(serializers.ModelSerializer):
                   'position', 'typeOfWorkplace', 'experience', 'academicLevel',
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent', 'isVerify',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
-                  'location', 'createAt', 'appliedNumber',
-                  'isSaved', 'isApplied', 'companyDict', 'locationDict', 'views')
+                  'location', 'createAt', 'updateAt', 'appliedNumber',
+                  'isSaved', 'isApplied', 'companyDict', 'mobileCompanyDict', 'locationDict', 'views')
 
     def create(self, validated_data):
         try:
@@ -269,4 +278,3 @@ class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):
         fields = ("title", "fullName", "email", "phone",
                   "gender", "birthday", "address",
                   "jobName", "createAt", "statusApply")
-
