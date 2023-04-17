@@ -329,6 +329,8 @@ class CvSerializer(serializers.ModelSerializer):
     fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
     file = serializers.FileField(required=True, write_only=True)
 
+    updateAt = serializers.DateTimeField(source='update_at', read_only=True)
+
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
 
@@ -342,7 +344,7 @@ class CvSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Resume
-        fields = ("id", "slug", "title", "fileUrl", "file")
+        fields = ("id", "slug", "title", "fileUrl", "file", "updateAt")
 
     def update(self, instance, validated_data):
         pdf_file = validated_data.pop('file')

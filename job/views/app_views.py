@@ -1,10 +1,14 @@
+
 from configs import variable_response as var_res, renderers, paginations
+from django.db.models import Count, F
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
 from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework.response import Response
+
+from helpers import helper
 from info.models import Resume
 from ..models import (
     JobPost,
@@ -132,3 +136,14 @@ class JobPostViewSet(viewsets.ViewSet,
         return Response(data={
             "isSaved": is_saved
         })
+
+    @action(methods=["get"], detail=False,
+            url_path="count-job-posts-by-job-type", url_name="count-job-posts-by-job-type")
+    def count_job_posts_by_job_type(self, request):
+        try:
+            data = JobPost.objects.values(typeOfWorkplace=F('type_of_workplace')).annotate(total=Count('id')).order_by()
+        except Exception as ex:
+            helper.print_log_error("count_job_posts_by_job_type", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return var_res.Response(data=data)

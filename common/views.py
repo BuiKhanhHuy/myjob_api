@@ -3,8 +3,6 @@ from helpers import utils, helper
 from configs import variable_response as var_res
 from django.db.models import Count
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework import status
 from .models import (
     Career,
@@ -14,6 +12,9 @@ from .models import (
 from .serializers import (
     CareerSerializer
 )
+
+import requests
+import json
 
 
 @api_view(http_method_names=["POST"])
@@ -45,6 +46,28 @@ def create_database(request):
             Career.objects.create(name=career)
 
     return var_res.response_data()
+
+
+@api_view(http_method_names=["POST"])
+def create_user_company_job(request):
+    response = requests.post('https://ms.vietnamworks.com/job-search/v1.0/search',
+                             data={
+                                 "query": "",
+                                 "filter": [
+                                 ],
+                                 "ranges": [],
+                                 "order": [
+
+                                 ],
+                                 "hitsPerPage": 200,
+                                 "page": 0,
+                                 "retrieveFields": [
+
+                                 ]
+                             })
+    data = json.loads(response.text).get("data", [])
+
+    return var_res.response_data(data=data)
 
 
 @api_view(http_method_names=["GET"])

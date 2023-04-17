@@ -192,7 +192,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
     def get_cv(self, request, pk):
         resume_queryset = self.get_object()
         resume_serializer = CvSerializer(resume_queryset,
-                                         fields=["id", "title", "fileUrl"])
+                                         fields=["id", "title", "fileUrl", "updateAt"])
 
         return var_res.response_data(data=resume_serializer.data)
 
