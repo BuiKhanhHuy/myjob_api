@@ -35,7 +35,8 @@ urlpatterns = [
         })),
     ])),
     path('app/', include([
-        path('', include(app_router.urls))
+        path('', include(app_router.urls)),
+        path("companies-follow/", app_views.CompanyFollowedAPIView.as_view()),
     ])),
     path('web/', include([
         path("company/", web_views.CompanyView.as_view({'get': 'get_company_info'})),

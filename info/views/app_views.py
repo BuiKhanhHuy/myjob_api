@@ -370,7 +370,7 @@ class CompanyViewSet(viewsets.ViewSet,
 
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
-    def followed(self, request, slug):
+    def followed(self, request, pk):
         is_followed = False
         companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
         if companies_followed.exists():
@@ -385,3 +385,24 @@ class CompanyViewSet(viewsets.ViewSet,
         return Response(data={
             "isFollowed": is_followed
         })
+
+
+class CompanyFollowedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    def get(self, request):
+        user = request.user
+
+        queryset = CompanyFollowed.objects.filter(user=user) \
+            .order_by("-update_at", "-create_at")
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = CompanyFollowedSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = CompanyFollowedSerializer(queryset, many=True)
+        return Response(data=serializer.data)

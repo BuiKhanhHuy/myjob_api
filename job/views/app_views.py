@@ -52,7 +52,7 @@ class JobPostViewSet(viewsets.ViewSet,
                 'jobName', 'isHot', 'isUrgent',
                 'career', 'position', 'experience', 'academicLevel',
                 'city', 'jobType', 'typeOfWorkplace', 'deadline',
-                'locationDict', 'updateAt'
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -78,7 +78,7 @@ class JobPostViewSet(viewsets.ViewSet,
                 'jobName', 'isHot', 'isUrgent',
                 'career', 'position', 'experience', 'academicLevel',
                 'city', 'jobType', 'typeOfWorkplace', 'deadline',
-                'locationDict', 'updateAt'
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -109,9 +109,11 @@ class JobPostViewSet(viewsets.ViewSet,
 
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
-                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-                'jobName', 'isHot', 'isUrgent', 'isApplied', 'salary', 'city', 'deadline',
-                'locationDict'
+                'id', 'companyDict', "salaryMin", "salaryMax",
+                'jobName', 'isHot', 'isUrgent',
+                'career', 'position', 'experience', 'academicLevel',
+                'city', 'jobType', 'typeOfWorkplace', 'deadline',
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
