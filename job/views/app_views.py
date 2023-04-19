@@ -19,6 +19,8 @@ from ..filters import (
 )
 from ..serializers import (
     JobPostSerializer,
+    JobPostAroundFilterSerializer,
+    JobPostAroundSerializer,
     JobSeekerJobPostActivitySerializer,
 )
 
@@ -150,6 +152,20 @@ class JobPostViewSet(viewsets.ViewSet,
             return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return var_res.Response(data=data)
+
+    @action(methods=["post"], detail=False,
+            url_path="job-posts-around", url_name="job-posts-around")
+    def get_job_posts_around(self, request):
+        data = request.data
+        filter_serializer = JobPostAroundFilterSerializer(data=data)
+        if not filter_serializer.is_valid():
+            print(">> BAD REQUEST >> get_job_posts_around: ", filter_serializer.errors)
+            return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = JobPost.objects.filter(is_verify=True)
+        serializer = JobPostAroundSerializer(queryset, many=True)
+
+        return var_res.Response(data=serializer.data)
 
 
 class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,

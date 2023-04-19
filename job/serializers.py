@@ -170,6 +170,21 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
 
 
+class JobPostAroundFilterSerializer(serializers.Serializer):
+    currentLatitude = serializers.FloatField(required=True)
+    currentLongitude = serializers.FloatField(required=True)
+    radius = serializers.IntegerField(required=True)
+
+
+class JobPostAroundSerializer(serializers.Serializer):
+    latitude = serializers.PrimaryKeyRelatedField(source="location.lat", read_only=True)
+    longitude = serializers.PrimaryKeyRelatedField(source="location.lat", read_only=True)
+
+    class Meta:
+        model = JobPost
+        fields = ("id", "latitude", "longitude")
+
+
 class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100)

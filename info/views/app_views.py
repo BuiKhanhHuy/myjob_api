@@ -1,13 +1,10 @@
-import cloudinary.uploader
-
-from helpers import utils
-from configs import variable_system as var_sys, table_export
+from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers, paginations
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
@@ -15,24 +12,18 @@ from rest_framework import status
 from ..models import (
     JobSeekerProfile,
     Resume, ResumeViewed,
-    ResumeSaved,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company,
-    CompanyFollowed, CompanyImage
+    CompanyFollowed,
 )
 from ..filters import (
-    ResumeFilter,
-    ResumeSavedFilter,
     CompanyFilter
 )
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
-    ResumeDetailSerializer,
     ResumeViewedSerializer,
-    ResumeSavedSerializer,
-    ResumeSavedExportSerializer,
     CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -41,15 +32,7 @@ from ..serializers import (
     AdvancedSkillSerializer,
     CompanySerializer,
     CompanyFollowedSerializer,
-    LogoCompanySerializer,
-    CompanyCoverImageSerializer,
-    CompanyImageSerializer,
-    SendMailReplyToJobSeekerSerializer
 )
-from job.models import (
-    JobPost
-)
-from job import serializers as job_serializers
 
 
 class JobSeekerProfileViewSet(viewsets.ViewSet,

@@ -268,7 +268,7 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=True, max_length=15)
     birthday = serializers.DateField(required=True,
                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
-                                                                   var_sys.DATE_TIME_FORMAT["Ymd"]])
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     gender = serializers.CharField(required=True, max_length=1)
     maritalStatus = serializers.CharField(source='marital_status',
                                           required=True,
@@ -542,6 +542,7 @@ class EducationSerializer(serializers.ModelSerializer):
                                           input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -576,6 +577,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -610,6 +612,7 @@ class CertificateSerializer(serializers.ModelSerializer):
     expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True,
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -637,6 +640,7 @@ class CertificateSerializer(serializers.ModelSerializer):
 class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_language(self, language):
@@ -667,6 +671,7 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
 class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_name(self, name):
