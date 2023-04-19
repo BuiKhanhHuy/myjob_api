@@ -73,20 +73,20 @@ class JobPostSerializer(serializers.ModelSerializer):
     def check_saved(self, job_post):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return job_post.savedjobpost_set.filter(user=user).exists()
-        return None
+        return False
 
     def check_applied(self, job_post):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return job_post.jobpostactivity_set.filter(user=user).count() > 0
-        return None
+        return False
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -182,6 +182,12 @@ class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
         'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
         'locationDict'
     ], read_only=True)
+    mobileJobPostDict = JobPostSerializer(source="job_post", fields=[
+        'id', 'companyDict', "salaryMin", "salaryMax",
+        'jobName', 'career', 'position', 'experience', 'academicLevel',
+        'city', 'jobType', 'typeOfWorkplace', 'deadline',
+        'locationDict', 'updateAt'
+    ], read_only=True)
     resumeDict = info_serializers.ResumeSerializer(source="resume", fields=[
         'id', 'slug', 'title', 'type'
     ], read_only=True)
@@ -200,7 +206,7 @@ class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPostActivity
         fields = ("id", "job_post", "resume", "fullName", "email", "phone",
-                  "createAt", "updateAt", "jobPostDict", "resumeDict")
+                  "createAt", "updateAt", "jobPostDict", "mobileJobPostDict", "resumeDict")
 
     def create(self, validated_data):
         request = self.context["request"]

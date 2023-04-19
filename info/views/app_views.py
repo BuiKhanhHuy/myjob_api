@@ -261,6 +261,28 @@ class PrivateResumeViewSet(viewsets.ViewSet,
         return var_res.response_data(data=advanced_skill_serializer.data)
 
 
+class ResumeViewedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    def get(self, request):
+        user = request.user
+
+        queryset = ResumeViewed.objects.filter(
+            resume__user=user
+        ).order_by('-update_at', '-create_at')
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = ResumeViewedSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = ResumeViewedSerializer(queryset, many=True)
+        return Response(data=serializer.data)
+
+
 class EducationDetailViewSet(viewsets.ViewSet,
                              generics.CreateAPIView,
                              generics.RetrieveUpdateDestroyAPIView):
@@ -362,7 +384,7 @@ class CompanyViewSet(viewsets.ViewSet,
                                            fields=[
                                                'id', 'companyName', 'companyImageUrl',
                                                'followNumber', 'jobPostNumber', 'isFollowed'
-                                           ])
+                                           ], context={'request': request})
         except Exception as ex:
             helper.print_log_error("get_top_companies", ex)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -401,8 +423,8 @@ class CompanyFollowedAPIView(views.APIView):
         paginator = self.pagination_class
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
-            serializer = CompanyFollowedSerializer(page, many=True)
+            serializer = CompanyFollowedSerializer(page, many=True, context={'request': request})
             return paginator.get_paginated_response(serializer.data)
 
-        serializer = CompanyFollowedSerializer(queryset, many=True)
+        serializer = CompanyFollowedSerializer(queryset, many=True, context={'request': request})
         return Response(data=serializer.data)

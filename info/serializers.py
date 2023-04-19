@@ -145,11 +145,11 @@ class CompanySerializer(serializers.ModelSerializer):
     def check_followed(self, company):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return company.companyfollowed_set.filter(user=user).count() > 0
-        return None
+        return False
 
     class Meta:
         model = Company
@@ -198,7 +198,8 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class CompanyFollowedSerializer(serializers.ModelSerializer):
     company = CompanySerializer(fields=['id', 'slug', 'companyName', 'companyImageUrl',
-                                        'fieldOperation', 'followNumber', 'jobPostNumber'])
+                                        'fieldOperation', 'followNumber', 'jobPostNumber',
+                                        'isFollowed'])
 
     class Meta:
         model = CompanyFollowed

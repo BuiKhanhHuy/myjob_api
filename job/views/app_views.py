@@ -1,24 +1,25 @@
-
 from configs import variable_response as var_res, renderers, paginations
+from helpers import helper
 from django.db.models import Count, F
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics, status
+from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework.response import Response
-
-from helpers import helper
+from rest_framework import status
 from info.models import Resume
 from ..models import (
     JobPost,
     SavedJobPost,
+    JobPostActivity
 )
 from ..filters import (
     JobPostFilter,
 )
 from ..serializers import (
     JobPostSerializer,
+    JobSeekerJobPostActivitySerializer,
 )
 
 
@@ -149,3 +150,29 @@ class JobPostViewSet(viewsets.ViewSet,
             return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return var_res.Response(data=data)
+
+
+class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
+                                      generics.ListAPIView,
+                                      generics.CreateAPIView):
+    queryset = JobPostActivity.objects
+    serializer_class = JobSeekerJobPostActivitySerializer
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = user.jobpostactivity_set \
+            .order_by('-create_at', '-update_at')
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "createAt", "mobileJobPostDict", "resumeDict"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)

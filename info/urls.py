@@ -36,6 +36,7 @@ urlpatterns = [
     ])),
     path('app/', include([
         path('', include(app_router.urls)),
+        path("resume-views/", app_views.ResumeViewedAPIView.as_view()),
         path("companies-follow/", app_views.CompanyFollowedAPIView.as_view()),
     ])),
     path('web/', include([
