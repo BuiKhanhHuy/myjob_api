@@ -162,18 +162,23 @@ class PrivateResumeViewSet(viewsets.ViewSet,
 
     @action(methods=["get"], detail=True,
             url_path='resume-active', url_name="resume-active", )
-    def active_resume(self, request, slug):
+    def active_resume(self, request, pk):
         resume = self.get_object()
         if resume.is_active:
             resume.is_active = False
             resume.save()
+            return var_res.response_data(data={
+                "isActive": False
+            })
         else:
             Resume.objects.filter(user=self.request.user) \
                 .exclude(slug=resume.slug) \
                 .update(is_active=False)
             resume.is_active = True
             resume.save()
-        return var_res.response_data()
+            return var_res.response_data(data={
+                "isActive": True
+            })
 
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )
