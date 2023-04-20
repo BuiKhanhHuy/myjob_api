@@ -1,5 +1,20 @@
 from django.db import models
+from django.db.models import Func, F
+from math import radians, cos, sin, asin, sqrt
 from authentication.models import User
+
+
+class Haversine(Func):
+    function = 'SELECT ST_Distance_Sphere(Point(%s,%s),Point(%s,%s))'
+    output_field = models.DecimalField()
+
+    def __init__(self, lat1, lon1, lat2, lon2, **kwargs):
+        self.lat1, self.lon1, self.lat2, self.lon2 = lat1, lon1, lat2, lon2
+        super().__init__(self.lat1, self.lon1, self.lat2, self.lon2, **kwargs)
+
+    def as_sql(self, compiler, connection):
+        return self.function, (radians(float(self.lat1)), radians(float(self.lon1)), radians(float(self.lat2)),
+                               radians(float(self.lon2))), self.output_field
 
 
 class CommonBaseModel(models.Model):

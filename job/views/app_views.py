@@ -1,6 +1,7 @@
 from configs import variable_response as var_res, renderers, paginations
-from helpers import helper
+from helpers import helper, utils
 from django.db.models import Count, F
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -28,7 +29,7 @@ from ..serializers import (
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
-    queryset = JobPost.objects
+    queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
@@ -161,11 +162,24 @@ class JobPostViewSet(viewsets.ViewSet,
         if not filter_serializer.is_valid():
             print(">> BAD REQUEST >> get_job_posts_around: ", filter_serializer.errors)
             return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+        filter_data = filter_serializer.data
+        current_latitude = filter_data.get('currentLatitude')
+        current_longitude = filter_data.get('currentLongitude')
+        radius = filter_data.get("radius")
 
-        queryset = JobPost.objects.filter(is_verify=True)
+        print(data)
+
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True).order_by('-id', 'update_at', 'create_at'))
+        is_pagination = request.query_params.get("isPagination", None)
+
+        if is_pagination and is_pagination == "OK":
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = JobPostAroundSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
         serializer = JobPostAroundSerializer(queryset, many=True)
-
-        return var_res.Response(data=serializer.data)
+        return var_res.Response(serializer.data)
 
 
 class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,

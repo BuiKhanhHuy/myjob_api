@@ -176,13 +176,29 @@ class JobPostAroundFilterSerializer(serializers.Serializer):
     radius = serializers.IntegerField(required=True)
 
 
-class JobPostAroundSerializer(serializers.Serializer):
+class JobPostAroundSerializer(serializers.ModelSerializer):
     latitude = serializers.PrimaryKeyRelatedField(source="location.lat", read_only=True)
-    longitude = serializers.PrimaryKeyRelatedField(source="location.lat", read_only=True)
+    longitude = serializers.PrimaryKeyRelatedField(source="location.lng", read_only=True)
+    jobName = serializers.CharField(source="job_name", required=True, max_length=255)
+    deadline = serializers.DateField(required=True,
+                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]],
+                                     )
+    salaryMin = serializers.IntegerField(source="salary_min", required=True)
+    salaryMax = serializers.IntegerField(source="salary_max", required=True)
+    mobileCompanyDict = info_serializers.CompanySerializer(source='company',
+                                                           fields=['companyName',
+                                                                   'companyImageUrl'],
+                                                           read_only=True)
+    locationDict = common_serializers.LocationSerializer(source="location",
+                                                         fields=['city'],
+                                                         read_only=True)
 
     class Meta:
         model = JobPost
-        fields = ("id", "latitude", "longitude")
+        fields = ('id', "latitude", "longitude",
+                  "jobName", "deadline", "salaryMin", "salaryMax",
+                  "mobileCompanyDict", "locationDict")
 
 
 class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
