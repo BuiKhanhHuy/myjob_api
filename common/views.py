@@ -1,10 +1,8 @@
 from configs import variable_system as var_sys, renderers
 from helpers import utils, helper
-from configs import variable_response as var_res
+from configs import variable_response as var_res, paginations
 from django.db.models import Count
 from rest_framework.decorators import api_view
-from rest_framework import viewsets
-from rest_framework import generics
 from rest_framework import status
 from .models import (
     Career,
@@ -14,6 +12,9 @@ from .models import (
 from .serializers import (
     CareerSerializer
 )
+
+import requests
+import json
 
 
 @api_view(http_method_names=["POST"])
@@ -45,6 +46,28 @@ def create_database(request):
             Career.objects.create(name=career)
 
     return var_res.response_data()
+
+
+@api_view(http_method_names=["POST"])
+def create_user_company_job(request):
+    response = requests.post('https://ms.vietnamworks.com/job-search/v1.0/search',
+                             data={
+                                 "query": "",
+                                 "filter": [
+                                 ],
+                                 "ranges": [],
+                                 "order": [
+
+                                 ],
+                                 "hitsPerPage": 200,
+                                 "page": 0,
+                                 "retrieveFields": [
+
+                                 ]
+                             })
+    data = json.loads(response.text).get("data", [])
+
+    return var_res.response_data(data=data)
 
 
 @api_view(http_method_names=["GET"])
@@ -174,12 +197,25 @@ def get_top_10_careers(request):
 @api_view(http_method_names=["GET"])
 def get_all_careers(request):
     try:
-        queryset = Career.objects.all().order_by('id')
+        paginator = paginations.CustomPagination()
+
+        queryset = Career.objects
+        kw = request.query_params.get("kw", None)
+        if kw:
+            queryset = queryset.filter(name__icontains=kw)
+        queryset = queryset.all().order_by('id')
+
+        page = paginator.paginate_queryset(queryset, request=request)
+        if page is not None:
+            serializer = CareerSerializer(page, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+            return paginator.get_paginated_response(serializer.data)
+
         serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+        return var_res.response_data(data=serializer.data)
     except Exception as ex:
         helper.print_log_error("get_all_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return var_res.response_data(data=serializer.data)
+
 
 
 from firebase_admin import db

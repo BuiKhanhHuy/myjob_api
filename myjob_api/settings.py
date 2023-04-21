@@ -157,7 +157,7 @@ OAUTH2_PROVIDER = {
         'write': 'Write scope',
     },
     'CLIENT_ID_GENERATOR_CLASS': 'oauth2_provider.generators.ClientIdGenerator',
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 43200
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 100000
 }
 
 AUTHENTICATION_BACKENDS = (

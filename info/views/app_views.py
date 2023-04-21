@@ -1,13 +1,10 @@
-import cloudinary.uploader
-
-from helpers import utils
-from configs import variable_system as var_sys, table_export
+from configs import variable_system as var_sys
 from configs import variable_response as var_res, renderers, paginations
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
@@ -15,24 +12,18 @@ from rest_framework import status
 from ..models import (
     JobSeekerProfile,
     Resume, ResumeViewed,
-    ResumeSaved,
     EducationDetail, ExperienceDetail,
     Certificate, LanguageSkill,
     AdvancedSkill, Company,
-    CompanyFollowed, CompanyImage
+    CompanyFollowed,
 )
 from ..filters import (
-    ResumeFilter,
-    ResumeSavedFilter,
     CompanyFilter
 )
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
-    ResumeDetailSerializer,
     ResumeViewedSerializer,
-    ResumeSavedSerializer,
-    ResumeSavedExportSerializer,
     CvSerializer,
     EducationSerializer,
     ExperienceSerializer,
@@ -41,15 +32,7 @@ from ..serializers import (
     AdvancedSkillSerializer,
     CompanySerializer,
     CompanyFollowedSerializer,
-    LogoCompanySerializer,
-    CompanyCoverImageSerializer,
-    CompanyImageSerializer,
-    SendMailReplyToJobSeekerSerializer
 )
-from job.models import (
-    JobPost
-)
-from job import serializers as job_serializers
 
 
 class JobSeekerProfileViewSet(viewsets.ViewSet,
@@ -162,18 +145,23 @@ class PrivateResumeViewSet(viewsets.ViewSet,
 
     @action(methods=["get"], detail=True,
             url_path='resume-active', url_name="resume-active", )
-    def active_resume(self, request, slug):
+    def active_resume(self, request, pk):
         resume = self.get_object()
         if resume.is_active:
             resume.is_active = False
             resume.save()
+            return var_res.response_data(data={
+                "isActive": False
+            })
         else:
             Resume.objects.filter(user=self.request.user) \
                 .exclude(slug=resume.slug) \
                 .update(is_active=False)
             resume.is_active = True
             resume.save()
-        return var_res.response_data()
+            return var_res.response_data(data={
+                "isActive": True
+            })
 
     @action(methods=["get"], detail=True,
             url_path='resume-owner', url_name="get-resume-detail-of-job-seeker", )
@@ -192,7 +180,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
     def get_cv(self, request, pk):
         resume_queryset = self.get_object()
         resume_serializer = CvSerializer(resume_queryset,
-                                         fields=["id", "title", "fileUrl"])
+                                         fields=["id", "title", "fileUrl", "updateAt"])
 
         return var_res.response_data(data=resume_serializer.data)
 
@@ -259,6 +247,28 @@ class PrivateResumeViewSet(viewsets.ViewSet,
             many=True)
 
         return var_res.response_data(data=advanced_skill_serializer.data)
+
+
+class ResumeViewedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    def get(self, request):
+        user = request.user
+
+        queryset = ResumeViewed.objects.filter(
+            resume__user=user
+        ).order_by('-update_at', '-create_at')
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = ResumeViewedSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = ResumeViewedSerializer(queryset, many=True)
+        return Response(data=serializer.data)
 
 
 class EducationDetailViewSet(viewsets.ViewSet,
@@ -362,7 +372,7 @@ class CompanyViewSet(viewsets.ViewSet,
                                            fields=[
                                                'id', 'companyName', 'companyImageUrl',
                                                'followNumber', 'jobPostNumber', 'isFollowed'
-                                           ])
+                                           ], context={'request': request})
         except Exception as ex:
             helper.print_log_error("get_top_companies", ex)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -370,7 +380,7 @@ class CompanyViewSet(viewsets.ViewSet,
 
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
-    def followed(self, request, slug):
+    def followed(self, request, pk):
         is_followed = False
         companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
         if companies_followed.exists():
@@ -385,3 +395,24 @@ class CompanyViewSet(viewsets.ViewSet,
         return Response(data={
             "isFollowed": is_followed
         })
+
+
+class CompanyFollowedAPIView(views.APIView):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination()
+
+    def get(self, request):
+        user = request.user
+
+        queryset = CompanyFollowed.objects.filter(user=user) \
+            .order_by("-update_at", "-create_at")
+
+        paginator = self.pagination_class
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = CompanyFollowedSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = CompanyFollowedSerializer(queryset, many=True, context={'request': request})
+        return Response(data=serializer.data)

@@ -1,8 +1,26 @@
-import re
+import math
 from configs import table_export
 from django.conf import settings
 from helpers import helper
 from django.core.mail import EmailMultiAlternatives
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # earth radius in kilometers
+
+    # convert degrees to radians
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+    # calculate differences between latitudes and longitudes
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    # apply Haversine formula
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance = R * c
+
+    return distance
 
 
 def convert_tuple_or_list_to_options(values):

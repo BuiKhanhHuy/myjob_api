@@ -73,20 +73,20 @@ class JobPostSerializer(serializers.ModelSerializer):
     def check_saved(self, job_post):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return job_post.savedjobpost_set.filter(user=user).exists()
-        return None
+        return False
 
     def check_applied(self, job_post):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return job_post.jobpostactivity_set.filter(user=user).count() > 0
-        return None
+        return False
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -170,6 +170,37 @@ class JobPostSerializer(serializers.ModelSerializer):
             return None
 
 
+class JobPostAroundFilterSerializer(serializers.Serializer):
+    currentLatitude = serializers.FloatField(required=True)
+    currentLongitude = serializers.FloatField(required=True)
+    radius = serializers.IntegerField(required=True)
+
+
+class JobPostAroundSerializer(serializers.ModelSerializer):
+    latitude = serializers.PrimaryKeyRelatedField(source="location.lat", read_only=True)
+    longitude = serializers.PrimaryKeyRelatedField(source="location.lng", read_only=True)
+    jobName = serializers.CharField(source="job_name", required=True, max_length=255)
+    deadline = serializers.DateField(required=True,
+                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]],
+                                     )
+    salaryMin = serializers.IntegerField(source="salary_min", required=True)
+    salaryMax = serializers.IntegerField(source="salary_max", required=True)
+    mobileCompanyDict = info_serializers.CompanySerializer(source='company',
+                                                           fields=['companyName',
+                                                                   'companyImageUrl'],
+                                                           read_only=True)
+    locationDict = common_serializers.LocationSerializer(source="location",
+                                                         fields=['city'],
+                                                         read_only=True)
+
+    class Meta:
+        model = JobPost
+        fields = ('id', "latitude", "longitude",
+                  "jobName", "deadline", "salaryMin", "salaryMax",
+                  "mobileCompanyDict", "locationDict")
+
+
 class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100)
@@ -181,6 +212,12 @@ class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
         'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
         'jobName', 'isHot', 'isUrgent', 'salary', 'city', 'deadline',
         'locationDict'
+    ], read_only=True)
+    mobileJobPostDict = JobPostSerializer(source="job_post", fields=[
+        'id', 'companyDict', "salaryMin", "salaryMax",
+        'jobName', 'career', 'position', 'experience', 'academicLevel',
+        'city', 'jobType', 'typeOfWorkplace', 'deadline',
+        'locationDict', 'updateAt'
     ], read_only=True)
     resumeDict = info_serializers.ResumeSerializer(source="resume", fields=[
         'id', 'slug', 'title', 'type'
@@ -200,7 +237,7 @@ class JobSeekerJobPostActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPostActivity
         fields = ("id", "job_post", "resume", "fullName", "email", "phone",
-                  "createAt", "updateAt", "jobPostDict", "resumeDict")
+                  "createAt", "updateAt", "jobPostDict", "mobileJobPostDict", "resumeDict")
 
     def create(self, validated_data):
         request = self.context["request"]

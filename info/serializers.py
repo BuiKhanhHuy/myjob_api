@@ -145,11 +145,11 @@ class CompanySerializer(serializers.ModelSerializer):
     def check_followed(self, company):
         request = self.context.get('request', None)
         if request is None:
-            return None
+            return False
         user = request.user
         if user.is_authenticated:
             return company.companyfollowed_set.filter(user=user).count() > 0
-        return None
+        return False
 
     class Meta:
         model = Company
@@ -198,7 +198,8 @@ class CompanySerializer(serializers.ModelSerializer):
 
 class CompanyFollowedSerializer(serializers.ModelSerializer):
     company = CompanySerializer(fields=['id', 'slug', 'companyName', 'companyImageUrl',
-                                        'fieldOperation', 'followNumber', 'jobPostNumber'])
+                                        'fieldOperation', 'followNumber', 'jobPostNumber',
+                                        'isFollowed'])
 
     class Meta:
         model = CompanyFollowed
@@ -267,7 +268,7 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(required=True, max_length=15)
     birthday = serializers.DateField(required=True,
                                      input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
-                                                                   var_sys.DATE_TIME_FORMAT["Ymd"]])
+                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     gender = serializers.CharField(required=True, max_length=1)
     maritalStatus = serializers.CharField(source='marital_status',
                                           required=True,
@@ -329,6 +330,8 @@ class CvSerializer(serializers.ModelSerializer):
     fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
     file = serializers.FileField(required=True, write_only=True)
 
+    updateAt = serializers.DateTimeField(source='update_at', read_only=True)
+
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
 
@@ -342,7 +345,7 @@ class CvSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Resume
-        fields = ("id", "slug", "title", "fileUrl", "file")
+        fields = ("id", "slug", "title", "fileUrl", "file", "updateAt")
 
     def update(self, instance, validated_data):
         pdf_file = validated_data.pop('file')
@@ -539,6 +542,7 @@ class EducationSerializer(serializers.ModelSerializer):
                                           input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -573,6 +577,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                     input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -607,6 +612,7 @@ class CertificateSerializer(serializers.ModelSerializer):
     expirationDate = serializers.DateField(source='expiration_date', required=False, allow_null=True,
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
@@ -634,6 +640,7 @@ class CertificateSerializer(serializers.ModelSerializer):
 class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_language(self, language):
@@ -664,6 +671,7 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
 class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
+
     # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_name(self, name):

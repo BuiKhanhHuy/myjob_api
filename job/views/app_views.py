@@ -1,27 +1,35 @@
 from configs import variable_response as var_res, renderers, paginations
+from helpers import helper, utils
+from django.db.models import Count, F
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
 from authentication import permissions as perms_custom
 from rest_framework.response import Response
+from rest_framework import status
 from info.models import Resume
 from ..models import (
     JobPost,
     SavedJobPost,
+    JobPostActivity
 )
 from ..filters import (
     JobPostFilter,
 )
 from ..serializers import (
     JobPostSerializer,
+    JobPostAroundFilterSerializer,
+    JobPostAroundSerializer,
+    JobSeekerJobPostActivitySerializer,
 )
 
 
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
-    queryset = JobPost.objects
+    queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
@@ -48,7 +56,7 @@ class JobPostViewSet(viewsets.ViewSet,
                 'jobName', 'isHot', 'isUrgent',
                 'career', 'position', 'experience', 'academicLevel',
                 'city', 'jobType', 'typeOfWorkplace', 'deadline',
-                'locationDict', 'updateAt'
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -74,7 +82,7 @@ class JobPostViewSet(viewsets.ViewSet,
                 'jobName', 'isHot', 'isUrgent',
                 'career', 'position', 'experience', 'academicLevel',
                 'city', 'jobType', 'typeOfWorkplace', 'deadline',
-                'locationDict', 'updateAt'
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -105,9 +113,11 @@ class JobPostViewSet(viewsets.ViewSet,
 
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
-                'id', 'slug', 'companyDict', "salaryMin", "salaryMax",
-                'jobName', 'isHot', 'isUrgent', 'isApplied', 'salary', 'city', 'deadline',
-                'locationDict'
+                'id', 'companyDict', "salaryMin", "salaryMax",
+                'jobName', 'isHot', 'isUrgent',
+                'career', 'position', 'experience', 'academicLevel',
+                'city', 'jobType', 'typeOfWorkplace', 'deadline',
+                'locationDict', 'updateAt', 'isSaved'
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -132,3 +142,67 @@ class JobPostViewSet(viewsets.ViewSet,
         return Response(data={
             "isSaved": is_saved
         })
+
+    @action(methods=["get"], detail=False,
+            url_path="count-job-posts-by-job-type", url_name="count-job-posts-by-job-type")
+    def count_job_posts_by_job_type(self, request):
+        try:
+            data = JobPost.objects.values(typeOfWorkplace=F('type_of_workplace')).annotate(total=Count('id')).order_by()
+        except Exception as ex:
+            helper.print_log_error("count_job_posts_by_job_type", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return var_res.Response(data=data)
+
+    @action(methods=["post"], detail=False,
+            url_path="job-posts-around", url_name="job-posts-around")
+    def get_job_posts_around(self, request):
+        data = request.data
+        filter_serializer = JobPostAroundFilterSerializer(data=data)
+        if not filter_serializer.is_valid():
+            print(">> BAD REQUEST >> get_job_posts_around: ", filter_serializer.errors)
+            return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+        filter_data = filter_serializer.data
+        current_latitude = filter_data.get('currentLatitude')
+        current_longitude = filter_data.get('currentLongitude')
+        radius = filter_data.get("radius")
+
+        print(data)
+
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True).order_by('-id', 'update_at', 'create_at'))
+        is_pagination = request.query_params.get("isPagination", None)
+
+        if is_pagination and is_pagination == "OK":
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = JobPostAroundSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+        serializer = JobPostAroundSerializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+
+class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
+                                      generics.ListAPIView,
+                                      generics.CreateAPIView):
+    queryset = JobPostActivity.objects
+    serializer_class = JobSeekerJobPostActivitySerializer
+    permission_classes = [perms_custom.IsJobSeekerUser]
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = user.jobpostactivity_set \
+            .order_by('-create_at', '-update_at')
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "createAt", "mobileJobPostDict", "resumeDict"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
