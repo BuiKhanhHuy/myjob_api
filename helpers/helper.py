@@ -1,3 +1,4 @@
+from configs import variable_system as var_sys
 from django.conf import settings
 import time
 from datetime import datetime
@@ -46,7 +47,7 @@ def urlsafe_base64_decode_with_encoded_data(encoded_data):
         return None, None
 
 
-def send_email_verify_email(request, user):
+def send_email_verify_email(request, user, platform):
     role_name = user.role_name
     redirect_login = settings.REDIRECT_LOGIN_CLIENT[role_name]
 
@@ -60,8 +61,13 @@ def send_email_verify_email(request, user):
     protocol = 'https' if request.is_secure() else 'http'
     domain = request.META['HTTP_HOST']
 
+    confirm_email_deeplink = None
+    if role_name == var_sys.JOB_SEEKER and platform == "APP":
+        confirm_email_deeplink = f"MyJob://app/{settings.REDIRECT_LOGIN_CLIENT[role_name]}"
+
     data = {
-        "confirm_email_url": f'{protocol}://{domain}/{func}'
+        "confirm_email_url": f'{protocol}://{domain}/{func}',
+        "confirm_email_deeplink": confirm_email_deeplink
     }
 
     # send mail verify

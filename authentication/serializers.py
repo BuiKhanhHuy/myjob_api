@@ -92,13 +92,14 @@ class ResetPasswordSerializer(serializers.Serializer):
         return attrs
 
 
-class JobSeekerRegisterSerializer(serializers.ModelSerializer):
+class JobSeekerRegisterSerializer(serializers.Serializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100,
                                    validators=[UniqueValidator(queryset=User.objects.all(),
                                                                message="Email đã tồn tại.")])
     password = serializers.CharField(required=True, max_length=100)
     confirmPassword = serializers.CharField(required=True, max_length=100)
+    platform = serializers.CharField(required=True, max_length=3)
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["confirmPassword"]:
@@ -109,6 +110,7 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 validated_data.pop("confirmPassword")
+                validated_data.pop("platform")
                 user = User.objects.create_user_with_role_name(**validated_data,
                                                                is_active=False,
                                                                role_name=var_sys.JOB_SEEKER)
@@ -123,7 +125,7 @@ class JobSeekerRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("fullName", "email", "password", "confirmPassword")
+        fields = ("fullName", "email", "password", "confirmPassword", "platform")
 
 
 class CompanyRegisterSerializer(serializers.ModelSerializer):
@@ -163,13 +165,14 @@ class CompanyRegisterSerializer(serializers.ModelSerializer):
                   "location")
 
 
-class EmployerRegisterSerializer(serializers.ModelSerializer):
+class EmployerRegisterSerializer(serializers.Serializer):
     company = CompanyRegisterSerializer()
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100,
                                    validators=[UniqueValidator(queryset=User.objects.all())])
     password = serializers.CharField(required=True, max_length=100)
     confirmPassword = serializers.CharField(required=True, max_length=100)
+    platform = serializers.CharField(required=True, max_length=3)
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["confirmPassword"]:
@@ -180,6 +183,7 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 validated_data.pop("confirmPassword")
+                validated_data.pop("platform")
                 company = validated_data.pop("company")
                 location = company.pop("location")
 
@@ -197,7 +201,7 @@ class EmployerRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("fullName", "email", "password", "confirmPassword", "company")
+        fields = ("fullName", "email", "password", "confirmPassword", "company", "platform")
 
 
 class UserSerializer(serializers.ModelSerializer):

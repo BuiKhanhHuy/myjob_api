@@ -240,9 +240,7 @@ def reset_password(request):
 
         if platform == "WEB":
             token = serializer.data.get("token")
-            print("Vo day: ", token)
             user_id = force_str(urlsafe_base64_decode(token))
-
             print("user id: ", user_id)
 
             forgot_password_tokens = ForgotPasswordToken.objects.filter(token=token, user_id=user_id, is_active=True)
@@ -275,14 +273,14 @@ def reset_password(request):
             if not forgot_password_tokens.exists():
                 return response_data(
                     status=status.HTTP_400_BAD_REQUEST,
-                    errors={"errorMessage": ["Mã xác nhận quên mật khẩu không hợp lệ."]}
+                    errors={"code": ["Mã xác nhận quên mật khẩu không hợp lệ."]}
                 )
             else:
                 forgot_password_token = forgot_password_tokens.first()
                 if forgot_password_token.expired_at < now or not forgot_password_token.is_active:
                     return response_data(
                         status=status.HTTP_400_BAD_REQUEST,
-                        errors={"errorMessage": ["Mã xác nhận quên mật khẩu đã hết hạn."]}
+                        errors={"code": ["Mã xác nhận quên mật khẩu đã hết hạn."]}
                     )
                 else:
                     with transaction.atomic():
@@ -364,8 +362,10 @@ def employer_register(request):
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
     try:
         user = serializer.save()
+        platform = serializer.validated_data.get("platform")
         if user:
-            helper.send_email_verify_email(request, user)
+            helper.send_email_verify_email(request, user,
+                                           platform=platform)
     except Exception as ex:
         helper.print_log_error("employer_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -378,10 +378,13 @@ def job_seeker_register(request):
     serializer = JobSeekerRegisterSerializer(data=data)
     if not serializer.is_valid():
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
+
     try:
         user = serializer.save()
+        platform = serializer.validated_data.get("platform")
         if user:
-            helper.send_email_verify_email(request, user)
+            helper.send_email_verify_email(request=request, user=user,
+                                           platform=platform)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
