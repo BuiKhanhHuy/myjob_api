@@ -1,4 +1,6 @@
-from configs import variable_system as var_sys, renderers
+import json
+from configs import variable_system as var_sys
+from django.conf import settings
 from helpers import utils, helper
 from configs import variable_response as var_res, paginations
 from django.db.models import Count
@@ -12,9 +14,6 @@ from .models import (
 from .serializers import (
     CareerSerializer
 )
-
-import requests
-import json
 
 
 @api_view(http_method_names=["POST"])
@@ -46,28 +45,6 @@ def create_database(request):
             Career.objects.create(name=career)
 
     return var_res.response_data()
-
-
-@api_view(http_method_names=["POST"])
-def create_user_company_job(request):
-    response = requests.post('https://ms.vietnamworks.com/job-search/v1.0/search',
-                             data={
-                                 "query": "",
-                                 "filter": [
-                                 ],
-                                 "ranges": [],
-                                 "order": [
-
-                                 ],
-                                 "hitsPerPage": 200,
-                                 "page": 0,
-                                 "retrieveFields": [
-
-                                 ]
-                             })
-    data = json.loads(response.text).get("data", [])
-
-    return var_res.response_data(data=data)
 
 
 @api_view(http_method_names=["GET"])
@@ -215,7 +192,6 @@ def get_all_careers(request):
     except Exception as ex:
         helper.print_log_error("get_all_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 from firebase_admin import db

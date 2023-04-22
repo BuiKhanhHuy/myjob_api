@@ -102,8 +102,8 @@ TYPE_OF_WORKPLACE_CHOICES = (
 JOB_TYPE_CHOICES = (
     (1, 'Nhân viên chính thức'),
     (2, 'Bán thời gian'),
-    (4, 'Thời vụ - Nghề tự do'),
-    (5, 'Thực tập')
+    (3, 'Thời vụ - Nghề tự do'),
+    (4, 'Thực tập')
 )
 
 EXPERIENCE_CHOICES = (

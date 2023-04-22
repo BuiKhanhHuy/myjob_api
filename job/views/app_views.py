@@ -1,7 +1,6 @@
 from configs import variable_response as var_res, renderers, paginations
 from helpers import helper, utils
 from django.db.models import Count, F
-
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -47,7 +46,7 @@ class JobPostViewSet(viewsets.ViewSet,
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
-                                        .order_by('-id', 'update_at', 'create_at'))
+                                        .order_by('-create_at', '-update_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -167,9 +166,9 @@ class JobPostViewSet(viewsets.ViewSet,
         current_longitude = filter_data.get('currentLongitude')
         radius = filter_data.get("radius")
 
-        print(data)
 
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True).order_by('-id', 'update_at', 'create_at'))
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
+                                        .order_by('update_at', 'create_at'))
         is_pagination = request.query_params.get("isPagination", None)
 
         if is_pagination and is_pagination == "OK":

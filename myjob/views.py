@@ -1,7 +1,8 @@
+import json
 from twilio.rest import Client
 from django.conf import settings
-
-from helpers import helper
+from django.db import transaction
+from helpers import helper, utils
 from configs import renderers
 from configs import variable_response as var_res, variable_system as var_sys
 from rest_framework.decorators import api_view
@@ -12,9 +13,54 @@ from rest_framework import permissions as perms_sys
 from .models import (
     Feedback
 )
+from authentication.models import (
+    User
+)
+from common.models import (
+    Location,
+)
+from info.models import (
+    Company
+)
+from job.models import (
+    JobPost
+)
 from .serializers import (
     FeedbackSerializer
 )
+
+
+@api_view(http_method_names=["POST"])
+def create_fake_data(request):
+    # try:
+    #     with open(settings.JSON_PATH, 'r', encoding='utf-8') as f:
+    #         data = json.load(f)
+    #     with transaction.atomic():
+    #         for d in data:
+    #             user_data = d.get("user")
+    #             location_data = d.get("location")
+    #             company_data = d.get("company")
+    #             jobs_post_data = d.get("jobs")
+    #             # create user
+    #             user = User.objects.create(**user_data)
+    #             user.set_password(user.password)
+    #             user.save()
+    #             # create company location
+    #             company_location = Location.objects.create(**location_data)
+    #             # create company
+    #             company = Company.objects.create(**company_data, user=user, location=company_location)
+    #
+    #             # create job posts of company
+    #             for job in jobs_post_data:
+    #                 job_post_location = Location.objects.create(**location_data)
+    #                 JobPost.objects.create(**job, user=user, company=company, location=job_post_location)
+    # except Exception as ex:
+    #     print(ex)
+    #     return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #                                  data=ex)
+    # else:
+    #     return var_res.response_data(data=None)
+    var_res.response_data(data=None)
 
 
 class FeedbackViewSet(viewsets.ViewSet,

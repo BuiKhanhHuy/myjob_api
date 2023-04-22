@@ -95,7 +95,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         queryset = self.filter_queryset(self.get_queryset()
                                         .filter(user=request.user,
                                                 company=request.user.company)
-                                        .order_by('-id', 'update_at', 'create_at'))
+                                        .order_by('-update_at', '-create_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -114,7 +114,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         queryset = self.filter_queryset(self.get_queryset()
                                         .filter(is_verify=True, user=request.user,
                                                 company=request.user.company)
-                                        .order_by('-id', 'update_at', 'create_at'))
+                                        .order_by('update_at', 'create_at'))
         serializer = self.get_serializer(queryset, many=True, fields=[
             "id", "jobName", "views",
             "createAt", "deadline", "appliedNumber"
@@ -159,7 +159,7 @@ class JobPostViewSet(viewsets.ViewSet,
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
-                                        .order_by('-id', 'update_at', 'create_at'))
+                                        .order_by('-update_at', '-create_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:

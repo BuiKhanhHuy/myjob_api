@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'cloudinary',
 
     # third party packages
+    'django_otp',
     'rest_framework',
     'django_filters',
     'django_extensions',
@@ -284,7 +285,8 @@ REDIRECT_LOGIN_CLIENT = {
 
 MYJOB_AUTH = {
     "VERIFY_EMAIL_LINK_EXPIRE_SECONDS": 7200,
-    "RESET_PASSWORD_LINK_EXPIRE_SECONDS": 7200
+    "RESET_PASSWORD_EXPIRE_SECONDS": 7200,
+    "TIME_REQUIRED_FORGOT_PASSWORD": 120
 }
 
 # TWILIO
@@ -303,5 +305,7 @@ firebase_admin.initialize_app(cred, {
 })
 
 COMPANY_NAME = "MyJob"
+
+JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\data.json')
 
 APP_ENVIRONMENT = config('APP_ENV')

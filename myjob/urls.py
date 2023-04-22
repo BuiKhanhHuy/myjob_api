@@ -8,6 +8,9 @@ web_router = DefaultRouter()
 web_router.register(r'feedbacks', views.FeedbackViewSet, basename='feedback')
 
 urlpatterns = [
+    path('', include([
+        path('create-fake-databases/', views.create_fake_data),
+    ])),
     path('app/', include([
         path('', include(app_router.urls))
     ])),

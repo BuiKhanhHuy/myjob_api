@@ -619,8 +619,9 @@ class CompanyImageViewSet(viewsets.ViewSet,
 
     def get_queryset(self):
         queryset = self.queryset
-        queryset = queryset.filter(company=self.request.user.company) \
-            .order_by('-update_at', '-create_at')
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(company=self.request.user.company) \
+                .order_by('-update_at', '-create_at')
 
         return queryset
 

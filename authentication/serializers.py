@@ -23,6 +23,12 @@ class CheckCredsSerializer(serializers.Serializer):
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=100)
+    platform = serializers.CharField(required=True)
+
+    def validate_platform(self, platform):
+        if platform not in ["WEB", "APP"]:
+            raise serializers.ValidationError("platform không hợp lệ.")
+        return platform
 
 
 class UpdatePasswordSerializer(serializers.Serializer):
@@ -53,13 +59,36 @@ class UpdatePasswordSerializer(serializers.Serializer):
 class ResetPasswordSerializer(serializers.Serializer):
     newPassword = serializers.CharField(required=True, max_length=128)
     confirmPassword = serializers.CharField(required=True, max_length=128)
-    token = serializers.CharField(required=True)
+    token = serializers.CharField(required=False)
+    code = serializers.CharField(required=False)
+    platform = serializers.CharField(required=True)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
 
     def validate(self, attrs):
         new_pass = attrs.get('newPassword', '')
         confirm_pass = attrs.get('confirmPassword', '')
         if not new_pass == confirm_pass:
             raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+
+        platform = attrs.get("platform", "")
+        if platform not in ["APP", "WEB"]:
+            raise serializers.ValidationError({'platform': 'platform không hợp lệ.'})
+        if platform == "APP":
+            if not attrs.get("code", None):
+                raise serializers.ValidationError({'code': 'code là bắt buộc.'})
+        elif platform == "WEB":
+            if not attrs.get("token", None):
+                raise serializers.ValidationError({'token': 'token là bắt buộc.'})
         return attrs
 
 

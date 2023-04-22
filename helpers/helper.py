@@ -1,7 +1,6 @@
 from django.conf import settings
 import time
 from datetime import datetime
-from configs import variable_system as var_sys
 from console.jobs import queue_mail
 from authentication.tokens_custom import email_verification_token
 from django.utils.encoding import force_str
@@ -67,25 +66,3 @@ def send_email_verify_email(request, user):
 
     # send mail verify
     queue_mail.send_email_verify_email_task.delay(to=[user.email], data=data)
-
-
-def send_email_reset_password(user):
-    app_env = settings.APP_ENVIRONMENT
-
-    encoded_data = urlsafe_base64_encode_with_expires(
-        user.pk, settings.MYJOB_AUTH["RESET_PASSWORD_LINK_EXPIRE_SECONDS"]
-    )
-
-    domain = settings.DOMAIN_CLIENT[app_env]
-    func = f"cap-nhat-mat-khau/{encoded_data}"
-
-    data = {
-        "reset_password_url": domain + func
-    }
-
-    # send mail reset password
-    queue_mail.send_email_reset_password_task.delay(to=[user.email], data=data)
-
-
-def send_email_reply_to_job_seeker(to, subject, data):
-    queue_mail.send_email_reply_job_seeker_task.delay(to=to, subject=subject, data=data)

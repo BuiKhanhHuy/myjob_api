@@ -73,3 +73,19 @@ class User(AbstractUser, AuthBaseModel):
     objects = UserManager()
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
+
+
+class ForgotPasswordToken(AuthBaseModel):
+    token = models.CharField(max_length=255, null=True)
+    code = models.IntegerField(null=True)
+    expired_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    platform = models.CharField(max_length=3, choices=var_sys.PLATFORM_CHOICES,
+                                default="WEB")
+
+    # ForeignKey
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="forgot_password_tokens")
+
+    class Meta:
+        db_table = "myjob_authentication_forgot_password_token"
+
