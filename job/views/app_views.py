@@ -1,6 +1,9 @@
 from configs import variable_response as var_res, renderers, paginations
-from helpers import helper, utils
-from django.db.models import Count, F
+from helpers import helper
+from django.db.models import F, Count
+from django.db.models.functions import ACos, Cos, Radians, Sin
+# from django.contrib.gis.db.models.functions import Distance
+# from django.contrib.gis.geos import Point
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -162,13 +165,31 @@ class JobPostViewSet(viewsets.ViewSet,
             print(">> BAD REQUEST >> get_job_posts_around: ", filter_serializer.errors)
             return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
         filter_data = filter_serializer.data
-        current_latitude = filter_data.get('currentLatitude')
-        current_longitude = filter_data.get('currentLongitude')
+        # latitude truyền vào
+        lat = filter_data.get('currentLatitude')
+        # longitude truyền vào
+        lng = filter_data.get('currentLongitude')
+        # bán kính truyền vào (đơn vị km)
         radius = filter_data.get("radius")
 
+        # Chuyển đổi vị trí truyền vào thành radian
+        lat_radian = Radians(lat)
+        lng_radian = Radians(lng)
 
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
-                                        .order_by('update_at', 'create_at'))
+        # Tính toán khoảng cách và filter các dòng thỏa mãn
+        queryset = JobPost.objects.annotate(
+            lat_radian=Radians('location__lat'),
+            lng_radian=Radians('location__lng'),
+            cos_lat_radian=Cos(Radians('location__lat')),
+            sin_lat_radian=Sin(Radians('location__lat')),
+            cos_lng_radian=Cos(Radians('location__lng')),
+            sin_lng_radian=Sin(Radians('location__lng')),
+            distance=6367.0 * ACos(
+                Cos(lat_radian) * F('cos_lat_radian') * Cos(lng_radian - F('lng_radian')) +
+                Sin(lat_radian) * F('sin_lat_radian')
+            )
+        ).filter(distance__lte=radius).order_by('update_at', 'create_at')
+
         is_pagination = request.query_params.get("isPagination", None)
 
         if is_pagination and is_pagination == "OK":

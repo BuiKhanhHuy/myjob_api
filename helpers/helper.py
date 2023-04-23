@@ -1,6 +1,7 @@
 from configs import variable_system as var_sys
 from django.conf import settings
 import time
+from math import radians, sin, cos, sqrt, atan2
 from datetime import datetime
 from console.jobs import queue_mail
 from authentication.tokens_custom import email_verification_token
@@ -11,6 +12,27 @@ from django.utils.encoding import force_bytes
 
 def print_log_error(func_name, error, now=datetime.now()):
     print(f">>> ERROR [{now}][{func_name}] >> {error}")
+
+
+def calculate_distance(lat1, lng1, lat2, lng2):
+    # approximate radius of earth in km
+    R = 6373.0
+
+    # convert decimal degrees to radians
+    lat1 = radians(lat1)
+    lng1 = radians(lng1)
+    lat2 = radians(lat2)
+    lng2 = radians(lng2)
+
+    dlng = lng2 - lng1
+    dlat = lat2 - lat1
+
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlng / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+
+    return distance
 
 
 def get_full_client_url(func):
