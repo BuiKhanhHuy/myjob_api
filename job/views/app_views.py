@@ -177,7 +177,7 @@ class JobPostViewSet(viewsets.ViewSet,
         lng_radian = Radians(lng)
 
         # Tính toán khoảng cách và filter các dòng thỏa mãn
-        queryset = JobPost.objects.annotate(
+        queryset = self.filter_queryset(self.get_queryset().annotate(
             lat_radian=Radians('location__lat'),
             lng_radian=Radians('location__lng'),
             cos_lat_radian=Cos(Radians('location__lat')),
@@ -188,7 +188,7 @@ class JobPostViewSet(viewsets.ViewSet,
                 Cos(lat_radian) * F('cos_lat_radian') * Cos(lng_radian - F('lng_radian')) +
                 Sin(lat_radian) * F('sin_lat_radian')
             )
-        ).filter(distance__lte=radius).order_by('update_at', 'create_at')
+        ).filter(distance__lte=radius).order_by('update_at', 'create_at'))
 
         is_pagination = request.query_params.get("isPagination", None)
 
