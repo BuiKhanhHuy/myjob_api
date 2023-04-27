@@ -1,5 +1,7 @@
 import json
 import datetime
+
+import cloudinary.uploader
 from django.conf import settings
 from django.db import transaction
 
@@ -338,20 +340,41 @@ def update_user_account(request):
         return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
 
 
-@api_view(http_method_names=['put'])
+@api_view(http_method_names=['put', 'delete'])
 @permission_classes(permission_classes=[IsAuthenticated])
 def avatar(request):
-    files = request.FILES
-    avatar_serializer = AvatarSerializer(request.user, data=files)
-    if not avatar_serializer.is_valid():
-        return response_data(status=status.HTTP_400_BAD_REQUEST, errors=avatar_serializer.errors)
-    try:
-        avatar_serializer.save()
-    except Exception as ex:
-        helper.print_log_error("avatar", ex)
-        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.method == "PUT":
+        files = request.FILES
+        avatar_serializer = AvatarSerializer(request.user, data=files)
+        if not avatar_serializer.is_valid():
+            return response_data(status=status.HTTP_400_BAD_REQUEST, errors=avatar_serializer.errors)
+        try:
+            avatar_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("avatar", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return response_data(status=status.HTTP_200_OK, data=avatar_serializer.data)
+    elif request.method == "DELETE":
+        user = request.user
+        try:
+            if user.avatar_public_id:
+                destroy_result = cloudinary.uploader.destroy(user.avatar_public_id)
+                if not destroy_result.get("result", "") == "ok":
+                    raise Exception("Something went wrong when upload image to cloudinary!")
+
+            user.avatar_url = var_sys.AVATAR_DEFAULT["AVATAR"]
+            user.avatar_public_id = None
+            user.save()
+        except Exception as ex:
+            helper.print_log_error("delete_avatar", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return response_data(status=status.HTTP_204_NO_CONTENT, data={
+                "avatarUrl": user.avatar_url
+            })
     else:
-        return response_data(status=status.HTTP_200_OK, data=avatar_serializer.data)
+        return response_data(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(http_method_names=['post'])

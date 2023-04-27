@@ -16,6 +16,7 @@ from decouple import config
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
+from django.utils import timezone
 import cloudinary
 import firebase_admin
 from firebase_admin import credentials
@@ -40,6 +41,7 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django_light',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
