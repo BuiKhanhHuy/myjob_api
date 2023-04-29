@@ -60,6 +60,9 @@ class JobPost(JobPostBaseModel):
     class Meta:
         db_table = "myjob_job_job_post"
 
+    def __str__(self):
+        return f"{self.job_name}"
+
 
 class SavedJobPost(JobPostBaseModel):
     # ForeignKey
@@ -68,6 +71,10 @@ class SavedJobPost(JobPostBaseModel):
 
     class Meta:
         db_table = "myjob_job_saved_job_post"
+        verbose_name_plural = "Saved job posts"
+
+    def __str__(self):
+        return f"{self.user} saved {self.job_post}"
 
 
 class JobPostActivity(JobPostBaseModel):
@@ -83,3 +90,4 @@ class JobPostActivity(JobPostBaseModel):
 
     class Meta:
         db_table = "myjob_job_job_post_activity"
+        verbose_name_plural = "Job posts activity"

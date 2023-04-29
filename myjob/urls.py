@@ -10,6 +10,7 @@ web_router.register(r'feedbacks', views.FeedbackViewSet, basename='feedback')
 urlpatterns = [
     path('', include([
         path('create-fake-databases/', views.create_fake_data),
+        path('send-noti-demo/', views.send_notification_demo),
     ])),
     path('app/', include([
         path('', include(app_router.urls))

@@ -69,6 +69,7 @@ class User(AbstractUser, AuthBaseModel):
 
     class Meta:
         db_table = "myjob_authentication_user"
+        verbose_name_plural = "Users"
 
     objects = UserManager()
     USERNAME_FIELD = "email"
@@ -88,4 +89,3 @@ class ForgotPasswordToken(AuthBaseModel):
 
     class Meta:
         db_table = "myjob_authentication_forgot_password_token"
-

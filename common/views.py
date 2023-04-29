@@ -192,12 +192,3 @@ def get_all_careers(request):
     except Exception as ex:
         helper.print_log_error("get_all_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-from firebase_admin import db
-
-
-@api_view(http_method_names=["GET"])
-def demo(request):
-    ref = db.reference()
-    return var_res.response_data(data=ref.get())

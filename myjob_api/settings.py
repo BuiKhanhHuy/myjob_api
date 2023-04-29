@@ -36,7 +36,6 @@ APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 ALLOWED_HOSTS = ['*']
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -89,7 +88,8 @@ ROOT_URLCONF = 'myjob_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'myjob_api/templates/emails/'],
+        'DIRS': [BASE_DIR / 'myjob_api/templates/emails/',
+                 BASE_DIR / 'myjob/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -201,6 +201,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
 INTERNAL_IPS = ('127.0.0.1', '192.168.1.5')
+
+LOGIN_REDIRECT_URL = '/'
 
 SERVICE_REDIS_HOST = config('SERVICE_REDIS_HOST')
 SERVICE_REDIS_PORT = config('SERVICE_REDIS_PORT', cast=int)

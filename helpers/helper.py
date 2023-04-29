@@ -1,9 +1,9 @@
-from configs import variable_system as var_sys
-from django.conf import settings
 import time
-from math import radians, sin, cos, sqrt, atan2
 from datetime import datetime
-from console.jobs import queue_mail
+from django.conf import settings
+
+from configs import variable_system as var_sys
+from console.jobs import queue_mail, queue_notification
 from authentication.tokens_custom import email_verification_token
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -12,27 +12,6 @@ from django.utils.encoding import force_bytes
 
 def print_log_error(func_name, error, now=datetime.now()):
     print(f">>> ERROR [{now}][{func_name}] >> {error}")
-
-
-def calculate_distance(lat1, lng1, lat2, lng2):
-    # approximate radius of earth in km
-    R = 6373.0
-
-    # convert decimal degrees to radians
-    lat1 = radians(lat1)
-    lng1 = radians(lng1)
-    lat2 = radians(lat2)
-    lng2 = radians(lng2)
-
-    dlng = lng2 - lng1
-    dlat = lat2 - lat1
-
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlng / 2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = R * c
-
-    return distance
 
 
 def get_full_client_url(func):
@@ -94,3 +73,65 @@ def send_email_verify_email(request, user, platform):
 
     # send mail verify
     queue_mail.send_email_verify_email_task.delay(to=[user.email], data=data)
+
+
+def add_system_notifications(title, content, user_id_list):
+    type_name = var_sys.NOTIFICATION_TYPE["SYSTEM"]
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      type_name=type_name, user_id_list=user_id_list)
+
+
+def add_welcome_notifications(title, content, user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["WELCOME"]
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      type_name=type_name, user_id_list=[user_id])
+
+
+def add_employer_viewed_resume_notifications(title, content, company_id, company_image, user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_VIEWED_RESUME"]
+    content_of_type = {
+        "company_id": company_id,
+        "company_image": company_image
+    }
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      content_of_type=content_of_type,
+                                                      type_name=type_name, user_id_list=[user_id])
+
+
+def add_employer_saved_resume_notifications(title, content, company_id, company_image, user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_SAVED_RESUME"]
+    content_of_type = {
+        "company_id": company_id,
+        "company_image": company_image
+    }
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      content_of_type=content_of_type,
+                                                      type_name=type_name, user_id_list=[user_id])
+
+
+def add_apply_status_notifications(title, content, user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["APPLY_STATUS"]
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      type_name=type_name, user_id_list=[user_id])
+
+
+def add_company_followed_notifications(title, content, user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["COMPANY_FOLLOWED"]
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      type_name=type_name, user_id_list=[user_id])
+
+
+def add_post_verify_required_notifications(title, content,
+                                           company_id, company_image,
+                                           job_post_id, job_post_title,
+                                           user_id):
+    type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
+    content_of_type = {
+        "company_id": company_id,
+        "company_image": company_image,
+        "job_post_id": job_post_id,
+        "job_post_title": job_post_title
+    }
+    queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                      content_of_type=content_of_type,
+                                                      type_name=type_name, user_id_list=[user_id])

@@ -1,7 +1,7 @@
 import json
 from twilio.rest import Client
 from django.conf import settings
-from django.db import transaction
+from django.shortcuts import render
 from helpers import helper, utils
 from configs import renderers
 from configs import variable_response as var_res, variable_system as var_sys
@@ -103,7 +103,7 @@ def send_sms_download_app(request):
                                               f'bạn có thể tìm kiếm các công việc phù hợp với nhu cầu '
                                               f'và kinh nghiệm của mình chỉ trong vài phút. '
                                               f'Để tải ứng dụng, bạn có thể truy cập vào link sau: '
-                                              f'Android: {var_sys.LINK_GOOGLEPLAY}; iOS: {var_sys.LINK_APPSTORE}. '
+                                              f'Android: {var_sys.LINK_GOOGLE_PLAY}; iOS: {var_sys.LINK_APPSTORE}. '
                                               f'Hãy cùng trải nghiệm và tìm kiếm công '
                                               f'việc mơ ước của bạn với {settings.COMPANY_NAME} nhé!',
                                          to=f"+84{phone[1:None]}")
@@ -111,4 +111,10 @@ def send_sms_download_app(request):
     except Exception as ex:
         helper.print_log_error("send_sms_download_app", ex)
         var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return var_res.response_data()
+
+
+@api_view(http_method_names=['post'])
+def send_notification_demo(request):
+    helper.add_welcome_notifications("Test", "Đây là nội dung test.", 196)
     return var_res.response_data()
