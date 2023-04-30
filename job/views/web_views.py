@@ -1,6 +1,7 @@
-from configs import variable_response as var_res, renderers, paginations, table_export
-from helpers import utils
-from django.db.models import Count, Q
+from configs import variable_response as var_res, variable_system as var_sys, \
+    renderers, paginations, table_export
+from helpers import utils, helper
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -308,5 +309,15 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             job_post_activity.status = stt
             job_post_activity.save()
 
+            # send notification
+            notification_title = job_post_activity.job_post.company.company_name
+            notification_content = f'Hồ sơ ứng tuyển của bạn vào vị trí "{job_post_activity.job_post.job_name}" được cập nhật trạng thái sang "{[x for x in var_sys.APPLICATION_STATUS if x[0] == stt][0][1]}"'
+            company_img = job_post_activity.job_post.company.company_image_url
+            helper.add_apply_status_notifications(
+                notification_title,
+                notification_content,
+                company_img,
+                job_post_activity.user_id
+            )
             return var_res.Response(status=status.HTTP_200_OK)
         return var_res.Response(status=status.HTTP_400_BAD_REQUEST)

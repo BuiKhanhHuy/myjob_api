@@ -1,9 +1,10 @@
 import cloudinary.uploader
 
+from console.jobs import queue_mail
 from helpers import utils
 from configs import variable_system as var_sys, table_export
 from configs import variable_response as var_res, renderers, paginations
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
@@ -298,7 +299,8 @@ class ResumeViewSet(viewsets.ViewSet,
     @action(methods=["post"], detail=True,
             url_path="resume-saved", url_name="resume-saved")
     def resume_saved(self, request, slug):
-        saved_resumes = ResumeSaved.objects.filter(company=request.user.company, resume=self.get_object())
+        user = request.user
+        saved_resumes = ResumeSaved.objects.filter(company=user.company, resume=self.get_object())
         is_saved = False
         if saved_resumes.exists():
             saved_resume = saved_resumes.first()
@@ -310,9 +312,44 @@ class ResumeViewSet(viewsets.ViewSet,
                 resume=self.get_object()
             )
             is_saved = True
+        # send notification
+        company = user.company
+        notification_content = "Đã lưu hồ sơ của bạn" if is_saved else "Đã hủy lưu hồ sơ của bạn"
+        helper.add_employer_saved_resume_notifications(
+            company.company_name,
+            notification_content,
+            company.company_image_url,
+            self.get_object().user_id
+        )
         return Response(data={
             "isSaved": is_saved
         })
+
+    @action(methods=["post"], detail=True,
+            url_path="view-resume", url_name="view-resume")
+    def view_resume(self, request, slug):
+        user = request.user
+        v, _ = ResumeViewed.objects.get_or_create(
+            resume=self.get_object(),
+            company=user.company
+        )
+        try:
+            v.views = F('views') + 1
+            v.save()
+            v.refresh_from_db()
+            # send notification
+            company = user.company
+            helper.add_employer_viewed_resume_notifications(
+                company.company_name,
+                "Đã xem hồ sơ của bạn",
+                company.company_image_url,
+                self.get_object().user_id
+            )
+        except Exception as ex:
+            helper.print_log_error("view_resume", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.Response(status=status.HTTP_200_OK)
 
 
 class ResumeViewedAPIView(views.APIView):
@@ -569,8 +606,11 @@ class CompanyViewSet(viewsets.ViewSet,
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
     def followed(self, request, slug):
+        user = request.user
+        company = self.get_object()
+
         is_followed = False
-        companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
+        companies_followed = CompanyFollowed.objects.filter(user=user, company=company)
         if companies_followed.exists():
             company_followed = companies_followed.first()
             company_followed.delete()
@@ -580,6 +620,15 @@ class CompanyViewSet(viewsets.ViewSet,
                 company=self.get_object(),
             )
             is_followed = True
+        # send notification
+        notification_title = f"{user.email} - {user.full_name}"
+        notification_content = "Đã theo dõi bạn" if is_followed else "Đã hủy theo dõi bạn"
+        helper.add_company_followed_notifications(
+            notification_title,
+            notification_content,
+            user.avatar_url,
+            company.user_id
+        )
         return Response(data={
             "isFollowed": is_followed
         })
@@ -670,7 +719,9 @@ def send_email_reply_to_job_seeker(request):
         'company_address': company.location.address,
         'company_website_url': company.website_url
     }
-    helper.send_email_reply_to_job_seeker(to=to,
-                                          subject=validate_data.get("title"),
-                                          data=email_data)
+    queue_mail.send_email_reply_job_seeker_task.delay(
+        to=to,
+        subject=validate_data.get("title"),
+        data=email_data
+    )
     return var_res.response_data()

@@ -153,6 +153,13 @@ def user_active(request, encoded_data, token):
         user.is_verify_email = True
         user.save()
 
+        # add notification welcome
+        helper.add_system_notifications(
+            "Thông báo hệ thống",
+            "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
+            "công việc mơ ước của bạn.",
+            [user.id]
+        )
         return HttpResponseRedirect(
             helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
     else:

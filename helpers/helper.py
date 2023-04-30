@@ -75,63 +75,76 @@ def send_email_verify_email(request, user, platform):
     queue_mail.send_email_verify_email_task.delay(to=[user.email], data=data)
 
 
+def send_email_reply_to_job_seeker(to, subject, data):
+    queue_mail.send_email_reply_job_seeker_task.delay(to=to, subject=subject, data=data)
+
+
 def add_system_notifications(title, content, user_id_list):
-    type_name = var_sys.NOTIFICATION_TYPE["SYSTEM"]
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      type_name=type_name, user_id_list=user_id_list)
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["SYSTEM"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name, user_id_list=user_id_list)
+    except Exception as ex:
+        print_log_error("add_system_notifications", ex)
 
 
-def add_welcome_notifications(title, content, user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["WELCOME"]
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      type_name=type_name, user_id_list=[user_id])
+def add_employer_viewed_resume_notifications(title, content, company_image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_VIEWED_RESUME"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name,
+                                                          image=company_image,
+                                                          user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_employer_viewed_resume_notifications", ex)
 
 
-def add_employer_viewed_resume_notifications(title, content, company_id, company_image, user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_VIEWED_RESUME"]
-    content_of_type = {
-        "company_id": company_id,
-        "company_image": company_image
-    }
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      content_of_type=content_of_type,
-                                                      type_name=type_name, user_id_list=[user_id])
+def add_employer_saved_resume_notifications(title, content, company_image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_SAVED_RESUME"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name,
+                                                          image=company_image,
+                                                          user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_employer_saved_resume_notifications", ex)
 
 
-def add_employer_saved_resume_notifications(title, content, company_id, company_image, user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_SAVED_RESUME"]
-    content_of_type = {
-        "company_id": company_id,
-        "company_image": company_image
-    }
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      content_of_type=content_of_type,
-                                                      type_name=type_name, user_id_list=[user_id])
+def add_apply_status_notifications(title, content, image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["APPLY_STATUS"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=image,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_apply_status_notifications", ex)
 
 
-def add_apply_status_notifications(title, content, user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["APPLY_STATUS"]
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      type_name=type_name, user_id_list=[user_id])
-
-
-def add_company_followed_notifications(title, content, user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["COMPANY_FOLLOWED"]
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      type_name=type_name, user_id_list=[user_id])
+def add_company_followed_notifications(title, content, avatar, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["COMPANY_FOLLOWED"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=avatar,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_company_followed_notifications", ex)
 
 
 def add_post_verify_required_notifications(title, content,
                                            company_id, company_image,
                                            job_post_id, job_post_title,
                                            user_id):
-    type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
-    content_of_type = {
-        "company_id": company_id,
-        "company_image": company_image,
-        "job_post_id": job_post_id,
-        "job_post_title": job_post_title
-    }
-    queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                      content_of_type=content_of_type,
-                                                      type_name=type_name, user_id_list=[user_id])
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
+        content_of_type = {
+            "company_id": company_id,
+            "company_image": company_image,
+            "job_post_id": job_post_id,
+            "job_post_title": job_post_title
+        }
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          content_of_type=content_of_type,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_post_verify_required_notifications", ex)
+

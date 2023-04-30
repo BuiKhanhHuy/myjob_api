@@ -116,5 +116,5 @@ def send_sms_download_app(request):
 
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
-    helper.add_welcome_notifications("Test", "Đây là nội dung test.", 196)
+    helper.add_system_notifications("Test notification nhà ứng viên", "Đây là nội dung test cho ứng viên.", [197])
     return var_res.response_data()
