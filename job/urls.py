@@ -15,6 +15,8 @@ web_router.register('job-seeker-job-posts-activity', web_views.JobSeekerJobPostA
                     basename='web-job-seeker-job-posts-activity')
 web_router.register('employer-job-posts-activity', web_views.EmployerJobPostActivityViewSet,
                     basename='web-employer-job-posts-activity')
+web_router.register('job-post-notifications', web_views.JobPostNotificationViewSet,
+                    basename='web-job-post-notifications')
 
 urlpatterns = [
     path('app/', include([

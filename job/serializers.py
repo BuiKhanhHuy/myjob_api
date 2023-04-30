@@ -4,13 +4,12 @@ from rest_framework import serializers
 from django.db import transaction
 from .models import (
     JobPost,
-    SavedJobPost,
-    JobPostActivity
+    JobPostActivity,
+    JobPostNotification
 )
 from common.models import (
     Location
 )
-from authentication import serializers as auth_serializers
 from common import serializers as common_serializers
 from info import serializers as info_serializers
 
@@ -315,3 +314,45 @@ class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):
         fields = ("title", "fullName", "email", "phone",
                   "gender", "birthday", "address",
                   "jobName", "createAt", "statusApply")
+
+
+class JobPostNotificationSerializer(serializers.ModelSerializer):
+    jobName = serializers.CharField(source="job_name", required=True, max_length=255)
+    position = serializers.IntegerField(required=False)
+    experience = serializers.IntegerField(required=False)
+    salary = serializers.IntegerField(required=False)
+    frequency = serializers.IntegerField(required=True)
+    isActive = serializers.BooleanField(source='is_active', required=False)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)
+
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+    class Meta:
+        model = JobPostNotification
+        fields = ("id", "jobName", "position",
+                  "experience", "salary",
+                  "frequency", "isActive",
+                  "career", "city")
+
+    def create(self, validated_data):
+        try:
+            request = self.context['request']
+            user = request.user
+
+            job_post_notification = JobPostNotification(**validated_data)
+            with transaction.atomic():
+                job_post_notification.user = user
+                job_post_notification.save()
+        except Exception as ex:
+            helper.print_log_error("create job post notification", error=ex)
+            return None
+        else:
+            return job_post_notification

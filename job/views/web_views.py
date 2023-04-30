@@ -1,7 +1,7 @@
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
-from django.db.models import Count
+from django.db.models import Count, F
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -13,7 +13,8 @@ from info.models import Resume
 from ..models import (
     JobPost,
     SavedJobPost,
-    JobPostActivity
+    JobPostActivity,
+    JobPostNotification
 )
 from ..filters import (
     JobPostFilter,
@@ -24,7 +25,8 @@ from ..serializers import (
     JobPostSerializer,
     JobSeekerJobPostActivitySerializer,
     EmployerJobPostActivitySerializer,
-    EmployerJobPostActivityExportSerializer
+    EmployerJobPostActivityExportSerializer,
+    JobPostNotificationSerializer
 )
 
 
@@ -176,6 +178,13 @@ class JobPostViewSet(viewsets.ViewSet,
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+        try:
+            instance.views = F('views') + 1
+            instance.save()
+            instance.refresh_from_db()
+        except Exception as ex:
+            helper.print_log_error("save views", ex)
+
         serializer = self.get_serializer(instance, fields=[
             'id', 'slug', 'jobName', 'deadline', 'quantity', 'genderRequired',
             'jobDescription', 'jobRequirement', 'benefitsEnjoyed', 'career',
@@ -321,3 +330,59 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             )
             return var_res.Response(status=status.HTTP_200_OK)
         return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class JobPostNotificationViewSet(viewsets.ViewSet,
+                                 generics.CreateAPIView,
+                                 generics.ListAPIView,
+                                 generics.UpdateAPIView,
+                                 generics.DestroyAPIView):
+    queryset = JobPostNotification.objects.all()
+    serializer_class = JobPostNotificationSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+    permission_classes = [perms_custom.IsJobSeekerUser]
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = self.get_queryset().filter(user=user).order_by('-is_active', '-update_at')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "jobName", "salary", "frequency",
+                "isActive", "career", "city"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, fields=[
+            "id", "jobName", "position", "experience",
+            "salary", "frequency", "career", "city"
+        ])
+        return Response(data=serializer.data)
+
+    @action(methods=["put"], detail=True,
+            url_path='active', url_name="active", )
+    def active_job_post_notification(self, request, pk):
+        user = request.user
+        job_post_notification = self.get_object()
+
+        if job_post_notification.is_active:
+            job_post_notification.is_active = False
+            job_post_notification.save()
+        else:
+            if JobPostNotification.objects.filter(user=user, is_active=True).count() >= 3:
+                return var_res.Response(status=status.HTTP_400_BAD_REQUEST,
+                                        data={"errorMessage": ["Tối đa 3 thông báo việc làm được bật"]})
+            job_post_notification.is_active = True
+            job_post_notification.save()
+
+        is_active = job_post_notification.is_active
+        return var_res.Response(data={
+            "isActive": is_active
+        })

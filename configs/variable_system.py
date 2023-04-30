@@ -154,3 +154,9 @@ APPLICATION_STATUS = (
     (5, 'Trúng tuyển'),
     (6, 'Không trúng tuyển')
 )
+
+FREQUENCY_NOTIFICATION = (
+    (1, 'Mỗi ngày'),
+    (2, '3 Ngày / lần'),
+    (3, '1 Tuần / 1 lần'),
+)

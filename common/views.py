@@ -63,6 +63,7 @@ def get_all_config(request):
         experience_tuple = utils.convert_tuple_or_list_to_options(var_sys.EXPERIENCE_CHOICES)
         employee_size_tuple = utils.convert_tuple_or_list_to_options(var_sys.EMPLOYEE_SIZE_CHOICES)
         application_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.APPLICATION_STATUS)
+        frequency_notification_tuple = utils.convert_tuple_or_list_to_options(var_sys.FREQUENCY_NOTIFICATION)
 
         # database
         cities = City.objects.values_list("id", "name")
@@ -84,6 +85,7 @@ def get_all_config(request):
         application_status_options = application_status_tuple[0]
         city_options = city_tuple[0]
         career_options = career_tuple[0]
+        frequency_notification_options = frequency_notification_tuple[0]
 
         completed_profile_dict = completed_profile_tuple[1]
         gender_dict = gender_tuple[1]
@@ -99,6 +101,7 @@ def get_all_config(request):
         application_status_dict = application_status_tuple[1]
         city_dict = city_tuple[1]
         career_dict = career_tuple[1]
+        frequency_notification_dict = frequency_notification_tuple[1]
 
         res_data = {
             "completedProfileOptions": completed_profile_options,
@@ -115,6 +118,7 @@ def get_all_config(request):
             "applicationStatusOptions": application_status_options,
             "cityOptions": city_options,
             "careerOptions": career_options,
+            "frequencyNotificationOptions": frequency_notification_options,
 
             "completedProfileDict": completed_profile_dict,
             "genderDict": gender_dict,
@@ -130,7 +134,7 @@ def get_all_config(request):
             "applicationStatusDict": application_status_dict,
             "cityDict": city_dict,
             "careerDict": career_dict,
-
+            "frequencyNotificationDict": frequency_notification_dict,
         }
     except Exception as ex:
         helper.print_log_error(func_name="get_all_config", error=ex)
@@ -182,7 +186,7 @@ def get_all_careers(request):
             queryset = queryset.filter(name__icontains=kw)
         queryset = queryset.all().order_by('id')
 
-        page = paginator.paginate_queryset(queryset, request=request)
+        page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = CareerSerializer(page, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
             return paginator.get_paginated_response(serializer.data)
