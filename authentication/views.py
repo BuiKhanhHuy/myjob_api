@@ -377,7 +377,7 @@ def avatar(request):
             helper.print_log_error("delete_avatar", ex)
             return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return response_data(status=status.HTTP_204_NO_CONTENT, data={
+            return response_data(status=status.HTTP_200_OK, data={
                 "avatarUrl": user.avatar_url
             })
     else:

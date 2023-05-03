@@ -78,6 +78,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
+        print(cities_id, careers_id)
         queryset = JobPost.objects.filter(is_verify=True) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 

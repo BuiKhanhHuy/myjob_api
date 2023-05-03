@@ -318,9 +318,9 @@ class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):
 
 class JobPostNotificationSerializer(serializers.ModelSerializer):
     jobName = serializers.CharField(source="job_name", required=True, max_length=255)
-    position = serializers.IntegerField(required=False)
-    experience = serializers.IntegerField(required=False)
-    salary = serializers.IntegerField(required=False)
+    position = serializers.IntegerField(required=False, allow_null=True)
+    experience = serializers.IntegerField(required=False, allow_null=True)
+    salary = serializers.IntegerField(required=False, allow_null=True)
     frequency = serializers.IntegerField(required=True)
     isActive = serializers.BooleanField(source='is_active', required=False)
 

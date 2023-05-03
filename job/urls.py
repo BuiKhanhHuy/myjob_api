@@ -6,6 +6,8 @@ app_router = DefaultRouter()
 app_router.register('job-posts', app_views.JobPostViewSet, basename="app-job-posts")
 app_router.register('job-seeker-job-posts-activity', app_views.JobSeekerJobPostActivityViewSet,
                     basename='app-job-seeker-job-posts-activity')
+app_router.register('job-post-notifications', app_views.JobPostNotificationViewSet,
+                    basename='app-job-post-notifications')
 
 
 web_router = DefaultRouter()
