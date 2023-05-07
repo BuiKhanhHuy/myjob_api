@@ -9,7 +9,6 @@ app_router.register('job-seeker-job-posts-activity', app_views.JobSeekerJobPostA
 app_router.register('job-post-notifications', app_views.JobPostNotificationViewSet,
                     basename='app-job-post-notifications')
 
-
 web_router = DefaultRouter()
 web_router.register('private-job-posts', web_views.PrivateJobPostViewSet, basename='private-web-job-posts')
 web_router.register('job-posts', web_views.JobPostViewSet, basename="web-job-posts")
@@ -25,6 +24,23 @@ urlpatterns = [
         path('', include(app_router.urls))
     ])),
     path('web/', include([
-        path('', include(web_router.urls))
+        path('', include(web_router.urls)),
+        path('statistics/', include([
+            path('general-statistics/', web_views.EmployerStatisticViewSet.as_view({
+                'post': 'general_statistics',
+            })),
+            path('recruitment-statistics/', web_views.EmployerStatisticViewSet.as_view({
+                'post': 'recruitment_statistics',
+            })),
+            path('candidate-statistics/', web_views.EmployerStatisticViewSet.as_view({
+                'post': 'candidate_statistics',
+            })),
+            path('application-statistics/', web_views.EmployerStatisticViewSet.as_view({
+                'post': 'application_statistics',
+            })),
+            path('recruitment-statistics-by-rank/', web_views.EmployerStatisticViewSet.as_view({
+                'post': 'recruitment_statistics_by_rank',
+            }))
+        ])),
     ]))
 ]

@@ -26,7 +26,8 @@ from ..serializers import (
     JobSeekerJobPostActivitySerializer,
     EmployerJobPostActivitySerializer,
     EmployerJobPostActivityExportSerializer,
-    JobPostNotificationSerializer
+    JobPostNotificationSerializer,
+    StatisticsSerializer
 )
 
 
@@ -387,3 +388,43 @@ class JobPostNotificationViewSet(viewsets.ViewSet,
         return var_res.Response(data={
             "isActive": is_active
         })
+
+
+class EmployerStatisticViewSet(viewsets.ViewSet):
+    permission_classes = [perms_custom.IsEmployerUser]
+
+    # thong ke tong quan
+    def general_statistics(self, request):
+        return var_res.response_data()
+
+    # bieu do tuyen dung
+    def recruitment_statistics(self, request):
+        return var_res.response_data()
+
+    # bieu do ung vien
+    def candidate_statistics(self, request):
+        return var_res.response_data()
+
+    # bieu do tuyen dung va ung vien
+    def application_statistics(self, request):
+        return var_res.response_data()
+
+    # bieu do tuyen dung theo cap bac
+    def recruitment_statistics_by_rank(self, request):
+        data = request.data
+        serializer = StatisticsSerializer(data=data)
+        if not serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         data=None,
+                                         errors=serializer.errors)
+        start_date = serializer.data.get("startDate")
+        end_date = serializer.data.get("endDate")
+
+        user = request.user
+        data = JobPost.objects.filter(company=user.company) \
+            .values(academicLevel=F('academic_level')) \
+            .filter(jobpostactivity__create_at__range=[start_date, end_date])\
+            .annotate(countJobPostActivity=Count('jobpostactivity')) \
+            .order_by('academic_level')
+
+        return var_res.response_data(data=data)

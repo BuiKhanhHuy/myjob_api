@@ -356,3 +356,8 @@ class JobPostNotificationSerializer(serializers.ModelSerializer):
             return None
         else:
             return job_post_notification
+
+
+class StatisticsSerializer(serializers.Serializer):
+    startDate = serializers.DateField(required=True)
+    endDate = serializers.DateField(required=True)

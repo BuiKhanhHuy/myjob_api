@@ -670,7 +670,7 @@ class CompanyImageViewSet(viewsets.ViewSet,
         queryset = self.queryset
         if self.request.user.is_authenticated:
             queryset = queryset.filter(company=self.request.user.company) \
-                .order_by('-update_at', '-create_at')
+                .order_by('update_at', 'create_at')
 
         return queryset
 
@@ -678,9 +678,8 @@ class CompanyImageViewSet(viewsets.ViewSet,
         files = request.FILES
         serializer = self.get_serializer(data=files)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        results = serializer.save()
+        return Response(results, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

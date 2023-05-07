@@ -52,14 +52,15 @@ class CompanyImageSerializer(serializers.ModelSerializer):
         user = request.user
         if user.role_name == var_sys.EMPLOYER:
             company = user.company
-            if CompanyImage.objects.filter(company=company).count() + count_upload_file > 12:
-                raise serializers.ValidationError({'errorMessage': 'Tối đa 12 ảnh'})
+            if CompanyImage.objects.filter(company=company).count() + count_upload_file > 15:
+                raise serializers.ValidationError({'errorMessage': 'Tối đa 15 ảnh'})
         return attrs
 
     def create(self, validated_data):
         files = validated_data.pop('files', [])
         request = self.context["request"]
 
+        file_name_list = []
         for file in files:
             company_image = CompanyImage.objects.create(company=request.user.company)
             company_image_upload_result = cloudinary.uploader.upload(
@@ -75,7 +76,12 @@ class CompanyImageSerializer(serializers.ModelSerializer):
             company_image.image_public_id = company_image_public_id
             company_image.save()
 
-        return validated_data
+            file_name_list.append({
+                'id': company_image.id,
+                'imageUrl': company_image.image_url
+            })
+
+        return file_name_list
 
     class Meta:
         model = CompanyImage
