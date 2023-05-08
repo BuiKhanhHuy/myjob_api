@@ -27,7 +27,7 @@ urlpatterns = [
         path('', include(web_router.urls)),
         path('statistics/', include([
             path('general-statistics/', web_views.EmployerStatisticViewSet.as_view({
-                'post': 'general_statistics',
+                'get': 'general_statistics',
             })),
             path('recruitment-statistics/', web_views.EmployerStatisticViewSet.as_view({
                 'post': 'recruitment_statistics',

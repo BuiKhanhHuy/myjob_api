@@ -1,7 +1,12 @@
+import datetime
+
+import pandas as pd
+from datetime import timedelta
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
+from django.db.models.functions import ExtractYear, TruncDate
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -163,7 +168,8 @@ class JobPostViewSet(viewsets.ViewSet,
         return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+                                                                   deadline__gte=datetime.datetime.now().date())
                                         .order_by('-update_at', '-create_at'))
 
         page = self.paginate_queryset(queryset)
@@ -395,19 +401,149 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
 
     # thong ke tong quan
     def general_statistics(self, request):
-        return var_res.response_data()
+        user = request.user
+
+        total_job_post = JobPost.objects.filter(company=user.company).count()
+        total_job_posting_pending_approval = JobPost.objects.filter(company=user.company, is_verify=False).count()
+        total_job_post_expired = JobPost.objects\
+            .filter(company=user.company, deadline__gte=datetime.datetime.now().date()).count()
+        total_apply = JobPostActivity.objects.filter(job_post__company=user.company).count()
+
+        return var_res.response_data(data={
+            "totalJobPost": total_job_post,
+            "totalJobPostingPendingApproval": total_job_posting_pending_approval,
+            "totalJobPostExpired": total_job_post_expired,
+            "totalApply": total_apply
+        })
 
     # bieu do tuyen dung
     def recruitment_statistics(self, request):
-        return var_res.response_data()
+        data = request.data
+        serializer = StatisticsSerializer(data=data)
+        if not serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         data=None,
+                                         errors=serializer.errors)
+        start_date_str = serializer.data.get("startDate")
+        end_date_str = serializer.data.get("endDate")
+
+        user = request.user
+        queryset = JobPostActivity.objects.filter(job_post__company=user.company) \
+            .values(stt=F('status')) \
+            .filter(
+            Q(create_at__isnull=True) |
+            Q(create_at__date__range=[start_date_str, end_date_str])) \
+            .annotate(countJobPostActivity=Count('id')) \
+            .order_by('-stt')
+
+        data_results = []
+        for application_stt in var_sys.APPLICATION_STATUS:
+            items = [x["countJobPostActivity"] for x in queryset if x.get("stt") == application_stt[0]]
+            if len(items) > 0:
+                data_results.append({
+                    "label": application_stt[1],
+                    "data": items
+                })
+            else:
+                data_results.append({
+                    "label": application_stt[1],
+                    "data": [0]
+                })
+
+        return var_res.response_data(data=data_results)
 
     # bieu do ung vien
     def candidate_statistics(self, request):
-        return var_res.response_data()
+        user = request.user
+        data = request.data
+
+        serializer = StatisticsSerializer(data=data)
+        if not serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         data=None,
+                                         errors=serializer.errors)
+        start_date_str = serializer.data.get("startDate")
+        end_date_str = serializer.data.get("endDate")
+        start_date1 = pd.to_datetime(start_date_str)
+        end_date1 = pd.to_datetime(end_date_str)
+        start_date2 = start_date1 - timedelta(days=365)
+        end_date2 = end_date1 - timedelta(days=365)
+
+        queryset1 = JobPostActivity.objects.filter(job_post__company=user.company,
+                                                   create_at__date__range=[start_date1, end_date1]) \
+            .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
+        queryset2 = JobPostActivity.objects.filter(job_post__company=user.company,
+                                                   create_at__date__range=[start_date2, end_date2]) \
+            .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
+
+        title1 = end_date1.year
+        title2 = end_date2.year
+        labels = []
+        data1 = []
+        data2 = []
+        date_range = pd.date_range(start=start_date1, end=end_date1, freq='D')
+        for date in date_range:
+            d1 = 0
+            d2 = 0
+            label = date.strftime("%d/%m")
+            items1 = [x for x in queryset1 if x.get("date") == date.date()]
+            if len(items1) > 0:
+                d1 = items1[0].get("count", 0)
+            items2 = [x for x in queryset2 if x.get("date") == date.date()]
+            if len(items2) > 0:
+                d1 = items2[0].get("count", 0)
+
+            data1.append(d1)
+            data2.append(d2)
+            labels.append(label)
+
+        return var_res.response_data(data={
+            "title1": title1,
+            "title2": title2,
+            "labels": labels,
+            "data1": data1,
+            "data2": data2
+        })
 
     # bieu do tuyen dung va ung vien
     def application_statistics(self, request):
-        return var_res.response_data()
+        user = request.user
+        data = request.data
+
+        serializer = StatisticsSerializer(data=data)
+        if not serializer.is_valid():
+            return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                         data=None,
+                                         errors=serializer.errors)
+        start_date_str = serializer.data.get("startDate")
+        end_date_str = serializer.data.get("endDate")
+        start_date = pd.to_datetime(start_date_str)
+        end_date = pd.to_datetime(end_date_str)
+
+        job_post_data = JobPost.objects.filter(company=user.company).values_list("create_at", flat=True)
+        job_post_activity_data = JobPostActivity.objects.filter(job_post__company=user.company) \
+            .filter(create_at__date__range=[start_date, end_date]).values_list("create_at", flat=True)
+
+        labels = []
+        data1 = []
+        data2 = []
+        date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+        for date in date_range:
+            total_job_post = len(list(filter(lambda item: item.date() <= date.date(), job_post_data)))
+            total_apply = len(list(filter(lambda item: item.date() == date.date(), job_post_activity_data)))
+            label = date.strftime("%d/%m")
+
+            data1.append(total_job_post)
+            data2.append(total_apply)
+            labels.append(label)
+
+        return var_res.response_data(data={
+            "title1": "Việc làm",
+            "title2": "Ứng tuyển",
+            "labels": labels,
+            "data1": data1,
+            "data2": data2,
+        })
 
     # bieu do tuyen dung theo cap bac
     def recruitment_statistics_by_rank(self, request):
@@ -417,13 +553,15 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
             return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
                                          data=None,
                                          errors=serializer.errors)
-        start_date = serializer.data.get("startDate")
-        end_date = serializer.data.get("endDate")
+        start_date_str = serializer.data.get("startDate")
+        end_date_str = serializer.data.get("endDate")
 
         user = request.user
         data = JobPost.objects.filter(company=user.company) \
             .values(academicLevel=F('academic_level')) \
-            .filter(jobpostactivity__create_at__range=[start_date, end_date])\
+            .filter(
+            Q(jobpostactivity__create_at__isnull=True) |
+            Q(jobpostactivity__create_at__date__range=[start_date_str, end_date_str])) \
             .annotate(countJobPostActivity=Count('jobpostactivity')) \
             .order_by('academic_level')
 

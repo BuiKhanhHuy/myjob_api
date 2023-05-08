@@ -1,3 +1,5 @@
+import datetime
+
 from configs import variable_response as var_res, renderers, paginations
 from helpers import helper
 from django.db.models import F, Count
@@ -48,7 +50,8 @@ class JobPostViewSet(viewsets.ViewSet,
         return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+                                                                   deadline__gte=datetime.datetime.now().date())
                                         .order_by('-create_at', '-update_at'))
 
         page = self.paginate_queryset(queryset)
