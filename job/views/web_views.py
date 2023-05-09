@@ -1,12 +1,12 @@
 import datetime
-
+import calendar
 import pandas as pd
 from datetime import timedelta
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
-from django.db.models import Count, F, Q
-from django.db.models.functions import ExtractYear, TruncDate
+from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth, TruncMonth, TruncYear
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -33,6 +33,10 @@ from ..serializers import (
     EmployerJobPostActivityExportSerializer,
     JobPostNotificationSerializer,
     StatisticsSerializer
+)
+from info.models import (
+    ResumeViewed,
+    CompanyFollowed
 )
 
 
@@ -84,8 +88,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        print(cities_id, careers_id)
-        queryset = JobPost.objects.filter(is_verify=True) \
+        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")
@@ -396,6 +399,114 @@ class JobPostNotificationViewSet(viewsets.ViewSet,
         })
 
 
+class JobSeekerStatisticViewSet(viewsets.ViewSet):
+    permission_classes = [perms_custom.IsJobSeekerUser]
+
+    # thong ke tong quan
+    def general_statistics(self, request):
+        user = request.user
+        total_apply = JobPostActivity.objects.filter(user=user).count()
+        total_save = SavedJobPost.objects.filter(user=user).count()
+        total_view = ResumeViewed.objects.filter(resume__user=user).aggregate(Sum('views'))
+        total_follow = CompanyFollowed.objects.filter(user=user).count()
+
+        return var_res.response_data(data={
+            "totalApply": total_apply,
+            "totalSave": total_save,
+            "totalView": total_view.get('views__sum', 0) if total_view.get('views__sum') else 0,
+            "totalFollow": total_follow
+        })
+
+    # dem so nha tuyen dung da xem ho so
+    def total_view(self, request):
+        user = request.user
+        total_view = ResumeViewed.objects.filter(resume__user=user).aggregate(Sum('views'))
+
+        return var_res.response_data(data={
+            "totalView": total_view.get('views__sum', 0) if total_view.get('views__sum') else 0,
+        })
+
+    # thong ke hoat dong
+    def activity_statistics(self, request):
+        user = request.user
+
+        now = datetime.datetime.now()
+        last_year_today = now.replace(year=now.year - 1)
+        first_day_of_month = last_year_today.replace(day=1).date()
+
+        last_day = calendar.monthrange(now.year, now.month)[1]
+        last_day_of_month = datetime.datetime(now.year, now.month,
+                                              last_day).date()
+
+        queryset1 = JobPostActivity.objects \
+            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .order_by('create_at') \
+            .annotate(year=ExtractYear('create_at'),
+                      month=ExtractMonth('create_at')) \
+            .values('year', 'month') \
+            .annotate(count=Count('id')) \
+            .order_by('year', 'month')
+
+        queryset2 = SavedJobPost.objects \
+            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .order_by('create_at') \
+            .annotate(year=ExtractYear('create_at'),
+                      month=ExtractMonth('create_at')) \
+            .values('year', 'month') \
+            .annotate(count=Count('id')) \
+            .order_by('year', 'month')
+
+        queryset3 = CompanyFollowed.objects \
+            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .order_by('create_at') \
+            .annotate(year=ExtractYear('create_at'),
+                      month=ExtractMonth('create_at')) \
+            .values('year', 'month') \
+            .annotate(count=Count('id')) \
+            .order_by('year', 'month')
+
+        labels = []
+        data1 = []
+        data2 = []
+        data3 = []
+        title1 = "Việc đã ứng tuyển"
+        title2 = "Việc đã lưu"
+        title3 = "Công ty đang theo dõi"
+        date_range = pd.date_range(start=first_day_of_month, end=last_day_of_month, freq='M')
+        for date in date_range:
+            m = date.month
+            y = date.year
+            items1 = [x for x in queryset1 if x['year'] == y and x['month'] == m]
+            if len(items1) > 0:
+                data1.append(items1[0]['count'])
+            else:
+                data1.append(0)
+
+            items2 = [x for x in queryset2 if x['year'] == y and x['month'] == m]
+            if len(items2) > 0:
+                data2.append(items2[0]['count'])
+            else:
+                data2.append(0)
+
+            items3 = [x for x in queryset3 if x['year'] == y and x['month'] == m]
+            if len(items3) > 0:
+                data3.append(items3[0]['count'])
+            else:
+                data3.append(0)
+
+            labels.append(f'T{m}-{y}')
+
+        return var_res.response_data(data={
+            "title1": title1,
+            "title2": title2,
+            "title3": title3,
+            "labels": labels,
+            "data1": data1,
+            "data2": data2,
+            "data3": data3
+        })
+
+
 class EmployerStatisticViewSet(viewsets.ViewSet):
     permission_classes = [perms_custom.IsEmployerUser]
 
@@ -405,7 +516,7 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
 
         total_job_post = JobPost.objects.filter(company=user.company).count()
         total_job_posting_pending_approval = JobPost.objects.filter(company=user.company, is_verify=False).count()
-        total_job_post_expired = JobPost.objects\
+        total_job_post_expired = JobPost.objects \
             .filter(company=user.company, deadline__gte=datetime.datetime.now().date()).count()
         total_apply = JobPostActivity.objects.filter(job_post__company=user.company).count()
 

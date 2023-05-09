@@ -76,7 +76,7 @@ class JobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        queryset = JobPost.objects.filter(is_verify=True) \
+        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")

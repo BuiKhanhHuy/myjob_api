@@ -26,21 +26,31 @@ urlpatterns = [
     path('web/', include([
         path('', include(web_router.urls)),
         path('statistics/', include([
-            path('general-statistics/', web_views.EmployerStatisticViewSet.as_view({
+            path('employer-general-statistics/', web_views.EmployerStatisticViewSet.as_view({
                 'get': 'general_statistics',
             })),
-            path('recruitment-statistics/', web_views.EmployerStatisticViewSet.as_view({
+            path('employer-recruitment-statistics/', web_views.EmployerStatisticViewSet.as_view({
                 'post': 'recruitment_statistics',
             })),
-            path('candidate-statistics/', web_views.EmployerStatisticViewSet.as_view({
+            path('employer-candidate-statistics/', web_views.EmployerStatisticViewSet.as_view({
                 'post': 'candidate_statistics',
             })),
-            path('application-statistics/', web_views.EmployerStatisticViewSet.as_view({
+            path('employer-application-statistics/', web_views.EmployerStatisticViewSet.as_view({
                 'post': 'application_statistics',
             })),
-            path('recruitment-statistics-by-rank/', web_views.EmployerStatisticViewSet.as_view({
+            path('employer-recruitment-statistics-by-rank/', web_views.EmployerStatisticViewSet.as_view({
                 'post': 'recruitment_statistics_by_rank',
-            }))
+            })),
+
+            path('job-seeker-general-statistics/', web_views.JobSeekerStatisticViewSet.as_view({
+                'get': 'general_statistics',
+            })),
+            path('job-seeker-total-view/', web_views.JobSeekerStatisticViewSet.as_view({
+                'get': 'total_view',
+            })),
+            path('job-seeker-activity-statistics/', web_views.JobSeekerStatisticViewSet.as_view({
+                'get': 'activity_statistics',
+            })),
         ])),
     ]))
 ]

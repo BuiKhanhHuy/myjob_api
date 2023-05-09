@@ -25,7 +25,7 @@ AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'goog
 AVATAR_DEFAULT = {
     "AVATAR": "https://res.cloudinary.com/dtnpj540t/image/upload/v1680687265/my-job/images_default/avt_default.jpg",
     "COMPANY_LOGO": "https://res.cloudinary.com/dtnpj540t/image/upload/v1682831706/my-job/images_default/company_image_default.png",
-    "COMPANY_COVER_IMAGE": "https://img.freepik.com/free-vector/purple-abstract-background_1340-17009.jpg?w=1380&t=st=1680457096~exp=1680457696~hmac=dce6634b13f28ecbe48a8de53421b99783d4b3f9dd4286d6ea2e68176cbfc083",
+    "COMPANY_COVER_IMAGE": "https://res.cloudinary.com/dtnpj540t/image/upload/v1683615297/my-job/images_default/company_cover_image_default.jpg",
 }
 
 COMPANY_INFO = {

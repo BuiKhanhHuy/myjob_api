@@ -79,7 +79,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         # get all
         if resume_type is None:
             serializer = ResumeSerializer(resumes, many=True, fields=[
-                "id", "slug", "title", "type"
+                "id", "title", "type", "updateAt", "isActive"
             ])
         else:
             # get by type
