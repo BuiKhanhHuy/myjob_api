@@ -132,19 +132,20 @@ def add_company_followed_notifications(title, content, avatar, user_id):
 
 def add_post_verify_required_notifications(title, content,
                                            company_id, company_image,
+                                           company_name,
                                            job_post_id, job_post_title,
-                                           user_id):
+                                           user_id_list):
     try:
         type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
         content_of_type = {
             "company_id": company_id,
-            "company_image": company_image,
             "job_post_id": job_post_id,
             "job_post_title": job_post_title
         }
         queue_notification.add_notification_to_user.delay(title=title, content=content,
                                                           content_of_type=content_of_type,
-                                                          type_name=type_name, user_id_list=[user_id])
+                                                          image=company_image,
+                                                          type_name=type_name, user_id_list=user_id_list)
     except Exception as ex:
         print_log_error("add_post_verify_required_notifications", ex)
 

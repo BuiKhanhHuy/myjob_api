@@ -116,5 +116,14 @@ def send_sms_download_app(request):
 
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
-    helper.add_system_notifications("Test notification ứng viên", "Đây là nội dung test cho ứng viên.", [197])
+    helper.add_post_verify_required_notifications(
+        title="TEST NOTI ADMIN",
+        content="CONTENT",
+        company_id=1,
+        company_image='http://localhost:8000/static/img/team-2.jpg',
+        company_name="ACD",
+        job_post_id=1,
+        job_post_title="Lập trình viên Python",
+        user_id_list=[1]
+    )
     return var_res.response_data()
