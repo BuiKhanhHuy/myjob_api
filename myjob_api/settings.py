@@ -16,6 +16,7 @@ from decouple import config
 from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
+from django.utils import timezone
 import cloudinary
 import firebase_admin
 from firebase_admin import credentials
@@ -35,11 +36,11 @@ APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 ALLOWED_HOSTS = ['*']
-
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django_light',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'cloudinary',
 
     # third party packages
+    'django_otp',
     'rest_framework',
     'django_filters',
     'django_extensions',
@@ -86,7 +88,8 @@ ROOT_URLCONF = 'myjob_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'myjob_api/templates/emails/'],
+        'DIRS': [BASE_DIR / 'myjob_api/templates/emails/',
+                 BASE_DIR / 'myjob/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -179,7 +182,6 @@ AUTHENTICATION_BACKENDS = (
 
 LANGUAGE_CODE = 'en-us'
 
-# TIME_ZONE = 'UTC'
 TIME_ZONE = 'Asia/Saigon'
 
 USE_I18N = True
@@ -198,6 +200,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
 INTERNAL_IPS = ('127.0.0.1', '192.168.1.5')
+
+LOGIN_REDIRECT_URL = '/'
 
 SERVICE_REDIS_HOST = config('SERVICE_REDIS_HOST')
 SERVICE_REDIS_PORT = config('SERVICE_REDIS_PORT', cast=int)
@@ -284,7 +288,8 @@ REDIRECT_LOGIN_CLIENT = {
 
 MYJOB_AUTH = {
     "VERIFY_EMAIL_LINK_EXPIRE_SECONDS": 7200,
-    "RESET_PASSWORD_LINK_EXPIRE_SECONDS": 7200
+    "RESET_PASSWORD_EXPIRE_SECONDS": 7200,
+    "TIME_REQUIRED_FORGOT_PASSWORD": 120
 }
 
 # TWILIO
@@ -303,5 +308,7 @@ firebase_admin.initialize_app(cred, {
 })
 
 COMPANY_NAME = "MyJob"
+
+JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\data.json')
 
 APP_ENVIRONMENT = config('APP_ENV')

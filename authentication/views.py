@@ -1,10 +1,17 @@
 import json
+import datetime
+
+import cloudinary.uploader
 from django.conf import settings
+from django.db import transaction
+
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django_otp.oath import TOTP
 from configs import variable_system as var_sys
 from configs.variable_response import response_data
-from .tokens_custom import email_verification_token
-from django.http import HttpResponseRedirect, HttpResponseNotFound
 from helpers import helper
+from django.http import HttpResponseRedirect, HttpResponseNotFound
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -12,7 +19,9 @@ from django.core.exceptions import BadRequest
 from drf_social_oauth2.views import TokenView, ConvertTokenView
 from oauth2_provider.models import get_access_token_model
 
-from .models import User
+from console.jobs import queue_mail
+from .tokens_custom import email_verification_token
+from .models import User, ForgotPasswordToken
 from .serializers import (
     CheckCredsSerializer,
     ForgotPasswordSerializer,
@@ -144,6 +153,13 @@ def user_active(request, encoded_data, token):
         user.is_verify_email = True
         user.save()
 
+        # add notification welcome
+        helper.add_system_notifications(
+            "Thông báo hệ thống",
+            "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
+            "công việc mơ ước của bạn.",
+            [user.id]
+        )
         return HttpResponseRedirect(
             helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
     else:
@@ -160,15 +176,63 @@ def forgot_password(request):
         return response_data(errors=forgot_password_serializer.errors)
 
     email = forgot_password_serializer.validated_data.get("email")
+    platform = forgot_password_serializer.validated_data.get("platform")
+
     user = User.objects.filter(email=email).first()
     if user:
         try:
-            # send mail reset password
-            helper.send_email_reset_password(user)
+            now = datetime.datetime.now()
+
+            tokens = ForgotPasswordToken.objects \
+                .filter(user=user, is_active=True, platform=platform, expired_at__gte=now)
+            if tokens.exists():
+                token = tokens.first()
+                token_created_at = token.create_at
+                if (now - token_created_at).total_seconds() < settings.MYJOB_AUTH[
+                    "TIME_REQUIRED_FORGOT_PASSWORD"
+                ]:
+                    return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
+                        "errorMessage": [
+                            "Bạn vừa gửi yêu cầu gửi email quên mật khẩu vui lòng kiểm tra hộp thư hoặc đợi thêm 2 "
+                            "phút để gửi lại email."]
+                    })
+
+            with transaction.atomic():
+                ForgotPasswordToken.objects.filter(user=user, is_active=True, platform=platform).update(is_active=False)
+                expired_at = now + datetime.timedelta(seconds=settings.MYJOB_AUTH["RESET_PASSWORD_EXPIRE_SECONDS"])
+
+                if platform == "WEB":
+                    app_env = settings.APP_ENVIRONMENT
+
+                    access_token = urlsafe_base64_encode(force_bytes(user.pk))
+
+                    domain = settings.DOMAIN_CLIENT[app_env]
+                    func = f"cap-nhat-mat-khau/{access_token}"
+                    reset_password_url = domain + func
+
+                    ForgotPasswordToken.objects.create(user=user, expired_at=expired_at,
+                                                       token=access_token, platform=platform)
+                    # send mail reset password cho website
+                    queue_mail.send_email_reset_password_for_web_task.delay(to=[user.email],
+                                                                            reset_password_url=reset_password_url)
+                elif platform == "APP":
+                    totp = TOTP(settings.SECRET_KEY.encode())
+                    code = totp.token()
+                    new_token = ForgotPasswordToken.objects.create(user=user, expired_at=expired_at,
+                                                                   code=code, platform=platform)
+                    # send mail reset password cho app
+                    queue_mail.send_email_reset_password_for_app_task.delay(to=[user.email],
+                                                                            full_name=user.full_name,
+                                                                            code=new_token.code)
         except Exception as ex:
             helper.print_log_error("forgot_password", ex)
             return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return response_data()
+        return response_data()
+    else:
+        return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
+            "errorMessage": [
+                "Email này chưa được sử dụng, bạn hãy đăng ký tham gia MyJob."]
+        })
 
 
 @api_view(http_method_names=["post"])
@@ -179,35 +243,63 @@ def reset_password(request):
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
 
     try:
+        now = datetime.datetime.now()
+        platform = serializer.data.get("platform")
         new_password = serializer.data.get("newPassword")
-        encoded_data = serializer.data.get("token")
 
-        uid, expiration_time = helper.urlsafe_base64_decode_with_encoded_data(encoded_data)
-        if uid is None or expiration_time is None:
-            return response_data(
-                status=status.HTTP_400_BAD_REQUEST,
-                errors={"errorMessage": ["Rất tiếc, có như liên kết đặt lại mật khẩu không chính xác."]}
-            )
+        if platform == "WEB":
+            token = serializer.data.get("token")
+            user_id = force_str(urlsafe_base64_decode(token))
+            print("user id: ", user_id)
 
-        if not helper.check_expiration_time(expiration_time):
-            return response_data(
-                status=status.HTTP_400_BAD_REQUEST,
-                errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết đặt lại mật khẩu đã hết hạn."]}
-            )
+            forgot_password_tokens = ForgotPasswordToken.objects.filter(token=token, user_id=user_id, is_active=True)
+            if not forgot_password_tokens.exists():
+                return response_data(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết xác nhận quên mật khẩu không hợp lệ."]}
+                )
+            else:
+                forgot_password_token = forgot_password_tokens.first()
+                if forgot_password_token.expired_at < now:
+                    return response_data(
+                        status=status.HTTP_400_BAD_REQUEST,
+                        errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết xác nhận quên mật khẩu đã hết hạn."]}
+                    )
+                else:
+                    with transaction.atomic():
+                        user = forgot_password_token.user
+                        user.set_password(new_password)
+                        user.save()
+                        forgot_password_token.is_active = False
+                        forgot_password_token.save()
+                        role_name = user.role_name
 
-        user = User.objects.filter(id=uid).first()
-        if not user:
-            return response_data(
-                status=status.HTTP_400_BAD_REQUEST,
-                errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết đặt lại mật khẩu không chính xác."]}
-            )
-        # set password
-        user.set_password(new_password)
-        user.save()
-        role_name = user.role_name
+                        redirect_login_url = settings.REDIRECT_LOGIN_CLIENT[role_name]
+                        return response_data(data={"redirectLoginUrl": f"/{redirect_login_url}"})
+        else:
+            code = serializer.data.get("code")
+            forgot_password_tokens = ForgotPasswordToken.objects.filter(code=code)
+            if not forgot_password_tokens.exists():
+                return response_data(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    errors={"code": ["Mã xác nhận quên mật khẩu không hợp lệ."]}
+                )
+            else:
+                forgot_password_token = forgot_password_tokens.first()
+                if forgot_password_token.expired_at < now or not forgot_password_token.is_active:
+                    return response_data(
+                        status=status.HTTP_400_BAD_REQUEST,
+                        errors={"code": ["Mã xác nhận quên mật khẩu đã hết hạn."]}
+                    )
+                else:
+                    with transaction.atomic():
+                        user = forgot_password_token.user
+                        user.set_password(new_password)
+                        user.save()
+                        forgot_password_token.is_active = False
+                        forgot_password_token.save()
 
-        redirect_login_url = settings.REDIRECT_LOGIN_CLIENT[role_name]
-        return response_data(data={"redirectLoginUrl": f"/{redirect_login_url}"})
+                        return response_data()
     except Exception as ex:
         helper.print_log_error("reset_password", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -255,20 +347,41 @@ def update_user_account(request):
         return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
 
 
-@api_view(http_method_names=['put'])
+@api_view(http_method_names=['put', 'delete'])
 @permission_classes(permission_classes=[IsAuthenticated])
 def avatar(request):
-    files = request.FILES
-    avatar_serializer = AvatarSerializer(request.user, data=files)
-    if not avatar_serializer.is_valid():
-        return response_data(status=status.HTTP_400_BAD_REQUEST, errors=avatar_serializer.errors)
-    try:
-        avatar_serializer.save()
-    except Exception as ex:
-        helper.print_log_error("avatar", ex)
-        return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.method == "PUT":
+        files = request.FILES
+        avatar_serializer = AvatarSerializer(request.user, data=files)
+        if not avatar_serializer.is_valid():
+            return response_data(status=status.HTTP_400_BAD_REQUEST, errors=avatar_serializer.errors)
+        try:
+            avatar_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("avatar", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return response_data(status=status.HTTP_200_OK, data=avatar_serializer.data)
+    elif request.method == "DELETE":
+        user = request.user
+        try:
+            if user.avatar_public_id:
+                destroy_result = cloudinary.uploader.destroy(user.avatar_public_id)
+                if not destroy_result.get("result", "") == "ok":
+                    raise Exception("Something went wrong when upload image to cloudinary!")
+
+            user.avatar_url = var_sys.AVATAR_DEFAULT["AVATAR"]
+            user.avatar_public_id = None
+            user.save()
+        except Exception as ex:
+            helper.print_log_error("delete_avatar", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return response_data(status=status.HTTP_200_OK, data={
+                "avatarUrl": user.avatar_url
+            })
     else:
-        return response_data(status=status.HTTP_200_OK, data=avatar_serializer.data)
+        return response_data(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 @api_view(http_method_names=['post'])
@@ -279,8 +392,10 @@ def employer_register(request):
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
     try:
         user = serializer.save()
+        platform = serializer.validated_data.get("platform")
         if user:
-            helper.send_email_verify_email(request, user)
+            helper.send_email_verify_email(request, user,
+                                           platform=platform)
     except Exception as ex:
         helper.print_log_error("employer_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -293,10 +408,13 @@ def job_seeker_register(request):
     serializer = JobSeekerRegisterSerializer(data=data)
     if not serializer.is_valid():
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors)
+
     try:
         user = serializer.save()
+        platform = serializer.validated_data.get("platform")
         if user:
-            helper.send_email_verify_email(request, user)
+            helper.send_email_verify_email(request=request, user=user,
+                                           platform=platform)
     except Exception as ex:
         helper.print_log_error("job_seeker_register", ex)
         return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

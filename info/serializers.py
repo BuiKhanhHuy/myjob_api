@@ -52,14 +52,15 @@ class CompanyImageSerializer(serializers.ModelSerializer):
         user = request.user
         if user.role_name == var_sys.EMPLOYER:
             company = user.company
-            if CompanyImage.objects.filter(company=company).count() + count_upload_file > 12:
-                raise serializers.ValidationError({'errorMessage': 'Tối đa 12 ảnh'})
+            if CompanyImage.objects.filter(company=company).count() + count_upload_file > 15:
+                raise serializers.ValidationError({'errorMessage': 'Tối đa 15 ảnh'})
         return attrs
 
     def create(self, validated_data):
         files = validated_data.pop('files', [])
         request = self.context["request"]
 
+        file_name_list = []
         for file in files:
             company_image = CompanyImage.objects.create(company=request.user.company)
             company_image_upload_result = cloudinary.uploader.upload(
@@ -75,7 +76,12 @@ class CompanyImageSerializer(serializers.ModelSerializer):
             company_image.image_public_id = company_image_public_id
             company_image.save()
 
-        return validated_data
+            file_name_list.append({
+                'id': company_image.id,
+                'imageUrl': company_image.image_url
+            })
+
+        return file_name_list
 
     class Meta:
         model = CompanyImage
@@ -543,7 +549,8 @@ class EducationSerializer(serializers.ModelSerializer):
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
-    # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+    # web
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -578,7 +585,8 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
-    # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+    # web
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -613,7 +621,8 @@ class CertificateSerializer(serializers.ModelSerializer):
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
 
-    # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+    # web
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -641,7 +650,8 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
 
-    # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+    # web
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_language(self, language):
     #     request = self.context['request']
@@ -672,7 +682,8 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
 
-    # resume = serializers.SlugRelatedField(required=True, slug_field="slug", queryset=Resume.objects.all())
+    # web
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
 
     # def validate_name(self, name):
     #     request = self.context['request']

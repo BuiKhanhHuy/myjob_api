@@ -60,6 +60,9 @@ class JobPost(JobPostBaseModel):
     class Meta:
         db_table = "myjob_job_job_post"
 
+    def __str__(self):
+        return f"{self.job_name}"
+
 
 class SavedJobPost(JobPostBaseModel):
     # ForeignKey
@@ -68,6 +71,10 @@ class SavedJobPost(JobPostBaseModel):
 
     class Meta:
         db_table = "myjob_job_saved_job_post"
+        verbose_name_plural = "Saved job posts"
+
+    def __str__(self):
+        return f"{self.user} saved {self.job_post}"
 
 
 class JobPostActivity(JobPostBaseModel):
@@ -83,3 +90,25 @@ class JobPostActivity(JobPostBaseModel):
 
     class Meta:
         db_table = "myjob_job_job_post_activity"
+        verbose_name_plural = "Job posts activity"
+
+
+class JobPostNotification(JobPostBaseModel):
+    job_name = models.CharField(max_length=255)
+    position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES, null=True)
+    experience = models.SmallIntegerField(choices=var_sys.EXPERIENCE_CHOICES, null=True)
+    salary = models.IntegerField(null=True)
+    frequency = models.IntegerField(choices=var_sys.FREQUENCY_NOTIFICATION)
+    is_active = models.BooleanField(default=False)
+
+    # ForeignKey
+    career = models.ForeignKey(Career, on_delete=models.SET_NULL,
+                               related_name="job_post_notifications", null=True)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True,
+                             related_name="job_post_notifications")
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name="job_post_notifications")
+
+    class Meta:
+        db_table = "myjob_job_job_post_notification"
+        verbose_name_plural = "Job post notifications"

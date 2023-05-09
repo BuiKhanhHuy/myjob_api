@@ -1,9 +1,10 @@
 import cloudinary.uploader
 
+from console.jobs import queue_mail
 from helpers import utils
 from configs import variable_system as var_sys, table_export
 from configs import variable_response as var_res, renderers, paginations
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
@@ -78,7 +79,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         # get all
         if resume_type is None:
             serializer = ResumeSerializer(resumes, many=True, fields=[
-                "id", "slug", "title", "type"
+                "id", "title", "type", "updateAt", "isActive"
             ])
         else:
             # get by type
@@ -91,11 +92,11 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                 if not resumes.first():
                     return var_res.response_data()
                 serializer = ResumeSerializer(resumes.first(),
-                                              fields=["id", "title", "experience", "position",
+                                              fields=["id", "slug", "title", "experience", "position",
                                                       "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
             else:
                 serializer = ResumeSerializer(resumes, many=True,
-                                              fields=["id", "title", "updateAt",
+                                              fields=["id", "slug", "title", "updateAt",
                                                       "imageUrl", "fileUrl", "isActive"])
 
         return var_res.response_data(data=serializer.data)
@@ -298,7 +299,8 @@ class ResumeViewSet(viewsets.ViewSet,
     @action(methods=["post"], detail=True,
             url_path="resume-saved", url_name="resume-saved")
     def resume_saved(self, request, slug):
-        saved_resumes = ResumeSaved.objects.filter(company=request.user.company, resume=self.get_object())
+        user = request.user
+        saved_resumes = ResumeSaved.objects.filter(company=user.company, resume=self.get_object())
         is_saved = False
         if saved_resumes.exists():
             saved_resume = saved_resumes.first()
@@ -310,15 +312,50 @@ class ResumeViewSet(viewsets.ViewSet,
                 resume=self.get_object()
             )
             is_saved = True
+        # send notification
+        company = user.company
+        notification_content = "Đã lưu hồ sơ của bạn" if is_saved else "Đã hủy lưu hồ sơ của bạn"
+        helper.add_employer_saved_resume_notifications(
+            company.company_name,
+            notification_content,
+            company.company_image_url,
+            self.get_object().user_id
+        )
         return Response(data={
             "isSaved": is_saved
         })
+
+    @action(methods=["post"], detail=True,
+            url_path="view-resume", url_name="view-resume")
+    def view_resume(self, request, slug):
+        user = request.user
+        v, _ = ResumeViewed.objects.get_or_create(
+            resume=self.get_object(),
+            company=user.company
+        )
+        try:
+            v.views = F('views') + 1
+            v.save()
+            v.refresh_from_db()
+            # send notification
+            company = user.company
+            helper.add_employer_viewed_resume_notifications(
+                company.company_name,
+                "Đã xem hồ sơ của bạn",
+                company.company_image_url,
+                self.get_object().user_id
+            )
+        except Exception as ex:
+            helper.print_log_error("view_resume", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.Response(status=status.HTTP_200_OK)
 
 
 class ResumeViewedAPIView(views.APIView):
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
-    pagination_class = paginations.CustomPagination()
+    pagination_class = paginations.CustomPagination
 
     # danh sach luot xem cua NTD doi voi ung vien hien tai
     def get(self, request):
@@ -328,7 +365,7 @@ class ResumeViewedAPIView(views.APIView):
             resume__user=user
         ).order_by('-update_at', '-create_at')
 
-        paginator = self.pagination_class
+        paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = ResumeViewedSerializer(page, many=True)
@@ -343,7 +380,7 @@ class ResumeSavedViewSet(viewsets.ViewSet,
     queryset = ResumeSaved.objects
     permission_classes = [perms_custom.IsEmployerUser]
     renderer_classes = [renderers.MyJSONRenderer]
-    pagination_class = paginations.CustomPagination()
+    pagination_class = paginations.CustomPagination
     filterset_class = ResumeSavedFilter
     filter_backends = [DjangoFilterBackend]
 
@@ -354,7 +391,7 @@ class ResumeSavedViewSet(viewsets.ViewSet,
                                         .filter(company=user.company, resume__is_active=True)
                                         .order_by("-create_at"))
 
-        paginator = self.pagination_class
+        paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = ResumeSavedSerializer(page, many=True, fields=[
@@ -569,8 +606,11 @@ class CompanyViewSet(viewsets.ViewSet,
     @action(methods=["post"], detail=True,
             url_path="followed", url_name="followed")
     def followed(self, request, slug):
+        user = request.user
+        company = self.get_object()
+
         is_followed = False
-        companies_followed = CompanyFollowed.objects.filter(user=request.user, company=self.get_object())
+        companies_followed = CompanyFollowed.objects.filter(user=user, company=company)
         if companies_followed.exists():
             company_followed = companies_followed.first()
             company_followed.delete()
@@ -580,6 +620,15 @@ class CompanyViewSet(viewsets.ViewSet,
                 company=self.get_object(),
             )
             is_followed = True
+        # send notification
+        notification_title = f"{user.email} - {user.full_name}"
+        notification_content = "Đã theo dõi bạn" if is_followed else "Đã hủy theo dõi bạn"
+        helper.add_company_followed_notifications(
+            notification_title,
+            notification_content,
+            user.avatar_url,
+            company.user_id
+        )
         return Response(data={
             "isFollowed": is_followed
         })
@@ -588,7 +637,7 @@ class CompanyViewSet(viewsets.ViewSet,
 class CompanyFollowedAPIView(views.APIView):
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
-    pagination_class = paginations.CustomPagination()
+    pagination_class = paginations.CustomPagination
 
     # danh sach cong ty dang follow
     def get(self, request):
@@ -597,7 +646,7 @@ class CompanyFollowedAPIView(views.APIView):
         queryset = CompanyFollowed.objects.filter(user=user) \
             .order_by("-update_at", "-create_at")
 
-        paginator = self.pagination_class
+        paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = CompanyFollowedSerializer(page, many=True)
@@ -619,8 +668,9 @@ class CompanyImageViewSet(viewsets.ViewSet,
 
     def get_queryset(self):
         queryset = self.queryset
-        queryset = queryset.filter(company=self.request.user.company) \
-            .order_by('-update_at', '-create_at')
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(company=self.request.user.company) \
+                .order_by('update_at', 'create_at')
 
         return queryset
 
@@ -628,9 +678,8 @@ class CompanyImageViewSet(viewsets.ViewSet,
         files = request.FILES
         serializer = self.get_serializer(data=files)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        results = serializer.save()
+        return Response(results, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -669,7 +718,9 @@ def send_email_reply_to_job_seeker(request):
         'company_address': company.location.address,
         'company_website_url': company.website_url
     }
-    helper.send_email_reply_to_job_seeker(to=to,
-                                          subject=validate_data.get("title"),
-                                          data=email_data)
+    queue_mail.send_email_reply_job_seeker_task.delay(
+        to=to,
+        subject=validate_data.get("title"),
+        data=email_data
+    )
     return var_res.response_data()

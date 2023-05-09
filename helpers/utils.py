@@ -1,26 +1,21 @@
-import math
+import random
+import datetime
 from configs import table_export
 from django.conf import settings
 from helpers import helper
 from django.core.mail import EmailMultiAlternatives
 
 
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371  # earth radius in kilometers
+def random_date():
+    start_date = datetime.date(2022, 4, 20)
+    end_date = datetime.date(2023, 4, 20)
 
-    # convert degrees to radians
-    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    time_between_dates = end_date - start_date
+    days_between_dates = time_between_dates.days
+    random_number_of_days = random.randrange(days_between_dates)
+    random_date = start_date + datetime.timedelta(days=random_number_of_days)
 
-    # calculate differences between latitudes and longitudes
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-
-    # apply Haversine formula
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    distance = R * c
-
-    return distance
+    return str(random_date)
 
 
 def convert_tuple_or_list_to_options(values):

@@ -20,27 +20,3 @@ class Feedback(MyJobBaseModel):
 
     class Meta:
         db_table = "myjob_myjob_feedback"
-
-
-class Notification(MyJobBaseModel):
-    message = models.TextField()
-    is_active = models.BooleanField(True)
-
-    # ManyToManyField
-    users = models.ManyToManyField(User, through="UserNotification",
-                                   related_name="notifications")
-
-    class Meta:
-        db_table = "myjob_myjob_notification"
-
-
-class UserNotification(MyJobBaseModel):
-    is_read = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-
-    # ForeignKey
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = "myjob_myjob_user_notification"

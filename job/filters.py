@@ -25,7 +25,7 @@ class JobPostFilter(django_filters.FilterSet):
     isUrgent = django_filters.BooleanFilter(field_name='is_urgent')
     excludeSlug = django_filters.CharFilter(method="exclude_slug")
     companyId = django_filters.NumberFilter(field_name="company")
-
+    # fId = 0 & fCreatedDate = 0 & fMailStatus = 0 & kw = z123123
     class Meta:
         model = JobPost
         fields = ['kw', 'careerId', 'cityId', 'positionId',

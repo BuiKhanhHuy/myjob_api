@@ -33,6 +33,9 @@ class JobSeekerProfile(InfoBaseModel):
     class Meta:
         db_table = "myjob_info_job_seeker_profile"
 
+    def __str__(self):
+        return f'Job seeker profile of {self.user.email}'
+
 
 class Resume(InfoBaseModel):
     title = models.CharField(max_length=200, null=True)
@@ -64,6 +67,9 @@ class Resume(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_resume"
+
+    def __str__(self):
+        return f"{self.title} - {self.user}"
 
 
 class EducationDetail(InfoBaseModel):
@@ -140,6 +146,10 @@ class CompanyFollowed(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_company_followed"
+        verbose_name_plural = "Companies followed"
+
+    def __str__(self):
+        return f"{self.user} followed {self.company}"
 
 
 class Company(InfoBaseModel):
@@ -173,6 +183,10 @@ class Company(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_company"
+        verbose_name_plural = "Companies"
+
+    def __str__(self):
+        return f"{self.company_name if self.company_name is not None else '-'}"
 
 
 class CompanyImage(InfoBaseModel):
@@ -194,6 +208,10 @@ class ResumeSaved(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_resume_saved"
+        verbose_name_plural = "Resumes saved"
+
+    def __str__(self):
+        return f"{self.company} saved {self.resume}"
 
 
 class ResumeViewed(InfoBaseModel):
@@ -205,3 +223,7 @@ class ResumeViewed(InfoBaseModel):
 
     class Meta:
         db_table = "myjob_info_resume_viewed"
+        verbose_name_plural = "Resumes viewed"
+
+    def __str__(self):
+        return f"{self.company} have watching {self.resume}"

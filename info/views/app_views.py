@@ -252,7 +252,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
 class ResumeViewedAPIView(views.APIView):
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
-    pagination_class = paginations.CustomPagination()
+    pagination_class = paginations.CustomPagination
 
     def get(self, request):
         user = request.user
@@ -261,7 +261,7 @@ class ResumeViewedAPIView(views.APIView):
             resume__user=user
         ).order_by('-update_at', '-create_at')
 
-        paginator = self.pagination_class
+        paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = ResumeViewedSerializer(page, many=True)
@@ -400,7 +400,7 @@ class CompanyViewSet(viewsets.ViewSet,
 class CompanyFollowedAPIView(views.APIView):
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
-    pagination_class = paginations.CustomPagination()
+    pagination_class = paginations.CustomPagination
 
     def get(self, request):
         user = request.user
@@ -408,7 +408,7 @@ class CompanyFollowedAPIView(views.APIView):
         queryset = CompanyFollowed.objects.filter(user=user) \
             .order_by("-update_at", "-create_at")
 
-        paginator = self.pagination_class
+        paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
             serializer = CompanyFollowedSerializer(page, many=True, context={'request': request})

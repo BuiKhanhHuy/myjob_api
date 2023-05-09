@@ -1,8 +1,9 @@
-from django.conf import settings
 import time
 from datetime import datetime
+from django.conf import settings
+
 from configs import variable_system as var_sys
-from console.jobs import queue_mail
+from console.jobs import queue_mail, queue_notification
 from authentication.tokens_custom import email_verification_token
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -47,7 +48,7 @@ def urlsafe_base64_decode_with_encoded_data(encoded_data):
         return None, None
 
 
-def send_email_verify_email(request, user):
+def send_email_verify_email(request, user, platform):
     role_name = user.role_name
     redirect_login = settings.REDIRECT_LOGIN_CLIENT[role_name]
 
@@ -61,31 +62,89 @@ def send_email_verify_email(request, user):
     protocol = 'https' if request.is_secure() else 'http'
     domain = request.META['HTTP_HOST']
 
+    confirm_email_deeplink = None
+    if role_name == var_sys.JOB_SEEKER and platform == "APP":
+        confirm_email_deeplink = f"MyJob://app/{settings.REDIRECT_LOGIN_CLIENT[role_name]}"
+
     data = {
-        "confirm_email_url": f'{protocol}://{domain}/{func}'
+        "confirm_email_url": f'{protocol}://{domain}/{func}',
+        "confirm_email_deeplink": confirm_email_deeplink
     }
 
     # send mail verify
     queue_mail.send_email_verify_email_task.delay(to=[user.email], data=data)
 
 
-def send_email_reset_password(user):
-    app_env = settings.APP_ENVIRONMENT
-
-    encoded_data = urlsafe_base64_encode_with_expires(
-        user.pk, settings.MYJOB_AUTH["RESET_PASSWORD_LINK_EXPIRE_SECONDS"]
-    )
-
-    domain = settings.DOMAIN_CLIENT[app_env]
-    func = f"cap-nhat-mat-khau/{encoded_data}"
-
-    data = {
-        "reset_password_url": domain + func
-    }
-
-    # send mail reset password
-    queue_mail.send_email_reset_password_task.delay(to=[user.email], data=data)
-
-
 def send_email_reply_to_job_seeker(to, subject, data):
     queue_mail.send_email_reply_job_seeker_task.delay(to=to, subject=subject, data=data)
+
+
+def add_system_notifications(title, content, user_id_list):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["SYSTEM"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name, user_id_list=user_id_list)
+    except Exception as ex:
+        print_log_error("add_system_notifications", ex)
+
+
+def add_employer_viewed_resume_notifications(title, content, company_image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_VIEWED_RESUME"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name,
+                                                          image=company_image,
+                                                          user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_employer_viewed_resume_notifications", ex)
+
+
+def add_employer_saved_resume_notifications(title, content, company_image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["EMPLOYER_SAVED_RESUME"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name,
+                                                          image=company_image,
+                                                          user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_employer_saved_resume_notifications", ex)
+
+
+def add_apply_status_notifications(title, content, image, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["APPLY_STATUS"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=image,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_apply_status_notifications", ex)
+
+
+def add_company_followed_notifications(title, content, avatar, user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["COMPANY_FOLLOWED"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=avatar,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_company_followed_notifications", ex)
+
+
+def add_post_verify_required_notifications(title, content,
+                                           company_id, company_image,
+                                           job_post_id, job_post_title,
+                                           user_id):
+    try:
+        type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
+        content_of_type = {
+            "company_id": company_id,
+            "company_image": company_image,
+            "job_post_id": job_post_id,
+            "job_post_title": job_post_title
+        }
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          content_of_type=content_of_type,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_post_verify_required_notifications", ex)
+

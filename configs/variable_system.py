@@ -5,6 +5,15 @@ JOB_SEEKER = 'JOB_SEEKER'
 CV_WEBSITE = "WEBSITE"
 CV_UPLOAD = "UPLOAD"
 
+NOTIFICATION_TYPE = {
+    "SYSTEM": "SYSTEM",
+    "EMPLOYER_VIEWED_RESUME": "EMPLOYER_VIEWED_RESUME",
+    "EMPLOYER_SAVED_RESUME": "EMPLOYER_SAVED_RESUME",
+    "APPLY_STATUS": "APPLY_STATUS",
+    "COMPANY_FOLLOWED": "COMPANY_FOLLOWED",
+    "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED"
+}
+
 DATE_TIME_FORMAT = {
     "dmY": "%d/%m/%Y",
     "Ymd": "%Y-%m-%d",
@@ -15,8 +24,8 @@ AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'goog
 
 AVATAR_DEFAULT = {
     "AVATAR": "https://res.cloudinary.com/dtnpj540t/image/upload/v1680687265/my-job/images_default/avt_default.jpg",
-    "COMPANY_LOGO": "https://img.icons8.com/external-xnimrodx-lineal-gradient-xnimrodx/1x/external-company-town-xnimrodx-lineal-gradient-xnimrodx-4.png",
-    "COMPANY_COVER_IMAGE": "https://img.freepik.com/free-vector/purple-abstract-background_1340-17009.jpg?w=1380&t=st=1680457096~exp=1680457696~hmac=dce6634b13f28ecbe48a8de53421b99783d4b3f9dd4286d6ea2e68176cbfc083",
+    "COMPANY_LOGO": "https://res.cloudinary.com/dtnpj540t/image/upload/v1682831706/my-job/images_default/company_image_default.png",
+    "COMPANY_COVER_IMAGE": "https://res.cloudinary.com/dtnpj540t/image/upload/v1683615297/my-job/images_default/company_cover_image_default.jpg",
 }
 
 COMPANY_INFO = {
@@ -32,8 +41,8 @@ PLATFORM_CHOICES = (
     ('APP', 'Ứng dụng')
 )
 
-LINK_GOOGLEPLAY = ""
-LINK_APPSTORE = ""
+LINK_GOOGLE_PLAY = "https://drive.google.com/drive/folders/1W7phVOeKGF6H_M0UDUQWpEgHRSWRXeWE?usp=sharing"
+LINK_APPSTORE = "https://drive.google.com/drive/folders/1W7phVOeKGF6H_M0UDUQWpEgHRSWRXeWE?usp=sharing"
 
 ROLE_CHOICES = (
     (ADMIN, 'Quản trị viên'),
@@ -102,8 +111,8 @@ TYPE_OF_WORKPLACE_CHOICES = (
 JOB_TYPE_CHOICES = (
     (1, 'Nhân viên chính thức'),
     (2, 'Bán thời gian'),
-    (4, 'Thời vụ - Nghề tự do'),
-    (5, 'Thực tập')
+    (3, 'Thời vụ - Nghề tự do'),
+    (4, 'Thực tập')
 )
 
 EXPERIENCE_CHOICES = (
@@ -144,4 +153,10 @@ APPLICATION_STATUS = (
     (4, 'Đã phỏng vấn'),
     (5, 'Trúng tuyển'),
     (6, 'Không trúng tuyển')
+)
+
+FREQUENCY_NOTIFICATION = (
+    (1, 'Mỗi ngày'),
+    (2, '3 Ngày / lần'),
+    (3, '1 Tuần / 1 lần'),
 )

@@ -1,7 +1,9 @@
-from configs import variable_response as var_res, renderers, paginations
-from helpers import helper, utils
-from django.db.models import Count, F
+import datetime
 
+from configs import variable_response as var_res, renderers, paginations
+from helpers import helper
+from django.db.models import F, Count
+from django.db.models.functions import ACos, Cos, Radians, Sin
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
@@ -13,7 +15,8 @@ from info.models import Resume
 from ..models import (
     JobPost,
     SavedJobPost,
-    JobPostActivity
+    JobPostActivity,
+    JobPostNotification
 )
 from ..filters import (
     JobPostFilter,
@@ -23,6 +26,7 @@ from ..serializers import (
     JobPostAroundFilterSerializer,
     JobPostAroundSerializer,
     JobSeekerJobPostActivitySerializer,
+    JobPostNotificationSerializer
 )
 
 
@@ -46,8 +50,9 @@ class JobPostViewSet(viewsets.ViewSet,
         return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True)
-                                        .order_by('-id', 'update_at', 'create_at'))
+        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+                                                                   deadline__gte=datetime.datetime.now().date())
+                                        .order_by('-create_at', '-update_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -71,7 +76,7 @@ class JobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        queryset = JobPost.objects.filter(is_verify=True) \
+        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")
@@ -163,13 +168,31 @@ class JobPostViewSet(viewsets.ViewSet,
             print(">> BAD REQUEST >> get_job_posts_around: ", filter_serializer.errors)
             return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
         filter_data = filter_serializer.data
-        current_latitude = filter_data.get('currentLatitude')
-        current_longitude = filter_data.get('currentLongitude')
+        # latitude truyền vào
+        lat = filter_data.get('currentLatitude')
+        # longitude truyền vào
+        lng = filter_data.get('currentLongitude')
+        # bán kính truyền vào (đơn vị km)
         radius = filter_data.get("radius")
 
-        print(data)
+        # Chuyển đổi vị trí truyền vào thành radian
+        lat_radian = Radians(lat)
+        lng_radian = Radians(lng)
 
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True).order_by('-id', 'update_at', 'create_at'))
+        # Tính toán khoảng cách và filter các dòng thỏa mãn
+        queryset = self.filter_queryset(self.get_queryset().annotate(
+            lat_radian=Radians('location__lat'),
+            lng_radian=Radians('location__lng'),
+            cos_lat_radian=Cos(Radians('location__lat')),
+            sin_lat_radian=Sin(Radians('location__lat')),
+            cos_lng_radian=Cos(Radians('location__lng')),
+            sin_lng_radian=Sin(Radians('location__lng')),
+            distance=6367.0 * ACos(
+                Cos(lat_radian) * F('cos_lat_radian') * Cos(lng_radian - F('lng_radian')) +
+                Sin(lat_radian) * F('sin_lat_radian')
+            )
+        ).filter(distance__lte=radius).order_by('update_at', 'create_at'))
+
         is_pagination = request.query_params.get("isPagination", None)
 
         if is_pagination and is_pagination == "OK":
@@ -206,3 +229,59 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+
+class JobPostNotificationViewSet(viewsets.ViewSet,
+                                 generics.CreateAPIView,
+                                 generics.ListAPIView,
+                                 generics.UpdateAPIView,
+                                 generics.DestroyAPIView):
+    queryset = JobPostNotification.objects.all()
+    serializer_class = JobPostNotificationSerializer
+    renderer_classes = [renderers.MyJSONRenderer]
+    pagination_class = paginations.CustomPagination
+    permission_classes = [perms_custom.IsJobSeekerUser]
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        queryset = self.get_queryset().filter(user=user).order_by('-is_active', '-update_at')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, fields=[
+                "id", "jobName", "position", "experience", "salary",
+                "frequency", "isActive", "career", "city"
+            ])
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return var_res.Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, fields=[
+            "id", "jobName", "position", "experience",
+            "salary", "frequency", "career", "city"
+        ])
+        return Response(data=serializer.data)
+
+    @action(methods=["put"], detail=True,
+            url_path='active', url_name="active", )
+    def active_job_post_notification(self, request, pk):
+        user = request.user
+        job_post_notification = self.get_object()
+
+        if job_post_notification.is_active:
+            job_post_notification.is_active = False
+            job_post_notification.save()
+        else:
+            if JobPostNotification.objects.filter(user=user, is_active=True).count() >= 3:
+                return var_res.Response(status=status.HTTP_400_BAD_REQUEST,
+                                        data={"errorMessage": ["Tối đa 3 thông báo việc làm được bật"]})
+            job_post_notification.is_active = True
+            job_post_notification.save()
+
+        is_active = job_post_notification.is_active
+        return var_res.Response(data={
+            "isActive": is_active
+        })
