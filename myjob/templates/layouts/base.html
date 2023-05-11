@@ -26,6 +26,7 @@
     <!-- CSS Files -->
     <link id="pagestyle" href="{% static 'css/argon-dashboard.css' %}" rel="stylesheet"/>
     <link rel="stylesheet" type="text/css" href="{% static 'css/loading.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
     <script type="text/javascript" src="{% static 'js/loading.js' %}"></script>
 
     <!-- jQuery library -->
@@ -60,7 +61,7 @@
     {% block content %}{% endblock content %}
 </main>
 <!-- APP Configurator -->
-{% include "includes/fixed-plugin.html" %}
+{#{% include "includes/fixed-plugin.html" %}#}
 
 <!--   Core JS Files   -->
 {% include 'includes/scripts.html' %}
@@ -87,6 +88,10 @@
 
 <script>
     var currentSuperuserId = '{{ request.user.id }}';
+     var currentSuperuserFullName = '{{ request.user.full_name }}';
+    var emailSuperuserId = '{{ request.user.email }}'
+
+    document.getElementById("current-user").innerText = currentSuperuserFullName + " - " + emailSuperuserId
 </script>
 </body>
 

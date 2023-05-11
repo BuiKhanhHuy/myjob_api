@@ -10,7 +10,7 @@ var lastVisiblePage = null;
 var notificationsPage = [];
 
 const notificationsRef = collection(db, "users", `${currentSuperuserId}`, "notifications")
-const first = query(notificationsRef, where("is_deleted", "==", false),    limit(PAGE_SIZE_PAGE));
+const firstPage = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "in", [false, true]), orderBy('time', 'desc'), limit(PAGE_SIZE_PAGE));
 
 const allQuery = query(notificationsRef, where("is_deleted", "==", false));
 onSnapshot(allQuery, (querySnapshot) => {
@@ -21,7 +21,7 @@ onSnapshot(allQuery, (querySnapshot) => {
     totalNotificationPage = count;
 });
 
-onSnapshot(first, (querySnapshot) => {
+onSnapshot(firstPage, (querySnapshot) => {
     const notificationList = [];
     querySnapshot.forEach((doc) => {
         notificationList.push({
@@ -41,7 +41,7 @@ onSnapshot(first, (querySnapshot) => {
 // Load more button click event
 document.getElementById("load-more-page").addEventListener("click", async () => {
     if (lastVisiblePage) {
-        const nextQuery = query(collection(db, "users", `${currentSuperuserId}`, "notifications"), where("is_deleted", "==", false), startAfter(lastVisiblePage), limit(PAGE_SIZE_PAGE));
+        const nextQuery = query(collection(db, "users", `${currentSuperuserId}`, "notifications"), where("is_deleted", "==", false), where("is_read", "in", [false, true]), orderBy('time', 'desc'), startAfter(lastVisiblePage), limit(PAGE_SIZE_PAGE));
         const nextQuerySnapshot = await getDocs(nextQuery);
 
         const nextNotificationList = [];
@@ -82,7 +82,7 @@ const renderItemsPage = (data) => {
                      ${stt}
                     </td>
                     <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">${moment(new Date(item?.time * 1000)).fromNow()}</span>
+                      <span class="text-secondary text-xs font-weight-bold">${moment(new Date(item?.time?.seconds * 1000)).fromNow()}</span>
                     </td>
                     <td class="align-middle text-right">
                      <a id="${'notification-delete-page-' + item?.key}" class="btn btn-link text-danger text-gradient px-3 mb-0" href="javascript:;" ><i class="far fa-trash-alt me-2"></i>Delete</a>
@@ -130,6 +130,14 @@ const deleteNotification = (key) => {
             updateDoc(doc(db, "users", `${currentSuperuserId}`, "notifications", key), {
                 is_deleted: true
             }).then(() => {
+                const index = notificationsPage.findIndex((value) => value.key === key);
+                if (index > -1) {
+                    let newNotifications = [...notificationsPage];
+                    newNotifications.splice(index, 1);
+                    notificationsPage = newNotifications;
+
+                    renderItemsPage(notificationsPage)
+                }
                 Swal.fire('Deleted!', 'Your notification has been deleted.', 'success')
             })
                 .catch((error) => {

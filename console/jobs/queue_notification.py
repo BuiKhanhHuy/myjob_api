@@ -1,6 +1,6 @@
 from celery import shared_task
-from firebase_admin import db, firestore
-from datetime import datetime
+from firebase_admin import firestore
+from google.cloud import firestore as google_cloud_firestore
 from helpers import helper
 from configs import variable_system as var_sys
 
@@ -13,7 +13,6 @@ def add_notification_to_user(title, content, type_name, image=None,
     try:
         if user_id_list is None:
             user_id_list = []
-        current_timestamp = datetime.timestamp(datetime.now())
         database = firestore.client()
         for user_id in user_id_list:
             notification = {
@@ -22,7 +21,7 @@ def add_notification_to_user(title, content, type_name, image=None,
                 "image": image,
                 "title": title,
                 "content": content,
-                "time": current_timestamp,
+                "time": google_cloud_firestore.SERVER_TIMESTAMP,
                 "type": type_name,
                 type_name: content_of_type
             }

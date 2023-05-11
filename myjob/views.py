@@ -124,7 +124,7 @@ def send_notification_demo(request):
     body_content = data.get('bodyContent', {})
     image_link = data.get("imageLink", None)
 
-    queue_notification.add_notification_to_user(
+    queue_notification.add_notification_to_user.delay(
         title=title,
         content=content,
         type_name=notification_type,

@@ -6,12 +6,12 @@ import db from './fire-base-config.js'
 // Popup
 // global variable
 const PAGE_SIZE = 5;
-var totalNotification = 0
+let totalNotification = 0;
 let lastVisible = null;
 let notifications = [];
 
 const notificationsRef = collection(db, "users", `${currentSuperuserId}`, "notifications")
-const first = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "==", false), limit(PAGE_SIZE));
+const first = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "==", false), orderBy('time', 'desc'), limit(PAGE_SIZE));
 
 const allQuery = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "==", false));
 onSnapshot(allQuery, (querySnapshot) => {
@@ -45,7 +45,12 @@ const unsubscribe = onSnapshot(first, (querySnapshot) => {
 // Load more button click event
 document.getElementById("load-more").addEventListener("click", async () => {
     if (lastVisible) {
-        const nextQuery = query(collection(db, "users", `${currentSuperuserId}`, "notifications"), where("is_deleted", "==", false), where("is_read", "==", false), startAfter(lastVisible), limit(PAGE_SIZE));
+        const nextQuery = query(collection(db, "users", `${currentSuperuserId}`, "notifications"),
+            where("is_deleted", "==", false),
+            where("is_read", "==", false),
+            orderBy('time', 'desc'),
+            startAfter(lastVisible),
+            limit(PAGE_SIZE));
         const nextQuerySnapshot = await getDocs(nextQuery);
 
         const nextNotificationList = [];
@@ -82,11 +87,11 @@ const renderItems = (data) => {
                                 </p>
                                 <p class="text-xs text-secondary mb-0">
                                     <i class="fa fa-clock me-1"></i>
-                                    ${moment(new Date(item?.time * 1000)).fromNow()}
+                                    ${moment(new Date(item?.time?.seconds * 1000)).fromNow()}
                                 </p>
                                
                             </div>
-                        </div>
+                        </div>  
                     </a>
                 </li>`
 

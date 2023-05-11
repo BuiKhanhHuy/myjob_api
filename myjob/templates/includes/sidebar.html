@@ -20,7 +20,7 @@
                 <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
                     <i class="fa fa-tachometer text-primary text-sm opacity-10"></i>
                 </div>
-                <span class="nav-link-text ms-1">Dashboard</span>
+                <span class="nav-link-text ms-0 mt-1">Dashboard</span>
                 </a>
             </li>
 
@@ -31,7 +31,7 @@
                 <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
                     <i class="fa fa-bell text-primary text-sm opacity-10"></i>
                 </div>
-                <span class="nav-link-text ms-1">Notifications</span>
+                <span class="nav-link-text ms-0 mt-1">Notifications</span>
                 </a>
             </li>
 
@@ -46,12 +46,12 @@
                                 <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
                                     <i class="fa fa-plus-circle text-primary text-sm opacity-10"></i>
                                 </div>
-                                <span class="nav-link-text ms-1">{{ app.label|slice:20 }}{% if app.label|length > 20 %}
+                                <span class="nav-link-text ms-0 mt-1">{{ app.label|slice:20 }}{% if app.label|length > 20 %}
                                     ..{% endif %}</span>
                             </a>
 
                             {% if app.models %}
-                                <div class="multi-level ms-5 collapse {% if 'tables-bootstrap-' in segment or app_label == app.label or app.url in request.path|urlencode %} show {% endif %}"
+                                <div class="multi-level ms-2 collapse {% if 'tables-bootstrap-' in segment or app_label == app.label or app.url in request.path|urlencode %} show {% endif %}"
                                      role="list" id="submenu-{{ app.app_label }}"
                                      aria-expanded="{% if app_label == app.label or app.url in request.path|urlencode %}true{% else %}false{% endif %}">
                                     <ul class="flex-column nav">
@@ -60,7 +60,7 @@
                                                 <li class="nav-item{% if 'bootstrap-tables' in segment or model.url in request.path|urlencode %} active {% endif %} list-unstyled">
                                                     <a class="nav-link" href="{{ model.url }}">
                                                         <i class="fa fa-circle-thin text-primary text-sm opacity-10"></i>
-                                                        <span class="nav-link-text ms-1">{{ model.label }}</span>
+                                                        <span class="nav-link-text ms-0">{{ model.label }}</span>
                                                     </a>
                                                 </li>
                                             {% else %}

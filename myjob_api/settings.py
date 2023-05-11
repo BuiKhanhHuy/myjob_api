@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'cloudinary',
 
     # third party packages
+    'django_admin_listfilter_dropdown',
+
     'django_otp',
     'rest_framework',
     'django_filters',

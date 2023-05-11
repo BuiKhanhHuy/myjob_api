@@ -6,36 +6,50 @@ from .models import (
     Location,
     Career
 )
+from django_admin_listfilter_dropdown.filters import (RelatedDropdownFilter)
 
 
 class LocationInlineAdmin(admin.StackedInline):
     model = Location
-    # classes = ('collapse',)
-    # fk_name = 'job_seeker_profile'
-    # form = forms.CareerGoalForm
     extra = 1
 
 
 class CityAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    list_display_links = ("name",)
+    list_display = ("id", "name",)
+    search_fields = ("name",)
+    list_display_links = ("id", "name",)
+    ordering = ("id", 'name',)
+    list_per_page = 25
 
 
 class DistrictAdmin(admin.ModelAdmin):
-    list_display = ("name", 'city')
-    list_display_links = ("name",)
+    list_display = ("id", "name", 'city')
+    list_display_links = ("id", "name",)
+    search_fields = ("name",)
     readonly_fields = ('city',)
+    ordering = ("id", 'name',)
+    list_per_page = 25
 
 
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ("city", 'district', 'lat', 'lng', 'address')
-    list_display_links = ("city",)
+    list_display = ("id", "city", 'district', 'lat', 'lng', 'address')
+    list_display_links = ("id", "city",)
+    search_fields = ("address", "city__name", "district__name")
+    list_filter = [
+        ("city", RelatedDropdownFilter),
+        ("district", RelatedDropdownFilter),
+    ]
+    ordering = ("id", 'address',)
+    list_per_page = 25
 
 
 class CareerAdmin(admin.ModelAdmin):
-    list_display = ("name", "show_icon")
-    list_display_links = ("name",)
+    list_display = ("id", "name", "show_icon")
+    list_display_links = ("id", "name",)
+    search_fields = ("name", )
+    ordering = ("id", 'name',)
     readonly_fields = ("icon_url",)
+    list_per_page = 25
 
     def show_icon(self, career):
         if career:
