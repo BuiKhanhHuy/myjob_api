@@ -11,7 +11,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="{% static 'img/apple-icon.png' %}">
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon-myjob.png' %}">
     <title>
         Administration MyJob
     </title>
@@ -25,6 +25,9 @@
     <link href="{% static 'css/nucleo-svg.css' %}" rel="stylesheet"/>
     <!-- CSS Files -->
     <link id="pagestyle" href="{% static 'css/argon-dashboard.css' %}" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/loading.css' %}">
+    <script type="text/javascript" src="{% static 'js/loading.js' %}"></script>
+
     <!-- jQuery library -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
@@ -34,7 +37,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
             integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+    <!-- Include SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.min.css">
+    <!-- Include SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.min.js"></script>
     {% block extrahead %}{% endblock extrahead %}
 
     {% block extrastyle %}{% endblock extrastyle %}
@@ -76,6 +82,12 @@
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
 
+<script src="{% static 'js/fire-base-config.js' %}" type="module"></script>
+<script src="{% static 'js/notification.js' %}" type="module"></script>
+
+<script>
+    var currentSuperuserId = '{{ request.user.id }}';
+</script>
 </body>
 
 </html>

@@ -1,109 +1,90 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-app.js";
 import {
-    getDatabase, ref, query, orderByChild, limitToFirst, startAt, get, onValue, remove,
-} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-database.js";
+    collection, getDocs, limit, onSnapshot, query, where, startAfter, orderBy, updateDoc, doc,
+} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-firestore.js";
+import db from './fire-base-config.js'
 
-const firebaseConfig = {
-    apiKey: 'AIzaSyCKr_uSX5ObUgxEEfLIOYhze750NPlTjgM',
-    authDomain: 'myjobpro-6283b.firebaseapp.com',
-    projectId: 'myjobpro-6283b',
-    storageBucket: 'myjobpro-6283b.appspot.com',
-    messagingSenderId: '734184453591',
-    appId: '1:734184453591:web:226041c4414b54c9b8c792',
-    databaseURL: 'https://myjobpro-6283b-default-rtdb.asia-southeast1.firebasedatabase.app/',
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-
-
+// Popup
+// global variable
 const PAGE_SIZE = 5;
-let lastKey = null;
-let notifications = []
+var totalNotification = 0
+let lastVisible = null;
+let notifications = [];
 
-window.onload = () => {
-    const notificationsRef = ref(database, `notifications/${1}`);
+const notificationsRef = collection(db, "users", `${currentSuperuserId}`, "notifications")
+const first = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "==", false), limit(PAGE_SIZE));
 
-    // Lắng nghe thay đổi danh sách thông báo
-    let notificationsQuery = query(notificationsRef, orderByChild('time'), limitToFirst(PAGE_SIZE));
-    onValue(notificationsQuery, (snapshot) => {
-        const data = snapshot.val();
-
-        if (data) {
-            const newNotifications = Object.values(data).map((notification) => ({
-                ...notification, key: Object.keys(data).find((key) => data[key] === notification),
-            }));
-
-            toastr.info('There is a new notification.')
-            console.log(newNotifications)
-            renderItems(newNotifications || [])
-        } else {
-            renderItems(notifications)
-        }
+const allQuery = query(notificationsRef, where("is_deleted", "==", false), where("is_read", "==", false));
+onSnapshot(allQuery, (querySnapshot) => {
+    let count = 0;
+    querySnapshot.forEach((doc) => {
+        count = count + 1
     });
+    totalNotification = count;
 
-    // Lắng nghe sự thay đổi số lượng thông báo
-    let countNotificationsQuery = query(notificationsRef, orderByChild('time'));
-    onValue(countNotificationsQuery, (snapshot) => {
-        const data = snapshot.val();
-        const countNoti = data ? Object.keys(data).length : 0;
+    document.getElementById("total-notification").innerHTML = totalNotification;
+});
 
+console.log("LOAD NOTIFICATIONS OF POPUP")
+const unsubscribe = onSnapshot(first, (querySnapshot) => {
+    const notificationList = [];
+    querySnapshot.forEach((doc) => {
+        notificationList.push({
+            ...doc.data(), key: doc.id
+        });
     });
-}
+    notifications = notificationList;
 
-const handleLoadMore = () => {
-    const lastKeyInList = notifications[notifications.length - 1].time;
-    if (lastKeyInList !== lastKey) {
-        lastKey = lastKeyInList + 1;
+    // hiển thị thông báo
+    renderItems(notifications)
+
+    // Get the last visible document
+    lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+});
+
+
+// Load more button click event
+document.getElementById("load-more").addEventListener("click", async () => {
+    if (lastVisible) {
+        const nextQuery = query(collection(db, "users", `${currentSuperuserId}`, "notifications"), where("is_deleted", "==", false), where("is_read", "==", false), startAfter(lastVisible), limit(PAGE_SIZE));
+        const nextQuerySnapshot = await getDocs(nextQuery);
+
+        const nextNotificationList = [];
+        nextQuerySnapshot.forEach((doc) => {
+            nextNotificationList.push({
+                ...doc.data(), key: doc.id
+            });
+        });
+
+        notifications = notifications.concat(nextNotificationList);
+        // hiển thị thông báo
+        renderItems(notifications)
+
+        lastVisible = nextQuerySnapshot.docs[nextQuerySnapshot.docs.length - 1];
     }
-
-    const notificationsRef = ref(database, `notifications/${1}`);
-    let notificationsQuery = query(notificationsRef, orderByChild('time'), limitToFirst(PAGE_SIZE));
-
-    if (lastKey) {
-        notificationsQuery = query(notificationsRef, orderByChild('time'), startAt(lastKey), limitToFirst(PAGE_SIZE));
-    }
-
-    const getNotifications = async () => {
-        const snapshot = await get(notificationsQuery);
-        const data = snapshot.val();
-        if (data) {
-            const newNotifications = Object.values(data).map((notification) => ({
-                ...notification, key: Object.keys(data).find((key) => data[key] === notification),
-            }));
-            notifications = [...notifications, ...newNotifications];
-            renderItems(notifications)
-        }
-    };
-
-    getNotifications().then(r => console.log(r));
-}
+});
 
 const renderItems = (data) => {
     let strItem = (item) => {
-        // let createdAt = moment(`${item.time}`).fromNow()
-        let createdAt = item.time;
 
-
-        return ` <li class="mb-2" onclick="">
-                    <a class="dropdown-item border-radius-md" href="javascript:;">
+        return `<li class="mb-2" id="${'notification-detail-' + item?.key}">
+                    <a class="dropdown-item border-radius-md" href="javascript:;" >
                         <div class="d-flex py-1">
                             <div class="my-auto">
-                                <img alt="img" src=" ${item?.image}"
+                                <img alt="img" src="${item?.image}"
                                      class="avatar avatar-lg  me-3 "/>
                             </div>
-                            <div class="d-flex flex-column justify-content-center">
-                                <h6 class="text-sm font-weight-normal mb-1">
+                            <div class="d-flex flex-column justify-content-center" >
+                                <h6 class="text-sm font-weight-normal mb-1" >
                                     <span class="font-weight-bold">${item?.title || '---'}</span>
                                 </h6>
-                                <p class="text-sm font-weight-normal mb-1">
+                                <p class="text-sm font-weight-normal mb-1 " style="white-space: normal;" >
                                     ${item?.content || '---'}
                                 </p>
                                 <p class="text-xs text-secondary mb-0">
                                     <i class="fa fa-clock me-1"></i>
-                                    ${createdAt}
+                                    ${moment(new Date(item?.time * 1000)).fromNow()}
                                 </p>
+                               
                             </div>
                         </div>
                     </a>
@@ -112,10 +93,75 @@ const renderItems = (data) => {
 
     }
     let strContent = ''
+    if (data.length <= 0) {
+        strContent = '<li><a class="dropdown-item border-radius-md" href="javascript:;" ><div class="text-center my-2">No notifications.</div></a></li>'
+    }
     let notificationContent = document.getElementById('notification-content')
 
     for (let i = 0; i < data.length; i++) {
         strContent += strItem(data[i])
     }
     notificationContent.innerHTML = strContent;
+
+    // them xu kien cho action la xem chi tiet
+    for (let i = 0; i < data.length; i++) {
+        document.getElementById(`notification-detail-${data[i].key}`).addEventListener("click", () => showDetail(data[i]));
+    }
+
+    // an hoac hien button xem them
+    let btnLoadMore = document.getElementById('load-more')
+    if (Math.ceil(totalNotification / PAGE_SIZE) > 1) {
+        btnLoadMore.style.display = 'block'
+    } else {
+        btnLoadMore.style.display = 'none'
+    }
 }
+
+const updateStatusNotification = async (key) => {
+    await updateDoc(doc(db, "users", `${currentSuperuserId}`, "notifications", key), {
+        is_read: true
+    });
+}
+
+
+const showDetail = (item) => {
+    const showPopup = (title, content, image, key, callBackFunc, bntTitle = "Ok", showCancelButton = false) => {
+
+        Swal.fire({
+            title: title,
+            text: content,
+            imageUrl: image,
+            imageWidth: 85,
+            imageHeight: 85,
+            showCancelButton: showCancelButton,
+            confirmButtonText: bntTitle,
+            allowOutsideClick: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                callBackFunc();
+            }
+        })
+
+    }
+
+    const type = item.type;
+    switch (type) {
+        case 'SYSTEM':
+            showPopup(item?.title, item?.content, item?.image, item?.key, () => {
+                const jobPostId = item[type].job_post_id
+                updateStatusNotification(item.key)
+            });
+            break;
+        case 'POST_VERIFY_REQUIRED':
+            showPopup(item?.title, item?.content, item?.image, item?.key, () => {
+                const jobPostId = item[type].job_post_id
+                updateStatusNotification(item.key)
+                window.location.href = `/admin/job/jobpost/${jobPostId}/change/`;
+            }, "Go to censorship", true);
+            break;
+        default:
+            break;
+    }
+}
+
+export {showDetail};

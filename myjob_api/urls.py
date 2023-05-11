@@ -26,12 +26,13 @@ urlpatterns = [
     path('admin/', include(
         [
             path('', myjob.admin_views.index),
-            # path('billing/', myjob.admin_views.billing),
-            # path('profile/', myjob.admin_views.profile),
-            # path('tables/', myjob.admin_views.tables),
-            # path('rtl/', myjob.admin_views.rtl),
-            # path('vr/', myjob.admin_views.vr),
+            path('notifications/', myjob.admin_views.notifications, name='notifications'),
             path('', include('admin_argon.urls')),
+            path('billing/', myjob.admin_views.billing),
+            path('profile/', myjob.admin_views.profile),
+            path('tables/', myjob.admin_views.tables),
+            path('rtl/', myjob.admin_views.rtl),
+            path('vr/', myjob.admin_views.vr),
         ]
     )),
     path('admin/', admin.site.urls),

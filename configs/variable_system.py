@@ -13,6 +13,7 @@ NOTIFICATION_TYPE = {
     "COMPANY_FOLLOWED": "COMPANY_FOLLOWED",
     "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED"
 }
+NOTIFICATION_IMAGE_DEFAULT = "https://res.cloudinary.com/dtnpj540t/image/upload/v1683799130/my-job/images_default/notification_image_default.png"
 
 DATE_TIME_FORMAT = {
     "dmY": "%d/%m/%Y",

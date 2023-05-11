@@ -5,7 +5,15 @@ from django.http import HttpResponseNotFound
 def index(request):
     if request.user.is_anonymous or not request.user.is_superuser:
         return redirect('/admin/login/?next=/admin/')
-    return render(request, 'pages/dashboard.html')
+
+    context = {'user': request.user}
+    return render(request, 'pages/dashboard.html', context)
+
+
+def notifications(request):
+    if request.user.is_anonymous or not request.user.is_superuser:
+        return redirect('/admin/login/?next=/admin/notifications/')
+    return render(request, 'pages/tables.html')
 
 
 def billing(request):

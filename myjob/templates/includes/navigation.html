@@ -59,33 +59,28 @@
                         </div>
                     </a>
                 </li>
-                <li class="nav-item px-3 d-flex align-items-center">
-                    <a href="javascript:;" class="nav-link text-white p-0">
-                        <i class="fa fa-cog fixed-plugin-button-nav cursor-pointer"></i>
-                    </a>
-                </li>
-                <li class="nav-item dropdown pe-2 d-flex align-items-center">
+                <li class="nav-item dropdown px-3  pe-2 d-flex align-items-center">
                     <a href="javascript:;" class="nav-link text-white p-0" id="dropdownMenuButton"
+                       style="position: relative;"
                        data-bs-toggle="dropdown" aria-expanded="false">
-
-                        <i class="fa fa-bell cursor-pointer"></i>
-                        <div style="position: absolute; top: 0; right: 0; z-index: 1;  color: red;">4</div>
-
+                        <i class="fa fa-bell cursor-pointer"> </i> <span id="total-notification"
+                            class="badge badge-md badge-circle badge-danger border-danger"
+                            style=" padding: 3px;  font-size: 10px; position: absolute; top: -8px; left: 8px;  ">0</span>
                     </a>
-                    <ul class="dropdown-menu  dropdown-menu-end  px-2 py-3 me-sm-n4"
-                        aria-labelledby="dropdownMenuButton" id="notification-content">
-
-                        <li class="mb-2 text-center font-weight-bold text-primary">Xem thêm
-                        </li>
-                    </ul>
+                    <div class="dropdown-menu dropdown-menu-end dropdown- px-2 py-3 me-sm-n4">
+                        <ul id="notification-content" class="list-unstyled"
+                            style="max-height: 500px; overflow-x: hidden; overflow-y: auto; width: 450px; z-index: 1; ">
+                        </ul>
+                        <ul class="list-unstyled">
+                            <li id="load-more" class="text-center font-weight-bold text-primary" style="display: none">
+                                Xem thêm
+                            </li>
+                        </ul>
+                    </div>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-{% block scripts %}
-    {{ super }}
-    <script src="{% static 'js/notification.js' %}" type="module"></script>
-{% endblock scripts %}
 <!-- End Navbar -->
