@@ -11,6 +11,7 @@ NOTIFICATION_TYPE = {
     "EMPLOYER_SAVED_RESUME": "EMPLOYER_SAVED_RESUME",
     "APPLY_STATUS": "APPLY_STATUS",
     "COMPANY_FOLLOWED": "COMPANY_FOLLOWED",
+    "APPLY_JOB": "APPLY_JOB",
     "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED"
 }
 NOTIFICATION_IMAGE_DEFAULT = "https://res.cloudinary.com/dtnpj540t/image/upload/v1683799130/my-job/images_default/notification_image_default.png"

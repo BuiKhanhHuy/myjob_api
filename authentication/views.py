@@ -155,7 +155,7 @@ def user_active(request, encoded_data, token):
 
         # add notification welcome
         helper.add_system_notifications(
-            "Thông báo hệ thống",
+            "Chào mừng bạn!",
             "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
             "công việc mơ ước của bạn.",
             [user.id]

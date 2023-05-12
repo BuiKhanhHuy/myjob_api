@@ -302,6 +302,20 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_post_activity = serializer.save()
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        print(job_post_activity)
+        # send noti
+        helper.add_apply_job_notifications(
+            job_post_activity=job_post_activity
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                                      generics.ListAPIView,

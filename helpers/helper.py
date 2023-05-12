@@ -132,6 +132,25 @@ def add_company_followed_notifications(title, content, avatar, user_id):
         print_log_error("add_company_followed_notifications", ex)
 
 
+def add_apply_job_notifications(job_post_activity):
+    try:
+        title = f"Ứng viên {job_post_activity.full_name} - {job_post_activity.email}"
+        content = f'Đã ứng tuyển vị trí "{job_post_activity.job_post.job_name}"'
+        avatar = job_post_activity.user.avatar_url
+        content_of_type = {
+            "resume_id": job_post_activity.resume_id,
+            "resume_slug": job_post_activity.resume.slug
+        }
+        user_id = job_post_activity.job_post.user_id
+        type_name = var_sys.NOTIFICATION_TYPE["APPLY_JOB"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=avatar,
+                                                          content_of_type=content_of_type,
+                                                          type_name=type_name, user_id_list=[user_id])
+    except Exception as ex:
+        print_log_error("add_apply_job_notifications", ex)
+
+
 def add_post_verify_required_notifications(company, job_post):
     try:
         job_post_id = job_post.id
@@ -153,4 +172,3 @@ def add_post_verify_required_notifications(company, job_post):
                                                           type_name=type_name, user_id_list=user_id_list)
     except Exception as ex:
         print_log_error("add_post_verify_required_notifications", ex)
-
