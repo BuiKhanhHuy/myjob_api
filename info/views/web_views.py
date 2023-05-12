@@ -79,7 +79,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
         # get all
         if resume_type is None:
             serializer = ResumeSerializer(resumes, many=True, fields=[
-                "id", "title", "type", "updateAt", "isActive"
+                "id", "slug", "title", "type", "updateAt", "isActive"
             ])
         else:
             # get by type
@@ -621,7 +621,7 @@ class CompanyViewSet(viewsets.ViewSet,
             )
             is_followed = True
         # send notification
-        notification_title = f"{user.email} - {user.full_name}"
+        notification_title = f"{user.full_name} - {user.email}"
         notification_content = "Đã theo dõi bạn" if is_followed else "Đã hủy theo dõi bạn"
         helper.add_company_followed_notifications(
             notification_title,

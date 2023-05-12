@@ -2,9 +2,11 @@ import time
 from datetime import datetime
 from django.conf import settings
 
+import authentication.models
 from configs import variable_system as var_sys
 from console.jobs import queue_mail, queue_notification
 from authentication.tokens_custom import email_verification_token
+from authentication.models import User
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -130,21 +132,43 @@ def add_company_followed_notifications(title, content, avatar, user_id):
         print_log_error("add_company_followed_notifications", ex)
 
 
-def add_post_verify_required_notifications(title, content,
-                                           company_id, company_image,
-                                           job_post_id, job_post_title,
-                                           user_id):
+def add_apply_job_notifications(job_post_activity):
     try:
-        type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
+        title = f"Ứng viên {job_post_activity.full_name} - {job_post_activity.email}"
+        content = f'Đã ứng tuyển vị trí "{job_post_activity.job_post.job_name}"'
+        avatar = job_post_activity.user.avatar_url
         content_of_type = {
-            "company_id": company_id,
-            "company_image": company_image,
-            "job_post_id": job_post_id,
-            "job_post_title": job_post_title
+            "resume_id": job_post_activity.resume_id,
+            "resume_slug": job_post_activity.resume.slug
         }
+        user_id = job_post_activity.job_post.user_id
+        type_name = var_sys.NOTIFICATION_TYPE["APPLY_JOB"]
         queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          image=avatar,
                                                           content_of_type=content_of_type,
                                                           type_name=type_name, user_id_list=[user_id])
     except Exception as ex:
-        print_log_error("add_post_verify_required_notifications", ex)
+        print_log_error("add_apply_job_notifications", ex)
 
+
+def add_post_verify_required_notifications(company, job_post):
+    try:
+        job_post_id = job_post.id
+        job_post_title = job_post.job_name
+
+        title = company.company_name
+        content = f'Yêu cầu duyệt tin tuyển dụng "{job_post_title}"'
+        company_image = company.company_image_url
+
+        user_id_list = list(User.objects.filter(is_superuser=True).values_list('id', flat=True))
+
+        type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
+        content_of_type = {
+            "job_post_id": job_post_id,
+        }
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          content_of_type=content_of_type,
+                                                          image=company_image,
+                                                          type_name=type_name, user_id_list=user_id_list)
+    except Exception as ex:
+        print_log_error("add_post_verify_required_notifications", ex)

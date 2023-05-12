@@ -214,7 +214,15 @@ class UserSerializer(serializers.ModelSerializer):
     roleName = serializers.CharField(source="role_name")
     jobSeekerProfileId = serializers.PrimaryKeyRelatedField(source='job_seeker_profile',
                                                             read_only=True)
+    jobSeekerProfilePhone = serializers.SerializerMethodField(method_name="get_phone_of_job_seeker", read_only=True)
     companyId = serializers.PrimaryKeyRelatedField(source='company', read_only=True)
+
+    def get_phone_of_job_seeker(self, user):
+        if user.role_name == var_sys.JOB_SEEKER:
+            job_seeker = user.job_seeker_profile
+            return job_seeker.phone
+        return None
+
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -233,7 +241,7 @@ class UserSerializer(serializers.ModelSerializer):
                   "isActive", "isVerifyEmail",
                   "avatarUrl", "roleName",
                   "jobSeekerProfileId",
-                  "companyId")
+                  "companyId", "jobSeekerProfilePhone")
 
 
 class AvatarSerializer(serializers.ModelSerializer):

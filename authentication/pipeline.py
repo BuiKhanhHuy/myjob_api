@@ -1,5 +1,6 @@
 from django.core.exceptions import BadRequest
 from configs import variable_system as var_sys
+from helpers import helper
 from .models import User
 
 
@@ -46,6 +47,13 @@ def custom_create_user(strategy, backend, user=None, *args, **kwargs):
         full_name=full_name,
         is_active=True,
         is_verify_email=True
+    )
+    # send noti welcome
+    helper.add_system_notifications(
+        "Chào mừng bạn!",
+        "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
+        "công việc mơ ước của bạn.",
+        [user.id]
     )
 
     return {'is_new': True, 'user': user}

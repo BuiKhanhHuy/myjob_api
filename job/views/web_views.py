@@ -104,6 +104,36 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        # gui noti cho admin
+        print("GỬI NOTI")
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        user = request.user
+
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        # gui noti yeu cau duyet bai
+        helper.add_post_verify_required_notifications(
+            company=user.company,
+            job_post=self.get_object()
+        )
+        return Response(serializer.data)
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset()
                                         .filter(user=request.user,
@@ -271,6 +301,20 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_post_activity = serializer.save()
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        print(job_post_activity)
+        # send noti
+        helper.add_apply_job_notifications(
+            job_post_activity=job_post_activity
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class EmployerJobPostActivityViewSet(viewsets.ViewSet,

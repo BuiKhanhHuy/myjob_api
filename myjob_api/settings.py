@@ -39,6 +39,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'admin_argon.apps.AdminArgonConfig',
     'django.contrib.admin',
     'django_light',
     'django.contrib.auth',
@@ -50,6 +51,8 @@ INSTALLED_APPS = [
     'cloudinary',
 
     # third party packages
+    'django_admin_listfilter_dropdown',
+
     'django_otp',
     'rest_framework',
     'django_filters',

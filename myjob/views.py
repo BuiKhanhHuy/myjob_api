@@ -1,8 +1,7 @@
-import json
+from console.jobs import queue_notification
 from twilio.rest import Client
 from django.conf import settings
-from django.shortcuts import render
-from helpers import helper, utils
+from helpers import helper
 from configs import renderers
 from configs import variable_response as var_res, variable_system as var_sys
 from rest_framework.decorators import api_view
@@ -116,5 +115,21 @@ def send_sms_download_app(request):
 
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
-    helper.add_system_notifications("Test notification ứng viên", "Đây là nội dung test cho ứng viên.", [197])
+    data = request.data
+
+    title = data.get("title", "TEST")
+    content = data.get('content', "TEST CONTENT")
+    user_list = data.get('userList', [])
+    notification_type = data.get("type", "SYSTEM")
+    body_content = data.get('bodyContent', {})
+    image_link = data.get("imageLink", None)
+
+    queue_notification.add_notification_to_user.delay(
+        title=title,
+        content=content,
+        type_name=notification_type,
+        image=image_link,
+        content_of_type=body_content,
+        user_id_list=user_list
+    )
     return var_res.response_data()
