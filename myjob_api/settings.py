@@ -36,8 +36,12 @@ APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 ALLOWED_HOSTS = ['*']
-# Application definition
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://bkhuy-myjob-api.up.railway.app'
+]
+
+# Application definition
 INSTALLED_APPS = [
     'admin_argon.apps.AdminArgonConfig',
     'django.contrib.admin',
