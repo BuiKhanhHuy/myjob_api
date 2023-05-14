@@ -384,7 +384,7 @@ class CompanyViewSet(viewsets.ViewSet,
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, fields=[
-            'id', 'taxCode', 'companyName',
+            'id', 'slug', 'taxCode', 'companyName',
             'employeeSize', 'fieldOperation', 'location',
             'since', 'companyEmail', 'companyPhone',
             'websiteUrl', 'facebookUrl', 'youtubeUrl',

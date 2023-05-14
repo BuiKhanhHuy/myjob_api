@@ -180,7 +180,9 @@ class JobPostViewSet(viewsets.ViewSet,
         lng_radian = Radians(lng)
 
         # Tính toán khoảng cách và filter các dòng thỏa mãn
-        queryset = self.filter_queryset(self.get_queryset().annotate(
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(is_verify=True, deadline__gte=datetime.datetime.now().date()
+                                                ).annotate(
             lat_radian=Radians('location__lat'),
             lng_radian=Radians('location__lng'),
             cos_lat_radian=Cos(Radians('location__lat')),
