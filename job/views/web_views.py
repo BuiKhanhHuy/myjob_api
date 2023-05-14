@@ -180,7 +180,6 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             "location"])
         return Response(data=serializer.data)
 
-
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):

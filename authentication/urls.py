@@ -7,6 +7,7 @@ router = DefaultRouter()
 urlpatterns = [
     path('token/', views.CustomTokenView.as_view()),
     path('convert-token/', views.CustomConvertTokenView.as_view()),
+    path('revoke-token/', views.CustomRevokeTokenView.as_view()),
     path('', include('drf_social_oauth2.urls', namespace='drf')),
     path('email-exists/', views.check_email_exists),
     path('check-creds/', views.check_creds),

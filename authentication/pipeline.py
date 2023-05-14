@@ -48,6 +48,7 @@ def custom_create_user(strategy, backend, user=None, *args, **kwargs):
         is_active=True,
         is_verify_email=True
     )
+
     # send noti welcome
     helper.add_system_notifications(
         "Chào mừng bạn!",
