@@ -2,9 +2,11 @@ import datetime
 import calendar
 import pandas as pd
 from datetime import timedelta
+from console.jobs import queue_mail
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
+from django.conf import settings
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth, TruncMonth, TruncYear
 from django_filters.rest_framework import DjangoFilterBackend
@@ -180,6 +182,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             "location"])
         return Response(data=serializer.data)
 
+
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
@@ -305,10 +308,29 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         job_post_activity = serializer.save()
-        self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        print(job_post_activity)
+        # send email here
+        user = request.user
+        job_post = job_post_activity.job_post
+        company = job_post.company
+
+        app_env = settings.APP_ENVIRONMENT
+        domain = settings.DOMAIN_CLIENT[app_env]
+        subject = f"Xác nhận ứng tuyển: {job_post.job_name}"
+        to = [user.email]
+        data = {
+            "full_name": user.full_name,
+            "company_name": company.company_name,
+            "job_name": job_post.job_name,
+            "find_job_post_link": domain + "viec-lam",
+            "get_suggested_job_posts": []
+        }
+        queue_mail.send_email_confirm_application.delay(
+            to=to,
+            subject=subject,
+            data=data
+        )
         # send noti
         helper.add_apply_job_notifications(
             job_post_activity=job_post_activity

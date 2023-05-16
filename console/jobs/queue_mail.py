@@ -1,9 +1,11 @@
 from configs import variable_system as var_sys
 from datetime import datetime
-from helpers import utils
+from helpers import utils, helper
 from celery import shared_task
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from info.models import Resume
+from job.models import JobPost
 
 
 @shared_task
@@ -93,3 +95,27 @@ def send_email_reply_job_seeker_task(to, subject, data=None, cc=None, bcc=None):
         return 'Email reply to job seeker sent successfully.'
     else:
         return 'Email reply to job seeker sent failed!'
+
+
+@shared_task
+def send_email_confirm_application(to, subject, data=None, cc=None, bcc=None):
+    try:
+        if data is None:
+            data = {}
+        data["my_email"] = var_sys.COMPANY_INFO["EMAIL"]
+        data["my_phone"] = var_sys.COMPANY_INFO["PHONE"]
+        data["my_logo_link"] = var_sys.COMPANY_INFO["DARK_LOGO_LINK"]
+        data["my_address"] = var_sys.COMPANY_INFO["ADDRESS"]
+        data["now"] = datetime.now().date().strftime(var_sys.DATE_TIME_FORMAT["dmY"])
+
+        email_html = render_to_string('application-confirm.html', data)
+        text_content = strip_tags(email_html)
+        sent = utils.send_mail(subject, text_content, email_html, to=to, cc=cc, bcc=bcc)
+
+        if sent:
+            return 'Email confirm application sent successfully.'
+        else:
+            return 'Email confirm application sent failed!'
+    except Exception as ex:
+        helper.print_log_error("send_email_confirm_application", ex)
+        return "Email confirm application sent failed with error!"
