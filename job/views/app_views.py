@@ -237,7 +237,6 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
             "company_name": company.company_name,
             "job_name": job_post.job_name,
             "find_job_post_link": domain + "viec-lam",
-            "get_suggested_job_posts": []
         }
         queue_mail.send_email_confirm_application.delay(
             to=to,
