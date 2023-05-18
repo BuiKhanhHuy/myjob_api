@@ -1,4 +1,4 @@
-from console.jobs import queue_notification
+from console.jobs import queue_notification, queue_job
 from twilio.rest import Client
 from django.conf import settings
 from helpers import helper
@@ -115,21 +115,22 @@ def send_sms_download_app(request):
 
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
-    data = request.data
-
-    title = data.get("title", "TEST")
-    content = data.get('content', "TEST CONTENT")
-    user_list = data.get('userList', [])
-    notification_type = data.get("type", "SYSTEM")
-    body_content = data.get('bodyContent', {})
-    image_link = data.get("imageLink", None)
-
-    queue_notification.add_notification_to_user.delay(
-        title=title,
-        content=content,
-        type_name=notification_type,
-        image=image_link,
-        content_of_type=body_content,
-        user_id_list=user_list
-    )
+    # data = request.data
+    #
+    # title = data.get("title", "TEST")
+    # content = data.get('content', "TEST CONTENT")
+    # user_list = data.get('userList', [])
+    # notification_type = data.get("type", "SYSTEM")
+    # body_content = data.get('bodyContent', {})
+    # image_link = data.get("imageLink", None)
+    #
+    # queue_notification.add_notification_to_user.delay(
+    #     title=title,
+    #     content=content,
+    #     type_name=notification_type,
+    #     image=image_link,
+    #     content_of_type=body_content,
+    #     user_id_list=user_list
+    # )
+    queue_job.send_email_job_post_for_job_seeker_task(1)
     return var_res.response_data()

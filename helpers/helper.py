@@ -2,7 +2,6 @@ import time
 from datetime import datetime
 from django.conf import settings
 
-import authentication.models
 from configs import variable_system as var_sys
 from console.jobs import queue_mail, queue_notification
 from authentication.tokens_custom import email_verification_token
@@ -160,7 +159,7 @@ def add_post_verify_required_notifications(company, job_post):
         content = f'Yêu cầu duyệt tin tuyển dụng "{job_post_title}"'
         company_image = company.company_image_url
 
-        user_id_list = list(User.objects.filter(is_superuser=True).values_list('id', flat=True))
+        user_id_list = list(User.objects.filter(is_staff=True).values_list('id', flat=True))
 
         type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_REQUIRED"]
         content_of_type = {

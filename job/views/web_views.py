@@ -2,6 +2,10 @@ import datetime
 import calendar
 import pandas as pd
 from datetime import timedelta
+
+import pytz
+from django.utils import timezone
+
 from console.jobs import queue_mail
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
@@ -186,7 +190,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
-    queryset = JobPost.objects
+    queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
@@ -194,13 +198,6 @@ class JobPostViewSet(viewsets.ViewSet,
     filterset_class = JobPostFilter
     filter_backends = [DjangoFilterBackend]
     lookup_field = "slug"
-
-    def get_permissions(self):
-        if self.action in ["get_job_posts_saved",
-                           "get_job_posts_applied",
-                           "job_saved"]:
-            return [perms_custom.IsJobSeekerUser()]
-        return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
@@ -496,14 +493,19 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
 
         now = datetime.datetime.now()
         last_year_today = now.replace(year=now.year - 1)
-        first_day_of_month = last_year_today.replace(day=1).date()
+        first_day_of_month = last_year_today.replace(day=1)
 
         last_day = calendar.monthrange(now.year, now.month)[1]
-        last_day_of_month = datetime.datetime(now.year, now.month,
-                                              last_day).date()
+        last_day_of_month = datetime.datetime(now.year, now.month, last_day)
+
+        first_day_of_month_no_utc = first_day_of_month.date()
+        last_day_of_month_no_utc = last_day_of_month.date()
+
+        first_day_of_month_utc = first_day_of_month.astimezone(pytz.utc).date()
+        last_day_of_month_utc = last_day_of_month.astimezone(pytz.utc).date()
 
         queryset1 = JobPostActivity.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -512,7 +514,7 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
             .order_by('year', 'month')
 
         queryset2 = SavedJobPost.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -521,7 +523,7 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
             .order_by('year', 'month')
 
         queryset3 = CompanyFollowed.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -536,7 +538,8 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
         title1 = "Việc đã ứng tuyển"
         title2 = "Việc đã lưu"
         title3 = "Công ty đang theo dõi"
-        date_range = pd.date_range(start=first_day_of_month, end=last_day_of_month, freq='M')
+        date_range = pd.date_range(start=first_day_of_month_no_utc, end=last_day_of_month_no_utc,
+                                   freq='M', normalize=True)
         for date in date_range:
             m = date.month
             y = date.year
@@ -601,13 +604,16 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+        start_date = pd.to_datetime(start_date_str)
+        end_date = pd.to_datetime(end_date_str)
 
         user = request.user
         queryset = JobPostActivity.objects.filter(job_post__company=user.company) \
             .values(stt=F('status')) \
             .filter(
             Q(create_at__isnull=True) |
-            Q(create_at__date__range=[start_date_str, end_date_str])) \
+            Q(create_at__date__range=[start_date.tz_localize(pytz.utc).date(),
+                                      end_date.tz_localize(pytz.utc).date()])) \
             .annotate(countJobPostActivity=Count('id')) \
             .order_by('-stt')
 
@@ -639,16 +645,19 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+
         start_date1 = pd.to_datetime(start_date_str)
         end_date1 = pd.to_datetime(end_date_str)
         start_date2 = start_date1 - timedelta(days=365)
         end_date2 = end_date1 - timedelta(days=365)
 
         queryset1 = JobPostActivity.objects.filter(job_post__company=user.company,
-                                                   create_at__date__range=[start_date1, end_date1]) \
+                                                   create_at__date__range=[start_date1.tz_localize(pytz.utc).date(),
+                                                                           end_date1.tz_localize(pytz.utc).date()]) \
             .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
         queryset2 = JobPostActivity.objects.filter(job_post__company=user.company,
-                                                   create_at__date__range=[start_date2, end_date2]) \
+                                                   create_at__date__range=[start_date2.tz_localize(pytz.utc).date(),
+                                                                           end_date2.tz_localize(pytz.utc).date()]) \
             .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
 
         title1 = end_date1.year
@@ -697,7 +706,8 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
 
         job_post_data = JobPost.objects.filter(company=user.company).values_list("create_at", flat=True)
         job_post_activity_data = JobPostActivity.objects.filter(job_post__company=user.company) \
-            .filter(create_at__date__range=[start_date, end_date]).values_list("create_at", flat=True)
+            .filter(create_at__date__range=[start_date.tz_localize(pytz.utc).date(), end_date.tz_localize(pytz.utc).date()])\
+            .values_list("create_at", flat=True)
 
         labels = []
         data1 = []
@@ -730,13 +740,16 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+        start_date = pd.to_datetime(start_date_str)
+        end_date = pd.to_datetime(end_date_str)
 
         user = request.user
         data = JobPost.objects.filter(company=user.company) \
             .values(academicLevel=F('academic_level')) \
             .filter(
             Q(jobpostactivity__create_at__isnull=True) |
-            Q(jobpostactivity__create_at__date__range=[start_date_str, end_date_str])) \
+            Q(jobpostactivity__create_at__date__range=[start_date.tz_localize(pytz.utc).date(),
+                                                       end_date.tz_localize(pytz.utc).date()])) \
             .annotate(countJobPostActivity=Count('jobpostactivity')) \
             .order_by('academic_level')
 

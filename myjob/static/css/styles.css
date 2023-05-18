@@ -10,3 +10,10 @@
     background-color: #441da0;
     border-radius: 5px;
 }
+
+h3,
+.h3,
+.h3 {
+  font-size: 1rem !important;
+  line-height: 1.375;
+}

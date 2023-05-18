@@ -2,6 +2,7 @@ import json
 import datetime
 
 import cloudinary.uploader
+import pytz
 from django.conf import settings
 from django.db import transaction
 
@@ -203,6 +204,7 @@ def forgot_password(request):
     if user:
         try:
             now = datetime.datetime.now()
+            now = now.astimezone(pytz.utc)
 
             tokens = ForgotPasswordToken.objects \
                 .filter(user=user, is_active=True, platform=platform, expired_at__gte=now)
@@ -265,13 +267,13 @@ def reset_password(request):
 
     try:
         now = datetime.datetime.now()
+        now = now.astimezone(pytz.utc)
         platform = serializer.data.get("platform")
         new_password = serializer.data.get("newPassword")
 
         if platform == "WEB":
             token = serializer.data.get("token")
             user_id = force_str(urlsafe_base64_decode(token))
-            print("user id: ", user_id)
 
             forgot_password_tokens = ForgotPasswordToken.objects.filter(token=token, user_id=user_id, is_active=True)
             if not forgot_password_tokens.exists():

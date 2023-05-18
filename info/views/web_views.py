@@ -381,6 +381,7 @@ class ResumeSavedViewSet(viewsets.ViewSet,
     permission_classes = [perms_custom.IsEmployerUser]
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
+    serializer_class = ResumeSavedSerializer
     filterset_class = ResumeSavedFilter
     filter_backends = [DjangoFilterBackend]
 
