@@ -20,3 +20,7 @@ class Feedback(MyJobBaseModel):
 
     class Meta:
         db_table = "myjob_myjob_feedback"
+
+
+class Banner(MyJobBaseModel):
+    pass
