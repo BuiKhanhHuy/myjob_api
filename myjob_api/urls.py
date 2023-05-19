@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import path, re_path, include
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -33,6 +32,12 @@ urlpatterns = [
             path('tables/', myjob.admin_views.tables),
             path('rtl/', myjob.admin_views.rtl),
             path('vr/', myjob.admin_views.vr),
+            path('api/', include([
+                path('user-chart/', myjob.admin_views.user_chart),
+                path('job-post-chart/', myjob.admin_views.job_post_chart),
+                path('career-chart/', myjob.admin_views.career_chart),
+                path('application-chart/', myjob.admin_views.application_chart),
+            ]))
         ]
     )),
     path('admin/', admin.site.urls),
