@@ -10,7 +10,8 @@ from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework import permissions as perms_sys
 from .models import (
-    Feedback
+    Feedback,
+    Banner
 )
 from authentication.models import (
     User
@@ -25,7 +26,8 @@ from job.models import (
     JobPost
 )
 from .serializers import (
-    FeedbackSerializer
+    FeedbackSerializer,
+    BannerSerializer
 )
 
 
@@ -111,6 +113,28 @@ def send_sms_download_app(request):
         helper.print_log_error("send_sms_download_app", ex)
         var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return var_res.response_data()
+
+
+@api_view(http_method_names=['get'])
+def get_web_banner(request):
+    banner_queryset = Banner.objects.filter(is_active=True, platform="WEB")
+    serializer = BannerSerializer(banner_queryset, many=True, fields=[
+        "id", "imageUrl", "buttonText", "description",
+        "buttonLink", "isShowButton", "descriptionLocation"
+    ])
+
+    return var_res.response_data(data=serializer.data)
+
+
+@api_view(http_method_names=['get'])
+def get_mobile_banner(request):
+    banner_queryset = Banner.objects.filter(is_active=True, platform="APP")
+    serializer = BannerSerializer(banner_queryset, many=True, fields=[
+        "id", "imageMobileUrl", "buttonText", "description",
+        "buttonLink", "isShowButton", "descriptionLocation"
+    ])
+
+    return var_res.response_data(data=serializer.data)
 
 
 @api_view(http_method_names=['post'])
