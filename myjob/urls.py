@@ -11,12 +11,15 @@ urlpatterns = [
     path('', include([
         path('create-fake-databases/', views.create_fake_data),
         path('send-noti-demo/', views.send_notification_demo),
+        path('fast-autocomplete-demo/', views.fast_autocomplete_demo),
     ])),
     path('app/', include([
-        path('', include(app_router.urls))
+        path('', include(app_router.urls)),
+        path('banner/', views.get_mobile_banner)
     ])),
     path('web/', include([
         path("", include(web_router.urls)),
-        path("sms-download-app/", views.send_sms_download_app)
+        path("sms-download-app/", views.send_sms_download_app),
+        path('banner/', views.get_web_banner)
     ]))
 ]

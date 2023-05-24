@@ -1,4 +1,4 @@
-from console.jobs import queue_notification
+from console.jobs import queue_notification, queue_job
 from twilio.rest import Client
 from django.conf import settings
 from helpers import helper
@@ -10,7 +10,8 @@ from rest_framework import viewsets
 from rest_framework import generics
 from rest_framework import permissions as perms_sys
 from .models import (
-    Feedback
+    Feedback,
+    Banner
 )
 from authentication.models import (
     User
@@ -25,7 +26,8 @@ from job.models import (
     JobPost
 )
 from .serializers import (
-    FeedbackSerializer
+    FeedbackSerializer,
+    BannerSerializer
 )
 
 
@@ -113,6 +115,28 @@ def send_sms_download_app(request):
     return var_res.response_data()
 
 
+@api_view(http_method_names=['get'])
+def get_web_banner(request):
+    banner_queryset = Banner.objects.filter(is_active=True, platform="WEB")
+    serializer = BannerSerializer(banner_queryset, many=True, fields=[
+        "id", "imageUrl", "buttonText", "description",
+        "buttonLink", "isShowButton", "descriptionLocation"
+    ])
+
+    return var_res.response_data(data=serializer.data)
+
+
+@api_view(http_method_names=['get'])
+def get_mobile_banner(request):
+    banner_queryset = Banner.objects.filter(is_active=True, platform="APP")
+    serializer = BannerSerializer(banner_queryset, many=True, fields=[
+        "id", "imageMobileUrl", "buttonText", "description",
+        "buttonLink", "isShowButton", "descriptionLocation"
+    ])
+
+    return var_res.response_data(data=serializer.data)
+
+
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
     data = request.data
@@ -132,4 +156,42 @@ def send_notification_demo(request):
         content_of_type=body_content,
         user_id_list=user_list
     )
+    # queue_job.send_email_job_post_for_job_seeker_task(1)
     return var_res.response_data()
+
+
+from fast_autocomplete import AutoComplete, demo
+
+
+@api_view(http_method_names=['get'])
+def fast_autocomplete_demo(request):
+    q = request.GET.get('q')
+    words = {'Nhân Viên Tư Vấn Tín Dụng': {},
+             'Data Protection and Information Security Partner': {},
+             'acura': {},
+             'alfa romeo 4c': {},
+             '4c': {},
+             'alfa romeo': {},
+             'alfa romeo 4c coupe': {},
+             '4c coupe': {},
+             'alfa romeo giulia': {},
+             'giulia': {},
+             'bmw 1 series': {},
+             '1 series': {},
+             'bmw': {},
+             'bmw 2 series': {},
+             '2 series': {},
+             '2007': {},
+             '2017': {},
+             '2018': {},
+             'los angeles': {},
+             'in': {}
+             }
+    synonyms = {
+
+    }
+    autocomplete = AutoComplete(words=words, synonyms=synonyms)
+    # max_cost: so tu duoc phep sai
+    # size: so luong ket qua tra ve
+    data = autocomplete.search(word=q, max_cost=3, size=5)
+    return var_res.response_data(data=data)

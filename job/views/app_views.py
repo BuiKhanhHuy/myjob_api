@@ -1,7 +1,8 @@
 import datetime
-
+from console.jobs import queue_mail
 from configs import variable_response as var_res, renderers, paginations
 from helpers import helper
+from django.conf import settings
 from django.db.models import F, Count
 from django.db.models.functions import ACos, Cos, Radians, Sin
 from django_filters.rest_framework import DjangoFilterBackend
@@ -180,7 +181,9 @@ class JobPostViewSet(viewsets.ViewSet,
         lng_radian = Radians(lng)
 
         # Tính toán khoảng cách và filter các dòng thỏa mãn
-        queryset = self.filter_queryset(self.get_queryset().annotate(
+        queryset = self.filter_queryset(self.get_queryset()
+                                        .filter(is_verify=True, deadline__gte=datetime.datetime.now().date()
+                                                ).annotate(
             lat_radian=Radians('location__lat'),
             lng_radian=Radians('location__lng'),
             cos_lat_radian=Cos(Radians('location__lat')),
@@ -213,6 +216,34 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
     permission_classes = [perms_custom.IsJobSeekerUser]
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_post_activity = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+
+        # send email here
+        user = request.user
+        job_post = job_post_activity.job_post
+        company = job_post.company
+
+        app_env = settings.APP_ENVIRONMENT
+        domain = settings.DOMAIN_CLIENT[app_env]
+        subject = f"Xác nhận ứng tuyển: {job_post.job_name}"
+        to = [user.email]
+        data = {
+            "full_name": user.full_name,
+            "company_name": company.company_name,
+            "job_name": job_post.job_name,
+            "find_job_post_link": domain + "viec-lam",
+        }
+        queue_mail.send_email_confirm_application.delay(
+            to=to,
+            subject=subject,
+            data=data
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def list(self, request, *args, **kwargs):
         user = request.user
@@ -264,6 +295,11 @@ class JobPostNotificationViewSet(viewsets.ViewSet,
             "salary", "frequency", "career", "city"
         ])
         return Response(data=serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
 
     @action(methods=["put"], detail=True,
             url_path='active', url_name="active", )

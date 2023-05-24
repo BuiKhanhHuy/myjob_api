@@ -162,3 +162,10 @@ FREQUENCY_NOTIFICATION = (
     (2, '3 Ngày / lần'),
     (3, '1 Tuần / 1 lần'),
 )
+
+DESCRIPTION_LOCATION = (
+    (1, 'TOP_LEFT'),
+    (2, 'TOP_RIGHT'),
+    (3, 'BOTTOM_LEFT'),
+    (4, 'BOTTOM_RIGHT')
+)

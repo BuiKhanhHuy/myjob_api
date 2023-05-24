@@ -2,12 +2,18 @@ import datetime
 import calendar
 import pandas as pd
 from datetime import timedelta
+import pytz
+
+from fast_autocomplete import AutoComplete
+from console.jobs import queue_mail
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
+from django.conf import settings
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth, TruncMonth, TruncYear
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import api_view
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework import permissions as perms_sys
@@ -38,6 +44,121 @@ from info.models import (
     ResumeViewed,
     CompanyFollowed
 )
+
+
+@api_view(http_method_names=['get'])
+def job_suggest_title_search(request):
+    q = request.GET.get('q')
+
+    words = {
+        "Nhân Viên SEO Web": {},
+        "Data Protection and Information Security Partner": {},
+        "Trainer for Cyber Security - Up to 900$": {},
+        "IT - Chuyên Viên Cơ Sở Dữ Liệu Ngân Hàng Giao Dịch": {},
+        "Kế Toán Kiêm Hành Chính (Novaworld Phan Thiết, Tiến Thành, Bình Thuận)": {},
+        "Kế Toán Kiêm Hành Chính (Tropicana Hồ Tràm, Xuyên Mộc)": {},
+        "Services Attendant - Quận 9": {},
+        "Kế Toán Tổng Hợp (Tiến Thành, Phan Thiết)": {},
+        "Nhân Viên Kỹ Thuật (Tây Hồ - Hà Nội)": {},
+        "Nhân Viên Kỹ Thuật (Tp Vũng Tàu)": {},
+        "Giám Sát Kỹ Thuật (Tp Vũng Tàu)": {},
+        "Kế Toán Tổng Hợp (Quận 2, Quận 9)": {},
+        "Nhân Viên Lễ Tân (Ecopark - Hưng Yên)": {},
+        "Nhân Viên Kỹ Thuật Tòa Nhà (Ecopark - Hưng Yên)": {},
+        "Giám Sát Dịch Vụ - HCM": {},
+        "Nhân Viên Lễ Tân - Tp. HCM": {},
+        "Kế Toán Tổng Hợp Kiêm Hành Chính (Tân Bình, HCM)": {},
+        "Nhân Viên Kỹ Thuật (Quận 1, Quận 7)": {},
+        "Nhân Viên Lễ Tân (Cầu Giấy - Hà Nội)": {},
+        "Nhân Viên Hải Quan (11 - 14 Triệu)": {},
+        "Chuyên Viên Kinh Doanh Chiến Lược (10 - 12 Triệu) - Không Áp Doanh Số": {},
+        "Kỹ Sư Thiết Kế Điện Lạnh - Cơ Khí - Pccc - Xây Dựng (13 - 20 Triệu)": {},
+        "Nhân Viên Kinh Doanh Dự Án (12 - 15 Triệu) - Không Áp Doanh Số, Không Yêu Cầu Kinh Nghiệm": {},
+        "Nhân Viên Marketing - Nữ (Lương Cứng 13-18 Triệu)": {},
+        "Kiến Trúc Sư Xây Dựng _ Lương Cứng (15 - 20 Triệu)": {},
+        "Nhân Viên Hành Chính Văn Phòng (10 - 13 Triệu)": {},
+        "Nhân Viên Lễ Tân Văn Phòng (10 -12 Triệu)": {},
+        "Chuyên Viên Điều Phối Phòng Điều Tra An Ninh": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bình Dương": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bà Rịa - Vũng Tàu": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Đồng Nai": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Tp. Thừa Thiên Huế, Quảng Trị": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Kon Tum, Gia Lai, Lâm Đồng": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Đồng Nai, Bình Dương, Tây Ninh": {},
+        "Nhân Viên Telesales Tiền Mặt Làm Việc Tại 519 Kim Mã, Ba Đình, Hà Nội": {},
+        "Nhân Viên Tư Vấn Tín Dụng Kênh Trả Góp Tại Hòa Bình": {},
+        "Nhân Viên Tư Vấn Cho  Vay Tiền Mặt Qua Điện Thoại Tại Hà Nội": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Thanh Miện - Hải Dương": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình (Bố Trạch, Ba Đồn, Quảng Ninh)": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Quế Võ- Bắc Ninh": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Lạng Sơn": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Hà Nội": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Khu Vực Bến Cát, Phú Giáo": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình Bố Trạch": {},
+        "Chuyên Viên Hỗ Trợ Tín Dụng - Kho (Đóng Mộc Hồ Sơ)": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Bố Trạch - Quảng Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Tân Ninh - Quảng Bình": {},
+        "Thành Phố Ninh Bình - Nhân Viên Tư Vấn Trả Góp Kênh Xe Máy": {},
+        "Kiến Xương, Thái Bình: Nhân Viên Tư Vấn Tín Dụng Trả Góp": {},
+        "(Duy Tiên, Kim Bảng) Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy (Hành Chính)": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Lộc Bình- Lạng Sơn": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Cao Bằng-Nguyên Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Hải Dương-Tp Hải Dương": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Hưng Yên-Thành Phố Hưng Yên, Văn Lâm": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) Lộc Bình- Lạng Sơn": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) Tại Hà Nội": {},
+        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp)- Bắc Ninh, Bắc Giang": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Trả Góp Tại Hà Nam, Ninh Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Hưng Yên, Hải Dương": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Hải Phòng": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Trả Góp Tại Nghệ An, Thanh Hóa": {},
+        "Nhân Viên Tư Vấn Tín Dụng Trả Góp Tại Hoàng Mai, Gia Lâm, Long Biên": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Sơn La": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Phú Thọ": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bình Phước": {},
+        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Kênh Xe Máy Tại Hà Nam": {},
+        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Tại Ninh Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Tại Thanh Hóa": {},
+        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Kênh Xe Máy Tại Hà Tĩnh": {},
+        "Nhân Viên Tư Vấn Tín Dụng Tại Tam Dương, Phúc Yên, Vĩnh Yên": {},
+        "Nhân Viên Tư Vấn Trả Góp Tại Lào Cai": {},
+        "Nhân Viên Tư Vấn Tài Chính Qua Điện Thoại Làm Việc Tại 519 Kim Mã": {},
+        "Nhân Viên Telesales Tiền Mặt Tại Hà Nội": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp - Thừa Thiên Huế, Quảng Bình": {},
+        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp - Bình Dương, Đồng Nai": {},
+        "Trình Dược Viên Kênh Nhà Thuốc - Ngành Hàng Dược Phẩm Abbott - Đồng Nai (Biên Hòa), Hà Nội (Gia Lâm, Hoàn Kiếm, Long Biên)": {},
+        "Trình Dược Viên Kênh Nhà Thuốc - Ngành Hàng Dược Phẩm Abbott - Bình Phước, Khánh Hòa (Nha Trang) - Thời Vụ 6 Tháng": {},
+        "Chuyên Viên Trưng Bày - Ngành Hàng Dược Phẩm - Hà Nội": {},
+        "Event Assistant - Pharmaceuticals - Contract 1 Year": {},
+        "Nhân Viên Bán Hàng Thị Trường (Kênh GT) - Long An": {},
+        "Giám Sát Bán Hàng Thị Trường (Npp Tx Ngã Năm, Sóc Trăng)": {},
+        "Sales Admin - HCM - Ngành Hàng Dược Phẩm - Thời Vụ 6 Tháng": {},
+        "Nhân Viên Bán Hàng Thị Trường (Kênh GT) - Tp.HCM": {},
+        "Nhân Viên Giải Quyết Khiếu Nại Khách Hàng (Thời Vụ 11 Tháng) - Hà Nội": {},
+        "Kiểm Nghiệm Viên Vi Sinh - Nhà Máy Dược Abbott Bình Dương": {},
+        "Nhân Viên Vận Hành Máy - Nhà Máy Dược Bình Dương - Thời Vụ 6 Tháng": {},
+        "Nhân Viên Bán Hàng Kênh Mt (Hà Nội / HCM / Tây Ninh)": {},
+        "Hà Nội - Nhân Viên Bán Hàng Thời Trang Skechers Vincom Trần Duy Hưng": {},
+        "Hà Nội - Nhân Viên Bán Hàng Charles&keith Tại Các Tttm": {},
+        "Hà Nội - Nhân Viên Nhân Sự Tổng Hợp (Mạnh Về Tuyển Dụng)": {},
+        "Hà Nội - Nhân Viên IT (IT Support Service)": {},
+        "Hn-Nhân Viên Bán Hàng Thời Trang Mlb Tại Aeon Long Biên": {},
+        "HCM - Quản Lý Cửa Hàng Nhãn Hàng Puma": {},
+        "HCM - Nhân Viên Bán Hàng Cửa Hàng Charles & Keith Vincom Mega Mall Thảo Điền": {},
+        "Vũng Tàu - Quản Lý Cửa Hàng Charles & Keith Ba Cu": {},
+        "Vũng Tàu - Nhân Viên Bán Hàng Cửa Hàng Charles & Keith Ba Cu": {},
+        "Rạch Giá - Nhân Viên Bán Hàng Kiêm Thu Ngân Skechers": {},
+        "Rạch Giá - Giám Sát Bán Hàng Havaianas / Skechers": {}
+    }
+    synonyms = {
+
+    }
+    autocomplete = AutoComplete(words=words, synonyms=synonyms)
+    # max_cost: so tu duoc phep sai
+    # size: so luong ket qua tra ve
+    data = autocomplete.search(word=q, max_cost=3, size=5)
+    return var_res.response_data(data=data)
 
 
 class PrivateJobPostViewSet(viewsets.ViewSet,
@@ -144,7 +265,8 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
                 "id", "slug", "jobName", "createAt", "deadline",
-                "appliedNumber", "views", "isUrgent", "isVerify"
+                "appliedNumber", "views", "isUrgent", "isVerify",
+                "isExpired"
             ])
             return self.get_paginated_response(serializer.data)
 
@@ -184,7 +306,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
 class JobPostViewSet(viewsets.ViewSet,
                      generics.ListAPIView,
                      generics.RetrieveAPIView):
-    queryset = JobPost.objects
+    queryset = JobPost.objects.all()
     serializer_class = JobPostSerializer
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
@@ -192,13 +314,6 @@ class JobPostViewSet(viewsets.ViewSet,
     filterset_class = JobPostFilter
     filter_backends = [DjangoFilterBackend]
     lookup_field = "slug"
-
-    def get_permissions(self):
-        if self.action in ["get_job_posts_saved",
-                           "get_job_posts_applied",
-                           "job_saved"]:
-            return [perms_custom.IsJobSeekerUser()]
-        return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
@@ -306,10 +421,28 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         job_post_activity = serializer.save()
-        self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        print(job_post_activity)
+        # send email here
+        user = request.user
+        job_post = job_post_activity.job_post
+        company = job_post.company
+
+        app_env = settings.APP_ENVIRONMENT
+        domain = settings.DOMAIN_CLIENT[app_env]
+        subject = f"Xác nhận ứng tuyển: {job_post.job_name}"
+        to = [user.email]
+        data = {
+            "full_name": user.full_name,
+            "company_name": company.company_name,
+            "job_name": job_post.job_name,
+            "find_job_post_link": domain + "viec-lam",
+        }
+        queue_mail.send_email_confirm_application.delay(
+            to=to,
+            subject=subject,
+            data=data
+        )
         # send noti
         helper.add_apply_job_notifications(
             job_post_activity=job_post_activity
@@ -476,14 +609,19 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
 
         now = datetime.datetime.now()
         last_year_today = now.replace(year=now.year - 1)
-        first_day_of_month = last_year_today.replace(day=1).date()
+        first_day_of_month = last_year_today.replace(day=1)
 
         last_day = calendar.monthrange(now.year, now.month)[1]
-        last_day_of_month = datetime.datetime(now.year, now.month,
-                                              last_day).date()
+        last_day_of_month = datetime.datetime(now.year, now.month, last_day)
+
+        first_day_of_month_no_utc = first_day_of_month.date()
+        last_day_of_month_no_utc = last_day_of_month.date()
+
+        first_day_of_month_utc = first_day_of_month.astimezone(pytz.utc).date()
+        last_day_of_month_utc = last_day_of_month.astimezone(pytz.utc).date()
 
         queryset1 = JobPostActivity.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -492,7 +630,7 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
             .order_by('year', 'month')
 
         queryset2 = SavedJobPost.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -501,7 +639,7 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
             .order_by('year', 'month')
 
         queryset3 = CompanyFollowed.objects \
-            .filter(user=user, create_at__date__range=[first_day_of_month, last_day_of_month]) \
+            .filter(user=user, create_at__date__range=[first_day_of_month_utc, last_day_of_month_utc]) \
             .order_by('create_at') \
             .annotate(year=ExtractYear('create_at'),
                       month=ExtractMonth('create_at')) \
@@ -516,7 +654,8 @@ class JobSeekerStatisticViewSet(viewsets.ViewSet):
         title1 = "Việc đã ứng tuyển"
         title2 = "Việc đã lưu"
         title3 = "Công ty đang theo dõi"
-        date_range = pd.date_range(start=first_day_of_month, end=last_day_of_month, freq='M')
+        date_range = pd.date_range(start=first_day_of_month_no_utc, end=last_day_of_month_no_utc,
+                                   freq='M', normalize=True)
         for date in date_range:
             m = date.month
             y = date.year
@@ -561,7 +700,7 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
         total_job_post = JobPost.objects.filter(company=user.company).count()
         total_job_posting_pending_approval = JobPost.objects.filter(company=user.company, is_verify=False).count()
         total_job_post_expired = JobPost.objects \
-            .filter(company=user.company, deadline__gte=datetime.datetime.now().date()).count()
+            .filter(company=user.company, deadline__lt=datetime.datetime.now().date()).count()
         total_apply = JobPostActivity.objects.filter(job_post__company=user.company).count()
 
         return var_res.response_data(data={
@@ -581,13 +720,16 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+        start_date = pd.to_datetime(start_date_str)
+        end_date = pd.to_datetime(end_date_str)
 
         user = request.user
         queryset = JobPostActivity.objects.filter(job_post__company=user.company) \
             .values(stt=F('status')) \
             .filter(
             Q(create_at__isnull=True) |
-            Q(create_at__date__range=[start_date_str, end_date_str])) \
+            Q(create_at__date__range=[start_date.tz_localize(pytz.utc).date(),
+                                      end_date.tz_localize(pytz.utc).date()])) \
             .annotate(countJobPostActivity=Count('id')) \
             .order_by('-stt')
 
@@ -619,16 +761,19 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+
         start_date1 = pd.to_datetime(start_date_str)
         end_date1 = pd.to_datetime(end_date_str)
         start_date2 = start_date1 - timedelta(days=365)
         end_date2 = end_date1 - timedelta(days=365)
 
         queryset1 = JobPostActivity.objects.filter(job_post__company=user.company,
-                                                   create_at__date__range=[start_date1, end_date1]) \
+                                                   create_at__date__range=[start_date1.tz_localize(pytz.utc).date(),
+                                                                           end_date1.tz_localize(pytz.utc).date()]) \
             .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
         queryset2 = JobPostActivity.objects.filter(job_post__company=user.company,
-                                                   create_at__date__range=[start_date2, end_date2]) \
+                                                   create_at__date__range=[start_date2.tz_localize(pytz.utc).date(),
+                                                                           end_date2.tz_localize(pytz.utc).date()]) \
             .annotate(date=TruncDate('create_at')).values('date').annotate(count=Count('id')).order_by('date')
 
         title1 = end_date1.year
@@ -677,7 +822,9 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
 
         job_post_data = JobPost.objects.filter(company=user.company).values_list("create_at", flat=True)
         job_post_activity_data = JobPostActivity.objects.filter(job_post__company=user.company) \
-            .filter(create_at__date__range=[start_date, end_date]).values_list("create_at", flat=True)
+            .filter(
+            create_at__date__range=[start_date.tz_localize(pytz.utc).date(), end_date.tz_localize(pytz.utc).date()]) \
+            .values_list("create_at", flat=True)
 
         labels = []
         data1 = []
@@ -710,13 +857,16 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
                                          errors=serializer.errors)
         start_date_str = serializer.data.get("startDate")
         end_date_str = serializer.data.get("endDate")
+        start_date = pd.to_datetime(start_date_str)
+        end_date = pd.to_datetime(end_date_str)
 
         user = request.user
         data = JobPost.objects.filter(company=user.company) \
             .values(academicLevel=F('academic_level')) \
             .filter(
             Q(jobpostactivity__create_at__isnull=True) |
-            Q(jobpostactivity__create_at__date__range=[start_date_str, end_date_str])) \
+            Q(jobpostactivity__create_at__date__range=[start_date.tz_localize(pytz.utc).date(),
+                                                       end_date.tz_localize(pytz.utc).date()])) \
             .annotate(countJobPostActivity=Count('jobpostactivity')) \
             .order_by('academic_level')
 

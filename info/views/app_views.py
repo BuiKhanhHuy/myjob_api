@@ -23,6 +23,7 @@ from ..filters import (
 from ..serializers import (
     JobSeekerProfileSerializer,
     ResumeSerializer,
+    ResumePdfViewSerializer,
     ResumeViewedSerializer,
     CvSerializer,
     EducationSerializer,
@@ -97,6 +98,7 @@ class PrivateResumeViewSet(viewsets.ViewSet,
                            "update", "partial_update",
                            "resume_active",
                            "destroy",
+                           "get_cv_pdf",
                            "get_experiences_detail",
                            "get_educations_detail",
                            "get_certificates_detail",
@@ -142,6 +144,11 @@ class PrivateResumeViewSet(viewsets.ViewSet,
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
 
     @action(methods=["get"], detail=True,
             url_path='resume-active', url_name="resume-active", )
@@ -197,6 +204,13 @@ class PrivateResumeViewSet(viewsets.ViewSet,
             helper.print_log_error("update_cv_file", error=ex)
             return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return var_res.response_data()
+
+    @action(methods=["get"], detail=True,
+            url_path='cv-pdf', url_name="get-cv-pdf", )
+    def get_cv_pdf(self, request, pk):
+        resume = self.get_object()
+        serializer = ResumePdfViewSerializer(resume)
+        return var_res.response_data(status=status.HTTP_200_OK, data=serializer.data)
 
     @action(methods=["get"], detail=True,
             url_path="educations-detail", url_name="get-educations-detail")
@@ -278,6 +292,11 @@ class EducationDetailViewSet(viewsets.ViewSet,
     serializer_class = EducationSerializer
     renderer_classes = [renderers.MyJSONRenderer]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
+
 
 class ExperienceDetailViewSet(viewsets.ViewSet,
                               generics.CreateAPIView,
@@ -285,6 +304,11 @@ class ExperienceDetailViewSet(viewsets.ViewSet,
     queryset = ExperienceDetail.objects
     serializer_class = ExperienceSerializer
     renderer_classes = [renderers.MyJSONRenderer]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
 
 
 class CertificateDetailViewSet(viewsets.ViewSet,
@@ -294,6 +318,11 @@ class CertificateDetailViewSet(viewsets.ViewSet,
     serializer_class = CertificateSerializer
     renderer_classes = [renderers.MyJSONRenderer]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
+
 
 class LanguageSkillViewSet(viewsets.ViewSet,
                            generics.CreateAPIView,
@@ -302,6 +331,11 @@ class LanguageSkillViewSet(viewsets.ViewSet,
     serializer_class = LanguageSkillSerializer
     renderer_classes = [renderers.MyJSONRenderer]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
+
 
 class AdvancedSkillViewSet(viewsets.ViewSet,
                            generics.CreateAPIView,
@@ -309,6 +343,11 @@ class AdvancedSkillViewSet(viewsets.ViewSet,
     queryset = AdvancedSkill.objects
     serializer_class = AdvancedSkillSerializer
     renderer_classes = [renderers.MyJSONRenderer]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
 
 
 class CompanyViewSet(viewsets.ViewSet,
@@ -345,7 +384,7 @@ class CompanyViewSet(viewsets.ViewSet,
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, fields=[
-            'id', 'taxCode', 'companyName',
+            'id', 'slug', 'taxCode', 'companyName',
             'employeeSize', 'fieldOperation', 'location',
             'since', 'companyEmail', 'companyPhone',
             'websiteUrl', 'facebookUrl', 'youtubeUrl',

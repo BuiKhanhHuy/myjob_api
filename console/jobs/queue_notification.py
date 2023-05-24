@@ -5,6 +5,7 @@ from helpers import helper
 from configs import variable_system as var_sys
 
 
+
 @shared_task
 def add_notification_to_user(title, content, type_name, image=None,
                              content_of_type=None, user_id_list=None):

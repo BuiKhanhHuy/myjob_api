@@ -24,6 +24,7 @@ urlpatterns = [
         path('', include(app_router.urls))
     ])),
     path('web/', include([
+        path('seach/job-suggest-title/', web_views.job_suggest_title_search),
         path('', include(web_router.urls)),
         path('statistics/', include([
             path('employer-general-statistics/', web_views.EmployerStatisticViewSet.as_view({

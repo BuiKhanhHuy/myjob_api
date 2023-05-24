@@ -74,9 +74,9 @@ const renderItems = (data) => {
         return `<li class="mb-2" id="${'notification-detail-' + item?.key}">
                     <a class="dropdown-item border-radius-md" href="javascript:;" >
                         <div class="d-flex py-1">
-                            <div class="my-auto">
-                                <img alt="img" src="${item?.image}"
-                                     class="avatar avatar-lg img-fluid me-3"/>
+                            <div class="my-auto me-1" style="width: 100px;">
+                                <img alt="img" src="${item?.image}"  
+                                     class="avatar avatar-lg img-fluid"/>
                             </div>
                             <div class="d-flex flex-column justify-content-center" >
                                 <h6 class="text-sm font-weight-normal mb-1" >

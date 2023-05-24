@@ -1,8 +1,7 @@
+import datetime
 from datetime import date
 import cloudinary.uploader
 from django.conf import settings
-from jsonschema._validators import required
-
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -146,7 +145,8 @@ class CompanySerializer(serializers.ModelSerializer):
         return company.companyfollowed_set.filter().count()
 
     def get_job_post_number(self, company):
-        return company.job_posts.count()
+        now = datetime.datetime.now().date()
+        return company.job_posts.filter(deadline__gte=now).count()
 
     def check_followed(self, company):
         request = self.context.get('request', None)
@@ -460,6 +460,107 @@ class ResumeSerializer(serializers.ModelSerializer):
         return resume
 
 
+class ExperiencePdfSerializer(serializers.ModelSerializer):
+    jobName = serializers.CharField(source='job_name', read_only=True)
+    companyName = serializers.CharField(source='company_name', read_only=True)
+    startDate = serializers.DateField(source='start_date', read_only=True)
+    endDate = serializers.DateField(source='end_date', read_only=True)
+    description = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = ExperienceDetail
+        fields = ('id', 'jobName', 'companyName',
+                  'startDate', 'endDate',
+                  'description')
+
+
+class EducationPdfSerializer(serializers.ModelSerializer):
+    degreeName = serializers.CharField(source='degree_name', read_only=True)
+    major = serializers.CharField(read_only=True)
+    trainingPlaceName = serializers.CharField(source='training_place_name', read_only=True)
+    startDate = serializers.DateField(source='start_date', read_only=True)
+    completedDate = serializers.DateField(source='completed_date', read_only=True)
+    description = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = EducationDetail
+        fields = ('id', 'degreeName', 'major', 'trainingPlaceName',
+                  'startDate', 'completedDate', 'description')
+
+
+class CertificatePdfSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    trainingPlace = serializers.CharField(source='training_place', read_only=True)
+    startDate = serializers.DateField(source='start_date', read_only=True)
+    expirationDate = serializers.DateField(read_only=True)
+
+    class Meta:
+        model = Certificate
+        fields = ('id', 'name', 'trainingPlace',
+                  'startDate',
+                  'expirationDate')
+
+
+class LanguageSkillPdfSerializer(serializers.ModelSerializer):
+    language = serializers.IntegerField(read_only=True)
+    level = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = LanguageSkill
+        fields = ('id', 'language', 'level')
+
+
+class AdvancedSkillPdfSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    level = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = AdvancedSkill
+        fields = ('id', 'name', 'level')
+
+
+class ResumePdfViewSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(read_only=True, )
+    description = serializers.CharField(read_only=True, )
+    salaryMin = serializers.IntegerField(source="salary_min", read_only=True, )
+    salaryMax = serializers.IntegerField(source="salary_max", read_only=True, )
+    experience = serializers.IntegerField(read_only=True, )
+    academicLevel = serializers.IntegerField(source="academic_level", read_only=True, )
+    typeOfWorkplace = serializers.IntegerField(source="type_of_workplace", read_only=True, )
+    jobType = serializers.IntegerField(source="job_type", read_only=True, )
+    user = auth_serializers.UserSerializer(read_only=True, fields=[
+        "fullName",
+        "avatarUrl",
+        "email"
+    ])
+    jobSeekerProfile = JobSeekerProfileSerializer(source='job_seeker_profile', read_only=True, fields=[
+        "phone",
+        "birthday",
+    ])
+    experienceDetails = ExperiencePdfSerializer(source='experience_details', read_only=True, many=True)
+    educationDetails = EducationPdfSerializer(source='education_details', read_only=True, many=True)
+    certificates = CertificatePdfSerializer(read_only=True, many=True)
+    languageSkills = LanguageSkillPdfSerializer(source='language_skills', read_only=True, many=True)
+    advancedSkills = AdvancedSkillPdfSerializer(source='advanced_skills', read_only=True, many=True)
+
+    class Meta:
+        model = Resume
+        fields = ("title", "description",
+                  "salaryMin", "salaryMax",
+                  "position", "experience",
+                  "academicLevel",
+                  "typeOfWorkplace", "jobType",
+                  "career", "user", "city",
+                  "user",
+                  "jobSeekerProfile",
+                  "experienceDetails",
+                  "educationDetails",
+                  "certificates",
+                  "languageSkills",
+                  "advancedSkills"
+                  )
+
+
 class ResumeViewedSerializer(serializers.ModelSerializer):
     resume = ResumeSerializer(fields=["id", "title"])
     company = CompanySerializer(fields=['id', 'slug', 'companyName', 'companyImageUrl'])
@@ -549,8 +650,14 @@ class EducationSerializer(serializers.ModelSerializer):
                                                          var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
-    # web
+    # slug field for web
     resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
+    # primary key field for app
+    resumeId = serializers.PrimaryKeyRelatedField(
+        source='resume',
+        queryset=Resume.objects.all(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -571,7 +678,7 @@ class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationDetail
         fields = ('id', 'degreeName', 'major', 'trainingPlaceName',
-                  'startDate', 'completedDate', 'description', 'resume')
+                  'startDate', 'completedDate', 'description', 'resume', 'resumeId')
 
 
 class ExperienceSerializer(serializers.ModelSerializer):
@@ -585,8 +692,14 @@ class ExperienceSerializer(serializers.ModelSerializer):
                                                    var_sys.DATE_TIME_FORMAT["Ymd"]])
     description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
-    # web
+    # slug field for web
     resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
+    # primary key field for app
+    resumeId = serializers.PrimaryKeyRelatedField(
+        source='resume',
+        queryset=Resume.objects.all(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -608,7 +721,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
         model = ExperienceDetail
         fields = ('id', 'jobName', 'companyName',
                   'startDate', 'endDate',
-                  'description', 'resume')
+                  'description', 'resume', 'resumeId')
 
 
 class CertificateSerializer(serializers.ModelSerializer):
@@ -621,8 +734,14 @@ class CertificateSerializer(serializers.ModelSerializer):
                                            input_formats=[var_sys.DATE_TIME_FORMAT["ISO8601"],
                                                           var_sys.DATE_TIME_FORMAT["Ymd"]])
 
-    # web
+    # slug field for web
     resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
+    # primary key field for app
+    resumeId = serializers.PrimaryKeyRelatedField(
+        source='resume',
+        queryset=Resume.objects.all(),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -643,15 +762,21 @@ class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certificate
         fields = ('id', 'name', 'trainingPlace', 'startDate',
-                  'expirationDate', 'resume')
+                  'expirationDate', 'resume', 'resumeId')
 
 
 class LanguageSkillSerializer(serializers.ModelSerializer):
     language = serializers.IntegerField(required=True)
     level = serializers.IntegerField(required=True)
 
-    # web
+    # slug field for web
     resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
+    # primary key field for app
+    resumeId = serializers.PrimaryKeyRelatedField(
+        source='resume',
+        queryset=Resume.objects.all(),
+        required=False
+    )
 
     # def validate_language(self, language):
     #     request = self.context['request']
@@ -675,15 +800,21 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LanguageSkill
-        fields = ('id', 'language', 'level', 'resume')
+        fields = ('id', 'language', 'level', 'resume', 'resumeId')
 
 
 class AdvancedSkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True, max_length=200)
     level = serializers.IntegerField(required=True)
 
-    # web
-    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
+    # slug field for web
+    resume = serializers.SlugRelatedField(required=False,  slug_field="slug", queryset=Resume.objects.all())
+    # primary key field for app
+    resumeId = serializers.PrimaryKeyRelatedField(
+        source='resume',
+        queryset=Resume.objects.all(),
+        required=False
+    )
 
     # def validate_name(self, name):
     #     request = self.context['request']
@@ -712,7 +843,7 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdvancedSkill
-        fields = ('id', 'name', 'level', 'resume')
+        fields = ('id', 'name', 'level', 'resume', "resumeId")
 
 
 class ResumeDetailSerializer(serializers.ModelSerializer):

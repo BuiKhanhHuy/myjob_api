@@ -2,6 +2,7 @@ import json
 import datetime
 
 import cloudinary.uploader
+import pytz
 from django.conf import settings
 from django.db import transaction
 
@@ -15,8 +16,9 @@ from django.http import HttpResponseRedirect, HttpResponseNotFound
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.response import Response
 from django.core.exceptions import BadRequest
-from drf_social_oauth2.views import TokenView, ConvertTokenView
+from drf_social_oauth2.views import TokenView, ConvertTokenView, RevokeTokenView
 from oauth2_provider.models import get_access_token_model
 
 from console.jobs import queue_mail
@@ -82,6 +84,23 @@ class CustomConvertTokenView(ConvertTokenView):
                 errors={"errorMessage": [str_ex]}
             )
 
+
+class CustomRevokeTokenView(RevokeTokenView):
+    def post(self, request, *args, **kwargs):
+        # Use the rest framework `.data` to fake the post body of the django request.
+        mutable_data = request.data.copy()
+        request._request.POST = request._request.POST.copy()
+        for key, value in mutable_data.items():
+            request._request.POST[key] = value
+
+        url, headers, body, status = self.create_revocation_response(request._request)
+        response = Response(
+            data=json.loads(body) if body else '', status=status if body else 200
+        )
+
+        for k, v in headers.items():
+            response[k] = v
+        return response
 
 @api_view(http_method_names=['post'])
 def check_email_exists(request):
@@ -153,11 +172,14 @@ def user_active(request, encoded_data, token):
         user.is_verify_email = True
         user.save()
 
+        noti_title = "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm công việc mơ ước của bạn."
+        if user.role_name == var_sys.EMPLOYER:
+            noti_title = "Chào mừng bạn đến với MyJob! hệ thống giới thiệu việc làm nhanh chóng và tiện lợi để tìm kiếm nhân tài cho công ty của bạn!"
+
         # add notification welcome
         helper.add_system_notifications(
             "Chào mừng bạn!",
-            "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
-            "công việc mơ ước của bạn.",
+            noti_title,
             [user.id]
         )
         return HttpResponseRedirect(
@@ -182,6 +204,7 @@ def forgot_password(request):
     if user:
         try:
             now = datetime.datetime.now()
+            now = now.astimezone(pytz.utc)
 
             tokens = ForgotPasswordToken.objects \
                 .filter(user=user, is_active=True, platform=platform, expired_at__gte=now)
@@ -244,13 +267,13 @@ def reset_password(request):
 
     try:
         now = datetime.datetime.now()
+        now = now.astimezone(pytz.utc)
         platform = serializer.data.get("platform")
         new_password = serializer.data.get("newPassword")
 
         if platform == "WEB":
             token = serializer.data.get("token")
             user_id = force_str(urlsafe_base64_decode(token))
-            print("user id: ", user_id)
 
             forgot_password_tokens = ForgotPasswordToken.objects.filter(token=token, user_id=user_id, is_active=True)
             if not forgot_password_tokens.exists():

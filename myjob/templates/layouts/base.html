@@ -42,6 +42,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.min.css">
     <!-- Include SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.4/dist/sweetalert2.min.js"></script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
     {% block extrahead %}{% endblock extrahead %}
 
     {% block extrastyle %}{% endblock extrastyle %}
@@ -88,7 +92,7 @@
 
 <script>
     var currentSuperuserId = '{{ request.user.id }}';
-     var currentSuperuserFullName = '{{ request.user.full_name }}';
+    var currentSuperuserFullName = '{{ request.user.full_name }}';
     var emailSuperuserId = '{{ request.user.email }}'
 
     document.getElementById("current-user").innerText = currentSuperuserFullName + " - " + emailSuperuserId

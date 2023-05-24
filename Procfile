@@ -1,2 +1,5 @@
 web: gunicorn myjob_api.wsgi --log-file -
-worker: celery -A myjob_api.celery worker --pool=solo --loglevel=info
+migrate: python manage.py migrate
+collectstatic: python manage.py collectstatic --noinput
+celery: celery -A myjob_api.celery worker --loglevel=info
+celery_beat: celery -A myjob_api.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
