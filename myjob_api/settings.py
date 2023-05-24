@@ -323,6 +323,6 @@ firebase_admin.initialize_app(cred, {
 
 COMPANY_NAME = "MyJob"
 
-JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\data.json')
+JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\\')
 
 APP_ENVIRONMENT = config('APP_ENV')

@@ -1,5 +1,7 @@
 import datetime
 import calendar
+import json
+
 import pandas as pd
 from datetime import timedelta
 import pytz
@@ -9,9 +11,10 @@ from console.jobs import queue_mail
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
 from helpers import utils, helper
+from helpers.redis_service import RedisService
 from django.conf import settings
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth, TruncMonth, TruncYear
+from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, generics
@@ -48,117 +51,41 @@ from info.models import (
 
 @api_view(http_method_names=['get'])
 def job_suggest_title_search(request):
-    q = request.GET.get('q')
+    try:
+        job_title_key = "jobTitleKey"
+        q = request.GET.get('q', None)
 
-    words = {
-        "Nhân Viên SEO Web": {},
-        "Data Protection and Information Security Partner": {},
-        "Trainer for Cyber Security - Up to 900$": {},
-        "IT - Chuyên Viên Cơ Sở Dữ Liệu Ngân Hàng Giao Dịch": {},
-        "Kế Toán Kiêm Hành Chính (Novaworld Phan Thiết, Tiến Thành, Bình Thuận)": {},
-        "Kế Toán Kiêm Hành Chính (Tropicana Hồ Tràm, Xuyên Mộc)": {},
-        "Services Attendant - Quận 9": {},
-        "Kế Toán Tổng Hợp (Tiến Thành, Phan Thiết)": {},
-        "Nhân Viên Kỹ Thuật (Tây Hồ - Hà Nội)": {},
-        "Nhân Viên Kỹ Thuật (Tp Vũng Tàu)": {},
-        "Giám Sát Kỹ Thuật (Tp Vũng Tàu)": {},
-        "Kế Toán Tổng Hợp (Quận 2, Quận 9)": {},
-        "Nhân Viên Lễ Tân (Ecopark - Hưng Yên)": {},
-        "Nhân Viên Kỹ Thuật Tòa Nhà (Ecopark - Hưng Yên)": {},
-        "Giám Sát Dịch Vụ - HCM": {},
-        "Nhân Viên Lễ Tân - Tp. HCM": {},
-        "Kế Toán Tổng Hợp Kiêm Hành Chính (Tân Bình, HCM)": {},
-        "Nhân Viên Kỹ Thuật (Quận 1, Quận 7)": {},
-        "Nhân Viên Lễ Tân (Cầu Giấy - Hà Nội)": {},
-        "Nhân Viên Hải Quan (11 - 14 Triệu)": {},
-        "Chuyên Viên Kinh Doanh Chiến Lược (10 - 12 Triệu) - Không Áp Doanh Số": {},
-        "Kỹ Sư Thiết Kế Điện Lạnh - Cơ Khí - Pccc - Xây Dựng (13 - 20 Triệu)": {},
-        "Nhân Viên Kinh Doanh Dự Án (12 - 15 Triệu) - Không Áp Doanh Số, Không Yêu Cầu Kinh Nghiệm": {},
-        "Nhân Viên Marketing - Nữ (Lương Cứng 13-18 Triệu)": {},
-        "Kiến Trúc Sư Xây Dựng _ Lương Cứng (15 - 20 Triệu)": {},
-        "Nhân Viên Hành Chính Văn Phòng (10 - 13 Triệu)": {},
-        "Nhân Viên Lễ Tân Văn Phòng (10 -12 Triệu)": {},
-        "Chuyên Viên Điều Phối Phòng Điều Tra An Ninh": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bình Dương": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bà Rịa - Vũng Tàu": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Đồng Nai": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Tp. Thừa Thiên Huế, Quảng Trị": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Kon Tum, Gia Lai, Lâm Đồng": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Đồng Nai, Bình Dương, Tây Ninh": {},
-        "Nhân Viên Telesales Tiền Mặt Làm Việc Tại 519 Kim Mã, Ba Đình, Hà Nội": {},
-        "Nhân Viên Tư Vấn Tín Dụng Kênh Trả Góp Tại Hòa Bình": {},
-        "Nhân Viên Tư Vấn Cho  Vay Tiền Mặt Qua Điện Thoại Tại Hà Nội": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Thanh Miện - Hải Dương": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình (Bố Trạch, Ba Đồn, Quảng Ninh)": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Quế Võ- Bắc Ninh": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Lạng Sơn": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Xe Máy) Tại Hà Nội": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Khu Vực Bến Cát, Phú Giáo": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình Bố Trạch": {},
-        "Chuyên Viên Hỗ Trợ Tín Dụng - Kho (Đóng Mộc Hồ Sơ)": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Bố Trạch - Quảng Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Quảng Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) - Tân Ninh - Quảng Bình": {},
-        "Thành Phố Ninh Bình - Nhân Viên Tư Vấn Trả Góp Kênh Xe Máy": {},
-        "Kiến Xương, Thái Bình: Nhân Viên Tư Vấn Tín Dụng Trả Góp": {},
-        "(Duy Tiên, Kim Bảng) Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy (Hành Chính)": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Lộc Bình- Lạng Sơn": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Cao Bằng-Nguyên Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Hải Dương-Tp Hải Dương": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Hưng Yên-Thành Phố Hưng Yên, Văn Lâm": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) Lộc Bình- Lạng Sơn": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp) Tại Hà Nội": {},
-        "Nhân Viên Tư Vấn Tín Dụng (Kênh Trả Góp)- Bắc Ninh, Bắc Giang": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Trả Góp Tại Hà Nam, Ninh Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Hưng Yên, Hải Dương": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Hải Phòng": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Trả Góp Tại Nghệ An, Thanh Hóa": {},
-        "Nhân Viên Tư Vấn Tín Dụng Trả Góp Tại Hoàng Mai, Gia Lâm, Long Biên": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Sơn La": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Phú Thọ": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp Xe Máy Tỉnh Bình Phước": {},
-        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Kênh Xe Máy Tại Hà Nam": {},
-        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Tại Ninh Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Tại Thanh Hóa": {},
-        "Nhân Viên Tư Vấn Tín Dụng Trả Góp - Kênh Xe Máy Tại Hà Tĩnh": {},
-        "Nhân Viên Tư Vấn Tín Dụng Tại Tam Dương, Phúc Yên, Vĩnh Yên": {},
-        "Nhân Viên Tư Vấn Trả Góp Tại Lào Cai": {},
-        "Nhân Viên Tư Vấn Tài Chính Qua Điện Thoại Làm Việc Tại 519 Kim Mã": {},
-        "Nhân Viên Telesales Tiền Mặt Tại Hà Nội": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp - Thừa Thiên Huế, Quảng Bình": {},
-        "Nhân Viên Tư Vấn Tín Dụng - Kênh Trả Góp - Bình Dương, Đồng Nai": {},
-        "Trình Dược Viên Kênh Nhà Thuốc - Ngành Hàng Dược Phẩm Abbott - Đồng Nai (Biên Hòa), Hà Nội (Gia Lâm, Hoàn Kiếm, Long Biên)": {},
-        "Trình Dược Viên Kênh Nhà Thuốc - Ngành Hàng Dược Phẩm Abbott - Bình Phước, Khánh Hòa (Nha Trang) - Thời Vụ 6 Tháng": {},
-        "Chuyên Viên Trưng Bày - Ngành Hàng Dược Phẩm - Hà Nội": {},
-        "Event Assistant - Pharmaceuticals - Contract 1 Year": {},
-        "Nhân Viên Bán Hàng Thị Trường (Kênh GT) - Long An": {},
-        "Giám Sát Bán Hàng Thị Trường (Npp Tx Ngã Năm, Sóc Trăng)": {},
-        "Sales Admin - HCM - Ngành Hàng Dược Phẩm - Thời Vụ 6 Tháng": {},
-        "Nhân Viên Bán Hàng Thị Trường (Kênh GT) - Tp.HCM": {},
-        "Nhân Viên Giải Quyết Khiếu Nại Khách Hàng (Thời Vụ 11 Tháng) - Hà Nội": {},
-        "Kiểm Nghiệm Viên Vi Sinh - Nhà Máy Dược Abbott Bình Dương": {},
-        "Nhân Viên Vận Hành Máy - Nhà Máy Dược Bình Dương - Thời Vụ 6 Tháng": {},
-        "Nhân Viên Bán Hàng Kênh Mt (Hà Nội / HCM / Tây Ninh)": {},
-        "Hà Nội - Nhân Viên Bán Hàng Thời Trang Skechers Vincom Trần Duy Hưng": {},
-        "Hà Nội - Nhân Viên Bán Hàng Charles&keith Tại Các Tttm": {},
-        "Hà Nội - Nhân Viên Nhân Sự Tổng Hợp (Mạnh Về Tuyển Dụng)": {},
-        "Hà Nội - Nhân Viên IT (IT Support Service)": {},
-        "Hn-Nhân Viên Bán Hàng Thời Trang Mlb Tại Aeon Long Biên": {},
-        "HCM - Quản Lý Cửa Hàng Nhãn Hàng Puma": {},
-        "HCM - Nhân Viên Bán Hàng Cửa Hàng Charles & Keith Vincom Mega Mall Thảo Điền": {},
-        "Vũng Tàu - Quản Lý Cửa Hàng Charles & Keith Ba Cu": {},
-        "Vũng Tàu - Nhân Viên Bán Hàng Cửa Hàng Charles & Keith Ba Cu": {},
-        "Rạch Giá - Nhân Viên Bán Hàng Kiêm Thu Ngân Skechers": {},
-        "Rạch Giá - Giám Sát Bán Hàng Havaianas / Skechers": {}
-    }
-    synonyms = {
+        if q:
+            redis_service = RedisService()
+            cache = redis_service.redis_service
+            job_title_str = cache.get(job_title_key)
+            if job_title_str:
+                print("Đã tồn tại => get từ Redis")
+                words = json.loads(job_title_str)
+            else:
+                print("Chưa tồn tại => set vào Redis")
+                job_title_list = JobPost.objects.filter(is_verify=True,
+                                                        deadline__lte=datetime.datetime.now().date()) \
+                    .values_list("job_name", flat=True)
+                job_title_dict = {}
+                for name in job_title_list:
+                    job_title_dict[name] = {}
 
-    }
-    autocomplete = AutoComplete(words=words, synonyms=synonyms)
-    # max_cost: so tu duoc phep sai
-    # size: so luong ket qua tra ve
-    data = autocomplete.search(word=q, max_cost=3, size=5)
-    return var_res.response_data(data=data)
+                cache.set(job_title_key, json.dumps(job_title_dict), 86400)
+                words = job_title_dict
+
+            # max_cost: so tu duoc phep sai
+            # size: so luong ket qua tra ve
+            synonyms = {
+            }
+            autocomplete = AutoComplete(words=words, synonyms=synonyms)
+            data = autocomplete.search(word=q, max_cost=3, size=5)
+            return var_res.response_data(data=data)
+
+        return var_res.response_data(data=[])
+    except Exception as ex:
+        helper.print_log_error("job_suggest_title_search", ex)
+        return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PrivateJobPostViewSet(viewsets.ViewSet,
