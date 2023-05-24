@@ -139,22 +139,59 @@ def get_mobile_banner(request):
 
 @api_view(http_method_names=['post'])
 def send_notification_demo(request):
-    # data = request.data
-    #
-    # title = data.get("title", "TEST")
-    # content = data.get('content', "TEST CONTENT")
-    # user_list = data.get('userList', [])
-    # notification_type = data.get("type", "SYSTEM")
-    # body_content = data.get('bodyContent', {})
-    # image_link = data.get("imageLink", None)
-    #
-    # queue_notification.add_notification_to_user.delay(
-    #     title=title,
-    #     content=content,
-    #     type_name=notification_type,
-    #     image=image_link,
-    #     content_of_type=body_content,
-    #     user_id_list=user_list
-    # )
-    queue_job.send_email_job_post_for_job_seeker_task(1)
+    data = request.data
+
+    title = data.get("title", "TEST")
+    content = data.get('content', "TEST CONTENT")
+    user_list = data.get('userList', [])
+    notification_type = data.get("type", "SYSTEM")
+    body_content = data.get('bodyContent', {})
+    image_link = data.get("imageLink", None)
+
+    queue_notification.add_notification_to_user.delay(
+        title=title,
+        content=content,
+        type_name=notification_type,
+        image=image_link,
+        content_of_type=body_content,
+        user_id_list=user_list
+    )
+    # queue_job.send_email_job_post_for_job_seeker_task(1)
     return var_res.response_data()
+
+
+from fast_autocomplete import AutoComplete, demo
+
+
+@api_view(http_method_names=['get'])
+def fast_autocomplete_demo(request):
+    q = request.GET.get('q')
+    words = {'Nhân Viên Tư Vấn Tín Dụng': {},
+             'Data Protection and Information Security Partner': {},
+             'acura': {},
+             'alfa romeo 4c': {},
+             '4c': {},
+             'alfa romeo': {},
+             'alfa romeo 4c coupe': {},
+             '4c coupe': {},
+             'alfa romeo giulia': {},
+             'giulia': {},
+             'bmw 1 series': {},
+             '1 series': {},
+             'bmw': {},
+             'bmw 2 series': {},
+             '2 series': {},
+             '2007': {},
+             '2017': {},
+             '2018': {},
+             'los angeles': {},
+             'in': {}
+             }
+    synonyms = {
+
+    }
+    autocomplete = AutoComplete(words=words, synonyms=synonyms)
+    # max_cost: so tu duoc phep sai
+    # size: so luong ket qua tra ve
+    data = autocomplete.search(word=q, max_cost=3, size=5)
+    return var_res.response_data(data=data)

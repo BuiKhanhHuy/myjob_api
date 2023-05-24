@@ -1,3 +1,5 @@
+import datetime
+
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -65,6 +67,7 @@ class JobPostSerializer(serializers.ModelSerializer):
 
     isSaved = serializers.SerializerMethodField(method_name='check_saved', read_only=True)
     isApplied = serializers.SerializerMethodField(method_name='check_applied', read_only=True)
+    isExpired = serializers.SerializerMethodField(method_name='check_is_expired', read_only=True)
 
     def get_applied_number(self, job_post):
         return job_post.peoples_applied.count()
@@ -87,6 +90,12 @@ class JobPostSerializer(serializers.ModelSerializer):
             return job_post.jobpostactivity_set.filter(user=user).count() > 0
         return False
 
+    def check_is_expired(self, job_post):
+        deadline = job_post.deadline
+        if deadline < datetime.datetime.now().date():
+            return True
+        return False
+
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
 
@@ -106,7 +115,8 @@ class JobPostSerializer(serializers.ModelSerializer):
                   'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent', 'isVerify',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
                   'location', 'createAt', 'updateAt', 'appliedNumber',
-                  'isSaved', 'isApplied', 'companyDict', 'mobileCompanyDict', 'locationDict', 'views')
+                  'isSaved', 'isApplied', 'companyDict', 'mobileCompanyDict', 'locationDict', 'views',
+                  'isExpired')
 
     def create(self, validated_data):
         try:

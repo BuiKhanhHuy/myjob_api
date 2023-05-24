@@ -11,6 +11,7 @@ urlpatterns = [
     path('', include([
         path('create-fake-databases/', views.create_fake_data),
         path('send-noti-demo/', views.send_notification_demo),
+        path('fast-autocomplete-demo/', views.fast_autocomplete_demo),
     ])),
     path('app/', include([
         path('', include(app_router.urls)),
