@@ -65,7 +65,7 @@ def job_suggest_title_search(request):
             else:
                 print("Chưa tồn tại => set vào Redis")
                 job_title_list = JobPost.objects.filter(is_verify=True,
-                                                        deadline__lte=datetime.datetime.now().date()) \
+                                                        deadline__gte=datetime.datetime.now().date()) \
                     .values_list("job_name", flat=True)
                 job_title_dict = {}
                 for name in job_title_list:
