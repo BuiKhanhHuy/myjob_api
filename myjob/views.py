@@ -1068,5 +1068,4 @@ def send_notification_demo(request):
         user_id_list=user_list
     )
     # queue_job.send_email_job_post_for_job_seeker_task(1)
-    print("tam")
     return var_res.response_data()
