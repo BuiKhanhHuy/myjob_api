@@ -1,14 +1,14 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "echo building!"
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "gunicorn myjob_api.wsgi --log-file - && python manage.py migrate && python manage.py collectstatic --noinput && celery -A myjob_api.celery worker --loglevel=info && celery -A myjob_api.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler",
-    "healthcheckPath": "/",
+    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn myjob_api.wsgi  --log-file - && celery -A myjob_api.celery worker --loglevel=info && celery -A myjob_api.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler",
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
 }
+
+
