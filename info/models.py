@@ -1,7 +1,8 @@
 from configs import variable_system as var_sys
 from django.db import models
 from django.utils.text import slugify
-from django_extensions.db.fields import AutoSlugField
+# from django_extensions.db.fields import AutoSlugField
+from autoslug import AutoSlugField
 from authentication.models import User
 from common.models import (
     Career, City, District, Location,
@@ -39,7 +40,11 @@ class JobSeekerProfile(InfoBaseModel):
 
 class Resume(InfoBaseModel):
     title = models.CharField(max_length=200, null=True)
-    slug = AutoSlugField(populate_from='title', unique=True, slugify_function=slugify)
+    slug = AutoSlugField(populate_from='title',
+                         unique=True,
+                         unique_with=['id'],
+                         slugify=slugify)
+    # slug = AutoSlugField(populate_from='title', unique=True, slugify_function=slugify)
     description = models.TextField(null=True)
     salary_min = models.DecimalField(default=0, max_digits=12, decimal_places=0)
     salary_max = models.DecimalField(default=0, max_digits=12, decimal_places=0)
@@ -78,7 +83,7 @@ class EducationDetail(InfoBaseModel):
     training_place_name = models.CharField(max_length=255)
     start_date = models.DateField()
     completed_date = models.DateField(null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
 
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE, related_name="education_details")
@@ -92,7 +97,7 @@ class ExperienceDetail(InfoBaseModel):
     company_name = models.CharField(max_length=255)
     start_date = models.DateField()
     end_date = models.DateField()
-    description = models.CharField(max_length=255, null=True, blank=True)
+    description = models.CharField(max_length=500, null=True, blank=True)
 
     # ForeignKey
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE,
@@ -154,7 +159,11 @@ class CompanyFollowed(InfoBaseModel):
 
 class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
-    slug = AutoSlugField(populate_from='company_name', unique=True, slugify_function=slugify)
+    # slug = AutoSlugField(populate_from='company_name', unique=True,
+    #                      slugify_function=slugify, max_length=300)
+    slug = AutoSlugField(populate_from='company_name', unique=True,
+                         unique_with=['id'],
+                         slugify=slugify, max_length=300)
     company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_LOGO"])
     company_image_public_id = models.CharField(max_length=300, null=True)
     company_cover_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"])

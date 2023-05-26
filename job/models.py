@@ -1,10 +1,18 @@
 from configs import variable_system as var_sys
 from django.db import models
+# from django_extensions.db.fields import AutoSlugField
+from autoslug import AutoSlugField
 from django.utils.text import slugify
-from django_extensions.db.fields import AutoSlugField
 from authentication.models import User
 from common.models import City, District, Location, Career
 from info.models import Company, Resume
+
+
+def custom_slugify_function(value, model_instance):
+    slug = slugify(value)
+    # Kết hợp slug với id của đối tượng
+    slug_with_id = f"{slug}-{model_instance.id}"
+    return slug_with_id
 
 
 class JobPostBaseModel(models.Model):
@@ -17,7 +25,12 @@ class JobPostBaseModel(models.Model):
 
 class JobPost(JobPostBaseModel):
     job_name = models.CharField(max_length=255)
-    slug = AutoSlugField(populate_from='job_name', unique=True, slugify_function=slugify)
+    # slug = AutoSlugField(populate_from='job_name', unique=True,
+    #                      slugify_function=custom_slugify_function,
+    #                      max_length=300)
+    slug = AutoSlugField(populate_from='job_name', unique=True,
+                         unique_with=['id'],
+                         slugify=slugify, max_length=300)
     deadline = models.DateField()
     quantity = models.IntegerField()
     gender_required = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES,

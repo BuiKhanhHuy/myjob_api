@@ -1,9 +1,15 @@
 import random
 import datetime
+import unicodedata
 from configs import table_export
 from django.conf import settings
 from helpers import helper
 from django.core.mail import EmailMultiAlternatives
+
+
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
 
 
 def random_date():
