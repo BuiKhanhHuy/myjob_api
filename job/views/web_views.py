@@ -729,7 +729,11 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
             "title2": title2,
             "labels": labels,
             "data1": data1,
-            "data2": data2
+            "data2": data2,
+            "borderColor1": "rgb(53, 162, 235)",
+            "backgroundColor1": "rgba(53, 162, 235, 0.5)",
+            "borderColor2": "rgb(255, 99, 132)",
+            "backgroundColor2": "rgba(255, 99, 132, 0.5)"
         })
 
     # bieu do tuyen dung va ung vien
@@ -772,6 +776,8 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
             "labels": labels,
             "data1": data1,
             "data2": data2,
+            "backgroundColor1": "rgb(75, 192, 192)",
+            "backgroundColor2": "red"
         })
 
     # bieu do tuyen dung theo cap bac
@@ -788,7 +794,7 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
         end_date = pd.to_datetime(end_date_str)
 
         user = request.user
-        data = JobPost.objects.filter(company=user.company) \
+        queryset = JobPost.objects.filter(company=user.company) \
             .values(academicLevel=F('academic_level')) \
             .filter(
             Q(jobpostactivity__create_at__isnull=True) |
@@ -797,4 +803,29 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
             .annotate(countJobPostActivity=Count('jobpostactivity')) \
             .order_by('academic_level')
 
-        return var_res.response_data(data=data)
+        labels = []
+        data = []
+        for academic_level in var_sys.ACADEMIC_LEVEL:
+            stt_id = academic_level[0]
+            name = academic_level[1]
+
+            items = [x for x in queryset if x["academicLevel"] == stt_id]
+            if len(items) > 0:
+                data.append(items[0]['countJobPostActivity'])
+                labels.append(name)
+            else:
+                data.append(0)
+                labels.append(name)
+
+        return var_res.response_data(data={
+            "data": data,
+            "labels": labels,
+            "backgroundColor": [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+            ]
+        })

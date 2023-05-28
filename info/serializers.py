@@ -2,6 +2,8 @@ import datetime
 from datetime import date
 import cloudinary.uploader
 from django.conf import settings
+from django_otp.middleware import is_verified
+
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers
@@ -146,7 +148,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     def get_job_post_number(self, company):
         now = datetime.datetime.now().date()
-        return company.job_posts.filter(deadline__gte=now).count()
+        return company.job_posts.filter(deadline__gte=now, is_verify=True).count()
 
     def check_followed(self, company):
         request = self.context.get('request', None)

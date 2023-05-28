@@ -1039,6 +1039,9 @@ def get_web_banner(request):
 
 @api_view(http_method_names=['get'])
 def get_mobile_banner(request):
+    banner_type = request.GET.get("type", "HOME")
+    if banner_type not in [x[1] for x in var_sys.BANNER_TYPE]:
+        return var_res.response_data(status=status.HTTP_400_BAD_REQUEST)
     banner_queryset = Banner.objects.filter(is_active=True, platform="APP")
     serializer = BannerSerializer(banner_queryset, many=True, fields=[
         "id", "imageMobileUrl", "buttonText", "description",

@@ -22,7 +22,7 @@ class FeedbackAdmin(admin.ModelAdmin):
 
 class BannerAdmin(admin.ModelAdmin):
     list_display = ("id", "description",  "is_active",
-                    "is_show_button", "show_image_url", "show_mobile_image_url", "platform")
+                    "is_show_button", "show_image_url", "show_mobile_image_url", "type", "platform")
     list_display_links = ("id",)
     list_editable = ("is_show_button", "is_active")
     search_fields = ("description",)
