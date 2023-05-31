@@ -71,7 +71,8 @@ def job_suggest_title_search(request):
                 for name in job_title_list:
                     job_title_dict[name] = {}
 
-                cache.set(job_title_key, json.dumps(job_title_dict), 86400)
+                cache.set(job_title_key, json.dumps(job_title_dict),
+                          settings.REDIS_JOB_TITLE_EXPIRE_SECONDS)
                 words = job_title_dict
 
             # max_cost: so tu duoc phep sai
@@ -344,6 +345,30 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
 
+    @action(methods=["get"], detail=False,
+            url_path="chat", url_name="job-seeker-job-posts-activity-chat")
+    def job_seeker_job_posts_activity_chat(self, request):
+        user = request.user
+        queryset = user.jobpostactivity_set \
+            .order_by('-create_at', '-update_at') \
+            .annotate(userId=F('job_post__company__user_id'),
+                      fullName=F('job_post__company__user__full_name'),
+                      userEmail=F('job_post__company__user__email'),
+                      companyId=F('job_post__company_id'),
+                      companyName=F('job_post__company__company_name'),
+                      companySlug=F('job_post__company__slug'),
+                      companyImageUrl=F('job_post__company__company_image_url'),
+                      jobPostTitle=F('job_post__job_name')) \
+            .values('id', 'userId', 'fullName', 'userEmail',
+                    'companyId', "companyName", "companySlug", 'companyImageUrl',
+                    'jobPostTitle')
+        page = self.paginate_queryset(queryset)
+        res_data = page
+
+        if page is not None:
+            return self.get_paginated_response(res_data)
+        return var_res.Response(res_data)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -403,6 +428,26 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    @action(methods=["get"], detail=False,
+            url_path="chat", url_name="employer-job-posts-activity-chat")
+    def employer_job_posts_activity_chat(self, request):
+        user = request.user
+        queryset = self.filter_queryset(
+            self.get_queryset().filter(job_post__company=user.company)
+            .annotate(userId=F('user_id'),
+                      fullName=F('user__full_name'),
+                      avatarUrl=F('user__avatar_url'),
+                      jobPostTitle=F('job_post__job_name'))\
+            .values('id', 'userId', "fullName", 'user__email', "avatarUrl", 'jobPostTitle')
+            .order_by('-id', 'create_at')
+        )
+        page = self.paginate_queryset(queryset)
+        res_data = page
+
+        if page is not None:
+            return self.get_paginated_response(res_data)
+        return var_res.Response(res_data)
 
     @action(methods=["get"], detail=False,
             url_path="export", url_name="job-posts-activity-export")

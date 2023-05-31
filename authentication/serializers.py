@@ -214,15 +214,29 @@ class UserSerializer(serializers.ModelSerializer):
     roleName = serializers.CharField(source="role_name")
     jobSeekerProfileId = serializers.PrimaryKeyRelatedField(source='job_seeker_profile',
                                                             read_only=True)
-    jobSeekerProfilePhone = serializers.SerializerMethodField(method_name="get_phone_of_job_seeker", read_only=True)
+    jobSeekerProfile = serializers.SerializerMethodField(method_name="get_job_seeker_profile", read_only=True)
     companyId = serializers.PrimaryKeyRelatedField(source='company', read_only=True)
+    company = serializers.SerializerMethodField(method_name='get_company')
 
-    def get_phone_of_job_seeker(self, user):
+    def get_job_seeker_profile(self, user):
         if user.role_name == var_sys.JOB_SEEKER:
-            job_seeker = user.job_seeker_profile
-            return job_seeker.phone
+            job_seeker_profile = user.job_seeker_profile
+            return {
+                "id": job_seeker_profile.id,
+                "phone": job_seeker_profile.phone
+            }
         return None
 
+    def get_company(self, user):
+        if user.role_name == var_sys.EMPLOYER:
+            company = user.company
+            return {
+                "id": company.id,
+                "slug": company.slug,
+                "companyName": company.company_name,
+                "imageUrl": company.company_image_url
+            }
+        return None
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -240,8 +254,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "fullName", "email",
                   "isActive", "isVerifyEmail",
                   "avatarUrl", "roleName",
-                  "jobSeekerProfileId",
-                  "companyId", "jobSeekerProfilePhone")
+                  "jobSeekerProfileId", "jobSeekerProfile",
+                  "companyId", "company",)
 
 
 class AvatarSerializer(serializers.ModelSerializer):

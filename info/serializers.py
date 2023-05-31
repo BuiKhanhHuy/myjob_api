@@ -416,7 +416,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         return fields
 
     def get_view_number(self, resume):
-        return 0
+        return resume.resumesaved_set.count()
 
     def check_saved(self, resume):
         request = self.context.get('request', None)
