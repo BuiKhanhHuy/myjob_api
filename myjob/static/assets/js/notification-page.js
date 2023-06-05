@@ -64,31 +64,32 @@ const renderItemsPage = (data) => {
         // let createdAt = moment(`${item.time}`).fromNow()
         let createdAt = item.time;
 
-        const stt = item?.is_read === true ? `<span class="badge badge-sm bg-gradient-success">Read</span>` : `<span class="badge badge-sm bg-gradient-warning">Unread</span>`
+        const stt = item?.is_read === true ? `<span class="font-weight-bold text-success">Read</span>` : `<span class="font-weight-bold text-danger">Unread</span>`
+
 
         return `<tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
+                     <td class="align-middle">
+                        <div class="d-flex px-2 py-1 align-middle">
                         <div>
-                          <img src="${item?.image}" class="avatar avatar-sm me-3" alt="user1"  style="object-fit:contain;">
+                          <img src="${item?.image}" class="avatar avatar-lg me-3" alt="user1"  style="object-fit:contain;">
                         </div>
                         <div class="d-flex flex-column justify-content-center">
                           <h6 class="mb-0 text-sm">${item?.title || "---"}</h6>
-                          <p class="text-xs text-secondary mb-0">${item?.content || "---"}</p>
+                          <p><small>${item?.content || "---"}</small></p>
                         </div>
                       </div>
                     </td>
-                    <td class="align-middle text-center text-sm">
-                     ${stt}
+                     <td class="align-middle text-center">
+                            ${stt}
                     </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">${moment(new Date(item?.time?.seconds * 1000)).fromNow()}</span>
+                     <td class="align-middle text-right">
+                           <span class="text-gray-400 text-xs font-weight-bold">${moment(new Date(item?.time?.seconds * 1000)).fromNow()}</span>
                     </td>
                     <td class="align-middle text-right">
-                     <a id="${'notification-delete-page-' + item?.key}" class="btn btn-link text-danger text-gradient px-3 mb-0" href="javascript:;" ><i class="far fa-trash-alt me-2"></i>Delete</a>
-                      <a id="${'notification-detail-page-' + item?.key}" class="btn btn-link text-info text-gradient px-3 mb-0" href="javascript:;" "><i class="far fa-eye me-2"></i>Detail</a>
+                       <button id="${'notification-detail-page-' + item?.key}"  class="btn btn-info btn-sm" type="button">Detail</button>
+                       <button id="${'notification-delete-page-' + item?.key}"  class="btn btn-danger btn-sm" type="button">Delete</button>
                     </td> 
-                  </tr>`
+                </tr>`
 
 
     }

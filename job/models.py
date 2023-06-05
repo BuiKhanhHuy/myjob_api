@@ -1,6 +1,6 @@
 from configs import variable_system as var_sys
 from django.db import models
-# from django_extensions.db.fields import AutoSlugField
+from ckeditor.fields import RichTextField
 from autoslug import AutoSlugField
 from django.utils.text import slugify
 from authentication.models import User
@@ -35,9 +35,9 @@ class JobPost(JobPostBaseModel):
     quantity = models.IntegerField()
     gender_required = models.CharField(max_length=1, choices=var_sys.GENDER_CHOICES,
                                        blank=True, null=True)
-    job_description = models.TextField()
-    job_requirement = models.TextField(null=True, blank=True)
-    benefits_enjoyed = models.TextField(null=True, blank=True)
+    job_description = RichTextField()
+    job_requirement = RichTextField(null=True, blank=True)
+    benefits_enjoyed = RichTextField(null=True, blank=True)
 
     position = models.SmallIntegerField(choices=var_sys.POSITION_CHOICES)
     type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES)

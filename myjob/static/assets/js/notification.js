@@ -21,7 +21,13 @@ onSnapshot(allQuery, (querySnapshot) => {
     });
     totalNotification = count;
 
-    document.getElementById("total-notification").innerHTML = totalNotification;
+    let bulletElement = document.getElementById("bullet")
+    if (totalNotification > 0) {
+        bulletElement.classList.add("unread");
+    } else {
+        bulletElement.classList.remove("unread");
+    }
+    // document.getElementById("total-notification").innerHTML = totalNotification;
 });
 
 console.log("LOAD NOTIFICATIONS OF POPUP")
@@ -70,30 +76,26 @@ document.getElementById("load-more").addEventListener("click", async () => {
 
 const renderItems = (data) => {
     let strItem = (item) => {
-
-        return `<li class="mb-2" id="${'notification-detail-' + item?.key}">
-                    <a class="dropdown-item border-radius-md" href="javascript:;" >
-                        <div class="d-flex py-1">
-                            <div class="my-auto me-1" style="width: 100px;">
-                                <img alt="img" src="${item?.image}"  
-                                     class="avatar avatar-lg img-fluid" style="object-fit:contain;"/>
-                            </div>
-                            <div class="d-flex flex-column justify-content-center" >
-                                <h6 class="text-sm font-weight-normal mb-1" >
-                                    <span class="font-weight-bold">${item?.title || '---'}</span>
-                                </h6>
-                                <p class="text-sm font-weight-normal mb-1 " style="white-space: normal;" >
-                                    ${item?.content || '---'}
-                                </p>
-                                <p class="text-xs text-secondary mb-0">
-                                    <i class="fa fa-clock me-1"></i>
-                                    ${moment(new Date(item?.time?.seconds * 1000)).fromNow()}
-                                </p>
-                               
-                            </div>
-                        </div>  
-                    </a>
-                </li>`
+        return `<a href="javascript:;" class="list-group-item list-group-item-action border-bottom" id="${'notification-detail-' + item?.key}">
+                <div class="row align-items-center">
+                  <div class="col-auto">
+                    <!-- Avatar -->
+                    <img alt="Logo" src="${item?.image}"
+                      class="avatar-md rounded img-fluid"  style="object-fit:contain;">
+                  </div>
+                  <div class="col ps-0 ms-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6 class="h6 mb-0 text-small" style="font-size: 15px;display: -webkit-box;-webkit-box-orient: vertical;-webkit-line-clamp: 2;overflow: hidden;">${item?.title || '---'}</h6>
+                      </div>
+                     
+                    </div>
+                    <p class="font-small mt-1 mb-0" style="display: -webkit-box;-webkit-box-orient: vertical;-webkit-line-clamp: 2;overflow: hidden;">${item?.content || '---'}
+                    </p>
+                   <small class="text-danger"> ${moment(new Date(item?.time?.seconds * 1000)).fromNow()}</small>
+                  </div>
+                </div>
+              </a>`
 
 
     }

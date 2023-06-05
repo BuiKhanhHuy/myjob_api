@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from django.utils.text import slugify
-# from django_extensions.db.fields import AutoSlugField
+from ckeditor.fields import RichTextField
 from autoslug import AutoSlugField
 from authentication.models import User
 from common.models import (
@@ -177,7 +177,7 @@ class Company(InfoBaseModel):
     tax_code = models.CharField(max_length=30, unique=True)
     since = models.DateField(null=True)
     field_operation = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
+    description = RichTextField(blank=True, null=True)
     employee_size = models.SmallIntegerField(choices=var_sys.EMPLOYEE_SIZE_CHOICES, null=True)
 
     # OneToOneField

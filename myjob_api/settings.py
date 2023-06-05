@@ -38,12 +38,12 @@ APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://bkhuy-myjob-api.up.railway.app'
+    'https://bkhuy-myjob-api.up.railway.app',
 ]
 
 # Application definition
 INSTALLED_APPS = [
-    'admin_argon.apps.AdminArgonConfig',
+    'admin_volt.apps.AdminVoltConfig',
     'django.contrib.admin',
     'django_light',
     'django.contrib.auth',
@@ -56,6 +56,7 @@ INSTALLED_APPS = [
 
     # third party packages
     'django_admin_listfilter_dropdown',
+    'ckeditor',
 
     'django_otp',
     'rest_framework',
@@ -106,12 +107,35 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'myjob.context_processors.get_current_user'
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'myjob_api.wsgi.application'
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar_Basic': [
+            ['Source', '-', 'Bold', 'Italic']
+        ],
+        'toolbar_YourCustomToolbarConfig': [
+            {'name': 'basicstyles',
+             'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript']},
+            {'name': 'paragraph',
+             'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-',
+                       'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
+            {'name': 'insert',
+             'items': ['Table', 'HorizontalRule']},
+            '/',  # put this to force next toolbar on new line
+        ],
+        'toolbar': 'YourCustomToolbarConfig',  # put selected toolbar config here
+        'height': 280,
+        'width': '100%',
+        'tabSpaces': 4,
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -206,6 +230,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "myjob", "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+CKEDITOR_UPLOAD_PATH = "uploads/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
