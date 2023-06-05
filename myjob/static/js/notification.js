@@ -76,7 +76,7 @@ const renderItems = (data) => {
                         <div class="d-flex py-1">
                             <div class="my-auto me-1" style="width: 100px;">
                                 <img alt="img" src="${item?.image}"  
-                                     class="avatar avatar-lg img-fluid"/>
+                                     class="avatar avatar-lg img-fluid" style="object-fit:contain;"/>
                             </div>
                             <div class="d-flex flex-column justify-content-center" >
                                 <h6 class="text-sm font-weight-normal mb-1" >
