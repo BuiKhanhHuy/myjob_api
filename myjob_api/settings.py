@@ -310,6 +310,9 @@ CLOUDINARY_DIRECTORY = {
     "logo": f"my-job/logo/{datetime.now().year}/{datetime.now().month}/",
     "coverImage": f"my-job/cover-image/{datetime.now().year}/{datetime.now().month}/",
     "company_image": f"my-job/company-image/{datetime.now().year}/{datetime.now().month}/",
+    "careerImage": f"my-job/career-images/",
+    "webBanner": f"my-job/banners/web-banners/",
+    "mobileBanner": f"my-job/banners/mobile-banners/"
 }
 
 DOMAIN_CLIENT = {

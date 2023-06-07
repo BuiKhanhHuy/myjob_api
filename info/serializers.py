@@ -2,8 +2,6 @@ import datetime
 from datetime import date
 import cloudinary.uploader
 from django.conf import settings
-from django_otp.middleware import is_verified
-
 from configs import variable_system as var_sys
 from helpers import helper
 from rest_framework import serializers

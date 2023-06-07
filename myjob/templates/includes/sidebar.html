@@ -1,7 +1,7 @@
 {% load i18n static admin_volt %}
 
 <nav id="sidebarMenu" class="sidebar d-lg-block bg-gray-800 text-white collapse" data-simplebar>
-    <div class="sidebar-inner px-4 pt-3">
+    <div class="sidebar-inner px-2 pt-3">
         <ul class="nav flex-column pt-3 pt-md-0">
             <li class="nav-item {% if 'dashboard' in segment %}active{% endif %}">
                 <a href="{% url 'admin:index' %}" class="nav-link">
@@ -36,7 +36,7 @@
                             clip-rule="evenodd"></path>
                     </svg>
                   </span>
-                  <span class="sidebar-text">{{ app.label|slice:10 }}{% if app.label|length > 10 %}..{% endif %}</span>
+                  <span class="sidebar-text">{{ app.label|slice:16 }}{% if app.label|length > 16 %}..{% endif %}</span>
                 </span>
                 <span class="link-arrow">
                   <svg class="icon icon-sm" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">

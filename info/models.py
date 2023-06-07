@@ -159,8 +159,6 @@ class CompanyFollowed(InfoBaseModel):
 
 class Company(InfoBaseModel):
     company_name = models.CharField(max_length=255, unique=True)
-    # slug = AutoSlugField(populate_from='company_name', unique=True,
-    #                      slugify_function=slugify, max_length=300)
     slug = AutoSlugField(populate_from='company_name', unique=True,
                          unique_with=['id'],
                          slugify=slugify, max_length=300)

@@ -14,6 +14,7 @@ $(function () {
         fetch('/admin/api/application-chart/', {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': Cookies.get('csrftoken'),
             },
             body: JSON.stringify({
                 "startDate": start,

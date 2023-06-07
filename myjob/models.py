@@ -22,6 +22,9 @@ class Feedback(MyJobBaseModel):
     class Meta:
         db_table = "myjob_myjob_feedback"
 
+    def __str__(self):
+        return self.content
+
 
 class Banner(MyJobBaseModel):
     image_url = models.URLField(null=True, blank=True)
@@ -40,3 +43,6 @@ class Banner(MyJobBaseModel):
 
     class Meta:
         db_table = "myjob_myjob_banner"
+
+    def __str__(self):
+        return str(self.id)

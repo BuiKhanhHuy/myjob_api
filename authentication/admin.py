@@ -1,10 +1,43 @@
+import cloudinary.uploader
+from django.conf import settings
 from django.contrib import admin
 from django.utils.html import mark_safe
+from django import forms
+from helpers import helper
 from .models import (
     User,
     ForgotPasswordToken
 )
-from django_admin_listfilter_dropdown.filters import (DropdownFilter )
+from django_admin_listfilter_dropdown.filters import (DropdownFilter)
+
+
+class UserForm(forms.ModelForm):
+    avatar_file = forms.FileField(required=False)
+    password = forms.CharField(widget=forms.PasswordInput)
+    password_edit = forms.CharField(widget=forms.PasswordInput, required=False)
+
+    class Meta:
+        model = User
+        fields = '__all__'
+        widgets = {
+            'avatar_file': forms.FileInput(attrs={'class': "form-control"}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_staff': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'email_notification_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'sms_notification_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'has_company': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_verify_email': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['avatar_file'].required = False
+        instance = kwargs.get('instance')
+        if instance and instance.pk:
+            self.fields['password'].widget = forms.HiddenInput()
+        else:
+            self.fields['password_edit'].widget = forms.HiddenInput()
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -19,8 +52,16 @@ class UserAdmin(admin.ModelAdmin):
         ("is_active", DropdownFilter),
     ]
     ordering = ("id", "email", "full_name", "is_verify_email", "is_active", "role_name")
-    readonly_fields = ("show_avatar", "avatar_public_id", "avatar_url", "password")
+    readonly_fields = ("show_avatar",)
     list_per_page = 25
+
+    fields = (
+        'show_avatar', 'avatar_file', 'full_name', 'email', 'role_name', 'password', 'password_edit',
+        'user_permissions', 'groups',
+        'is_superuser', 'is_staff', 'is_active', 'is_verify_email', 'has_company',
+        'email_notification_active', 'sms_notification_active',
+        'last_login',
+    )
 
     def show_avatar(self, user):
         if user:
@@ -31,6 +72,34 @@ class UserAdmin(admin.ModelAdmin):
             )
 
     show_avatar.short_description = "Avatar"
+
+    form = UserForm
+
+    def save_model(self, request, user, form, change):
+        if not change:
+            user.set_password(user.password)
+        else:
+            password_edit = form.data.get("password_edit", None)
+            if password_edit:
+                user.set_password(password_edit)
+
+        super().save_model(request, user, form, change)
+        if 'avatar_file' in request.FILES:
+            file = request.FILES['avatar_file']
+            try:
+                avatar_upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=settings.CLOUDINARY_DIRECTORY["avatar"],
+                    public_id=user.id
+                )
+                avatar_public_id = avatar_upload_result.get('public_id')
+            except Exception as ex:
+                helper.print_log_error("user_save_model", ex)
+            else:
+                avatar_url = avatar_upload_result.get('secure_url')
+                user.avatar_url = avatar_url
+                user.avatar_public_id = avatar_public_id
+                user.save()
 
 
 class ForgotPasswordTokenAdmin(admin.ModelAdmin):

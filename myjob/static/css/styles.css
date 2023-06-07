@@ -7,7 +7,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #441da0;
+    background-color: #374151;
     border-radius: 5px;
 }
 
@@ -16,4 +16,25 @@ h3,
 .h3 {
   font-size: 1rem !important;
   line-height: 1.375;
+}
+
+.vLargeTextField, .vXMLLargeTextField {
+    width: 100% !important;
+}
+
+.vTextField, .vUUIDField {
+    width: 100% !important;
+}
+
+.vIntegerField {
+    width: 100% !important;
+}
+
+.vBigIntegerField {
+    width: 100% !important;
+}
+
+form .aligned ul {
+     margin-left: 0 !important;
+    padding-left: 10px;
 }

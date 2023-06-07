@@ -72,6 +72,13 @@ urlpatterns = [
 
             # Extra
             path('pages/upgrade-to-pro/', admin_views.upgrade_to_pro, name="upgrade_to_pro"),
+
+            path('api/', include([
+                path('user-chart/', admin_views.user_chart),
+                path('job-post-chart/', admin_views.job_post_chart),
+                path('career-chart/', admin_views.career_chart),
+                path('application-chart/', admin_views.application_chart),
+            ]))
         ]
     )),
     path('admin/', admin.site.urls),

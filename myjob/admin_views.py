@@ -19,7 +19,7 @@ from job.models import (
 
 
 def index(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return redirect('/admin/login/?next=/admin/')
 
     now = timezone.now()
@@ -68,7 +68,7 @@ def index(request):
 
 
 def myjob_notifications(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return redirect('/admin/login/?next=/admin/notifications/')
     return render(request, 'pages/tables/bootstrap-tables.html')
 
@@ -127,12 +127,11 @@ def upgrade_to_pro(request):
     return HttpResponseNotFound()
 
 
-@csrf_exempt
 def user_chart(request):
     # x <= 31 => by day
     # 31 < x <= 366 => by month
     # 366 <= x => by year
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -243,17 +242,16 @@ def user_chart(request):
         "data2": data2,
         "title1": "Job seeker",
         "title2": "Employer",
-        "color1": "#2196f3",
-        "color2": "#dd2c00"
+        "color1": "#F8BD7A",
+        "color2": "#000000"
     })
 
 
-@csrf_exempt
 def job_post_chart(request):
     # x <= 31 => by day
     # 31 < x <= 366 => by month
     # 366 <= x => by year
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -364,12 +362,11 @@ def job_post_chart(request):
         "data2": data2,
         "title1": "Đã duyệt",
         "title2": "Chưa duyệt",
-        "color1": "#64dd17",
-        "color2": "#dd2c00"
+        "color1": "#F8BD7A",
+        "color2": "#000000"
     })
 
 
-@csrf_exempt
 def career_chart(request):
     data = json.loads(request.body)
 
@@ -390,14 +387,13 @@ def career_chart(request):
 
     return JsonResponse({
         "labels": [x["career__name"] for x in queryset],
-        "backgroundColors": ["#00c853", "#1de9b6", "#00e5ff", "#cddc39", "#ffb74d"],
+        "backgroundColors": ["#32316A", "#000000", "#4a148c", "#2CA58D", "#ffb74d"],
         "data": [x["total"] for x in queryset],
     })
 
 
-@csrf_exempt
 def application_chart(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -432,5 +428,5 @@ def application_chart(request):
     return JsonResponse({
         "labels": labels,
         "data": data,
-        "backgroundColors": ["#fb8c00", "#eeff41", "#00e5ff", "#1de9b6", "#64dd17", "#ff3d00"],
+        "backgroundColors": ["#000000", "#32316A", "#4a148c", "#ffb74d", "#2CA58D", "#ff3d00"],
     })

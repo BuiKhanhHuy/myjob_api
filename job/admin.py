@@ -1,10 +1,22 @@
 from django.contrib import admin
+from django import forms
 from .models import (
     JobPost,
     SavedJobPost,
     JobPostActivity
 )
 from django_admin_listfilter_dropdown.filters import (RelatedDropdownFilter, DropdownFilter, ChoiceDropdownFilter)
+
+
+class JobPostForm(forms.ModelForm):
+    class Meta:
+        model = JobPost
+        fields = '__all__'
+        widgets = {
+            'is_hot': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_urgent': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_verify': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+        }
 
 
 class JobPostAdmin(admin.ModelAdmin):
@@ -25,6 +37,18 @@ class JobPostAdmin(admin.ModelAdmin):
     ]
     ordering = ("id", 'job_name', "is_hot", "is_urgent", "is_verify", "views", "shares")
     list_per_page = 25
+
+    fields = ("job_name", "deadline", "quantity",
+              "position", "type_of_workplace",
+              "experience", "academic_level", "job_type",
+              "salary_min", "salary_max",
+              "contact_person_name", "contact_person_phone", "contact_person_email",
+              "views", "shares", "career",
+              "location", "user", "company",
+              "gender_required", "job_description", "job_requirement", "benefits_enjoyed",
+              "is_hot", "is_urgent", "is_verify")
+
+    form = JobPostForm
 
 
 class SavedJobPostAdmin(admin.ModelAdmin):
