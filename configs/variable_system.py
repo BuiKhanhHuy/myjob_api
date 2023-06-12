@@ -169,3 +169,8 @@ DESCRIPTION_LOCATION = (
     (3, 'BOTTOM_LEFT'),
     (4, 'BOTTOM_RIGHT')
 )
+
+BANNER_TYPE = (
+    (1, 'HOME'),
+    (2, 'MAIN_JOB_RIGHT'),
+)

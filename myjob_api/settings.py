@@ -34,16 +34,13 @@ SECRET_KEY = 'django-insecure-m)n0iq(0d55p5$xc7t)wmn5$9-dv8zw1a3k9nwnf#v86&mu=gt
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://bkhuy-myjob-api.up.railway.app'
-]
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
 INSTALLED_APPS = [
-    'admin_argon.apps.AdminArgonConfig',
+    'admin_volt.apps.AdminVoltConfig',
     'django.contrib.admin',
     'django_light',
     'django.contrib.auth',
@@ -56,6 +53,7 @@ INSTALLED_APPS = [
 
     # third party packages
     'django_admin_listfilter_dropdown',
+    'ckeditor',
 
     'django_otp',
     'rest_framework',
@@ -88,6 +86,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'myjob_api.urls'
@@ -106,12 +105,35 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'myjob.context_processors.get_current_user'
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'myjob_api.wsgi.application'
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar_Basic': [
+            ['Source', '-', 'Bold', 'Italic']
+        ],
+        'toolbar_YourCustomToolbarConfig': [
+            {'name': 'basicstyles',
+             'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript']},
+            {'name': 'paragraph',
+             'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-',
+                       'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']},
+            {'name': 'insert',
+             'items': ['Table', 'HorizontalRule']},
+            '/',  # put this to force next toolbar on new line
+        ],
+        'toolbar': 'YourCustomToolbarConfig',  # put selected toolbar config here
+        'height': 280,
+        'width': '100%',
+        'tabSpaces': 4,
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -202,10 +224,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = '/static/'
-
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "myjob", "static")]
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+CKEDITOR_UPLOAD_PATH = "uploads/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
@@ -277,9 +299,9 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Set the Cloudinary configuration
 cloudinary.config(
-    cloud_name='dtnpj540t',
-    api_key='371357798369383',
-    api_secret='9zy7ehlUetIxxl7ibee4y3tmdL4'
+    cloud_name=config('CLOUDINARY_CLOUD_NAME'),
+    api_key=config('CLOUDINARY_API_KEY'),
+    api_secret=config('CLOUDINARY_API_SECRET'),
 )
 
 CLOUDINARY_DIRECTORY = {
@@ -288,11 +310,14 @@ CLOUDINARY_DIRECTORY = {
     "logo": f"my-job/logo/{datetime.now().year}/{datetime.now().month}/",
     "coverImage": f"my-job/cover-image/{datetime.now().year}/{datetime.now().month}/",
     "company_image": f"my-job/company-image/{datetime.now().year}/{datetime.now().month}/",
+    "careerImage": f"my-job/career-images/",
+    "webBanner": f"my-job/banners/web-banners/",
+    "mobileBanner": f"my-job/banners/mobile-banners/"
 }
 
 DOMAIN_CLIENT = {
     "local": "http://localhost:3000/",
-    "production": "https://myjobb.netlify.app/",
+    "production": config('WEB_CLIENT_URL'),
 }
 
 REDIRECT_LOGIN_CLIENT = {
@@ -306,10 +331,9 @@ MYJOB_AUTH = {
     "TIME_REQUIRED_FORGOT_PASSWORD": 120
 }
 
+REDIS_JOB_TITLE_EXPIRE_SECONDS = 14400
+
 # TWILIO
-# TWILIO_ACCOUNT_SID = "ACd3da0224a922434d28fb3f268d37c2ab"
-# TWILIO_AUTH_TOKEN = "b1878132d4cbeaf99605c5d98ce7598a"
-# TWILIO_PHONE = "+15856393430"
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE = config('TWILIO_PHONE')
@@ -323,6 +347,6 @@ firebase_admin.initialize_app(cred, {
 
 COMPANY_NAME = "MyJob"
 
-JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\data.json')
+JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\\')
 
 APP_ENVIRONMENT = config('APP_ENV')

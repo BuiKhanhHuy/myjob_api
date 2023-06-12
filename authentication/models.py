@@ -47,8 +47,8 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser, AuthBaseModel):
-    groups = None
-    user_permissions = None
+    # groups = None
+    # user_permissions = None
 
     username = None
     first_name = None

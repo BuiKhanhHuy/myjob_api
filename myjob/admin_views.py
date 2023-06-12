@@ -1,13 +1,12 @@
 import json
 import pandas as pd
-import pytz
 from django.views.decorators.csrf import csrf_exempt
 from configs import variable_system as var_sys
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import timezone
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Q
 from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay
 from datetime import timedelta
 from authentication.models import (
@@ -20,7 +19,7 @@ from job.models import (
 
 
 def index(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return redirect('/admin/login/?next=/admin/')
 
     now = timezone.now()
@@ -46,59 +45,93 @@ def index(request):
     total_job_post_activity = job_post_activity_queryset.count()
     last_month_total_job_post_activity = job_post_activity_queryset.filter(create_at__lte=last_month).count()
 
-    context = {'user': request.user,
-               'new_candidate': {
-                   'total': total_job_seeker,
-                   'current_month_total': total_job_seeker - last_month_total_job_seeker
-               },
-               'new_employer': {
-                   'total': total_employer,
-                   'current_month_total': total_employer - last_month_total_employer
-               },
-               'job_post': {
-                   'total': total_job_post,
-                   'current_month_total': total_job_post - last_month_total_job_post
-               },
-               'job_post_activity': {
-                   'total': total_job_post_activity,
-                   'current_month_total': total_job_post_activity - last_month_total_job_post_activity
-               }
-               }
-    return render(request, 'pages/dashboard.html', context)
+    context = {
+        'user': request.user,
+        'new_candidate': {
+            'total': total_job_seeker,
+            'current_month_total': total_job_seeker - last_month_total_job_seeker
+        },
+        'new_employer': {
+            'total': total_employer,
+            'current_month_total': total_employer - last_month_total_employer
+        },
+        'job_post': {
+            'total': total_job_post,
+            'current_month_total': total_job_post - last_month_total_job_post
+        },
+        'job_post_activity': {
+            'total': total_job_post_activity,
+            'current_month_total': total_job_post_activity - last_month_total_job_post_activity
+        }
+    }
+    return render(request, 'pages/dashboard/dashboard.html', context)
+
+
+def myjob_notifications(request):
+    if request.user.is_anonymous or not request.user.is_staff:
+        return redirect('/admin/login/?next=/admin/notifications/')
+    return render(request, 'pages/tables/bootstrap-tables.html')
+
+
+# Dashboard
+def dashboard(request):
+    return HttpResponseNotFound()
+
+
+# Pages
+def transaction(request):
+    return HttpResponseNotFound()
+
+
+def settings(request):
+    return HttpResponseNotFound()
+
+
+# Tables
+def bs_tables(request):
+    return HttpResponseNotFound()
+
+
+# Components
+def buttons(request):
+    return HttpResponseNotFound()
 
 
 def notifications(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
-        return redirect('/admin/login/?next=/admin/notifications/')
-    return render(request, 'pages/tables.html')
-
-
-def billing(request):
     return HttpResponseNotFound()
 
 
-def profile(request):
+def forms(request):
     return HttpResponseNotFound()
 
 
-def tables(request):
+def modals(request):
     return HttpResponseNotFound()
 
 
-def rtl(request):
+def typography(request):
     return HttpResponseNotFound()
 
 
-def vr(request):
+# Authentication
+def register_view(request):
     return HttpResponseNotFound()
 
 
-@csrf_exempt
+def lock(request):
+    return HttpResponseNotFound()
+
+
+# Extra
+def upgrade_to_pro(request):
+    return HttpResponseNotFound()
+
+
 def user_chart(request):
     # x <= 31 => by day
     # 31 < x <= 366 => by month
     # 366 <= x => by year
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -209,17 +242,16 @@ def user_chart(request):
         "data2": data2,
         "title1": "Job seeker",
         "title2": "Employer",
-        "color1": "#2196f3",
-        "color2": "#dd2c00"
+        "color1": "#F8BD7A",
+        "color2": "#000000"
     })
 
 
-@csrf_exempt
 def job_post_chart(request):
     # x <= 31 => by day
     # 31 < x <= 366 => by month
     # 366 <= x => by year
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -330,12 +362,11 @@ def job_post_chart(request):
         "data2": data2,
         "title1": "Đã duyệt",
         "title2": "Chưa duyệt",
-        "color1": "#64dd17",
-        "color2": "#dd2c00"
+        "color1": "#F8BD7A",
+        "color2": "#000000"
     })
 
 
-@csrf_exempt
 def career_chart(request):
     data = json.loads(request.body)
 
@@ -352,18 +383,17 @@ def career_chart(request):
     queryset = JobPost.objects.filter(
         Q(jobpostactivity__create_at__isnull=True) | Q(create_at__date__range=[start_date, end_date])).values(
         'career').annotate(
-        total=Count('id')).values('career__name', 'total',).order_by('-total')[:5]
+        total=Count('id')).values('career__name', 'total', ).order_by('-total')[:5]
 
     return JsonResponse({
-        "labels":  [x["career__name"] for x in queryset],
-        "backgroundColors": ["#00c853", "#1de9b6", "#00e5ff", "#cddc39", "#ffb74d"],
+        "labels": [x["career__name"] for x in queryset],
+        "backgroundColors": ["#32316A", "#000000", "#4a148c", "#2CA58D", "#ffb74d"],
         "data": [x["total"] for x in queryset],
     })
 
 
-@csrf_exempt
 def application_chart(request):
-    if request.user.is_anonymous or not request.user.is_superuser:
+    if request.user.is_anonymous or not request.user.is_staff:
         return HttpResponseForbidden()
     data = json.loads(request.body)
 
@@ -398,5 +428,5 @@ def application_chart(request):
     return JsonResponse({
         "labels": labels,
         "data": data,
-        "backgroundColors": ["#fb8c00", "#eeff41", "#00e5ff", "#1de9b6", "#64dd17", "#ff3d00"],
+        "backgroundColors": ["#000000", "#32316A", "#4a148c", "#ffb74d", "#2CA58D", "#ff3d00"],
     })

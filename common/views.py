@@ -18,33 +18,36 @@ from .serializers import (
 
 @api_view(http_method_names=["POST"])
 def create_database(request):
-    careers = ['Chứng khoán - Vàng', 'Tài chính - Tiền tệ', 'Bảo hiểm/ Tư vấn bảo hiểm', 'Đầu tư', 'Bất động sản',
-               'Kế toán - Kiểm toán', 'Ngân hàng/ Tài Chính', 'Xây dựng', 'Kiến trúc - Thiết kế nội thất',
-               'Khách sạn - Du lịch', 'Du lịch', 'Khách sạn - Nhà hàng', 'Sản xuất', 'Công nghệ cao', 'Công nghiệp',
-               'Dệt may - Da giày', 'In ấn - Xuất bản', 'Lao động phổ thông', 'Nông - Lâm - Ngư nghiệp',
-               'Ô tô - Xe máy', 'Thủ công mỹ nghệ', 'Vật tư/Thiết bị/Mua hàng', 'Làm thêm', 'Làm bán thời gian',
-               'Nhân viên trông quán internet', 'Promotion Girl/ Boy (PG-PB)', 'Sinh viên làm thêm', 'Thực tập',
-               'Kinh doanh - Thương mại', 'Bán hàng', 'Nhân viên kinh doanh', 'Quản trị kinh doanh', 'Xuất - Nhập khẩu',
-               'Công nghệ thông tin', 'Games', 'IT phần cứng/mạng', 'IT phần mềm', 'Thiết kế đồ họa - Web',
-               'Thương mại điện tử', 'Truyền thông - PR', 'Biên tập/ Báo chí/ Truyền hình', 'Marketing - PR',
-               'Tiếp thị - Quảng cáo', 'Tổ chức sự kiện - Quà tặng', 'Viễn thông', 'Bưu chính', 'Điện tử viễn thông',
-               'Hàng tiêu dùng', 'Hàng gia dụng', 'Mỹ phẩm - Trang sức', 'Thời trang', 'Thực phẩm - Đồ uống',
-               'Dịch vụ - Hỗ trợ', 'Bảo vệ/ An ninh/ Vệ sỹ', 'Phiên dịch/ Ngoại ngữ', 'Dịch vụ', 'Giáo dục - Đào tạo',
-               'Hàng hải', 'Hàng không', 'Người giúp việc/ Phục vụ/ Tạp vụ', 'Pháp luật/ Pháp lý',
-               'Tư vấn/ Chăm sóc khách hàng', 'Vận tải - Lái xe/ Tài xế', 'Y tế - Dược', 'Kỹ thuật - Công nghệ',
-               'Cơ khí - Chế tạo', 'Dầu khí - Hóa chất', 'Điện - Điện tử - Điện lạnh', 'Hóa học - Sinh học', 'Kỹ thuật',
-               'Kỹ thuật ứng dụng', 'Hành chính - Nhân sự', 'Hành chính - Văn phòng', 'Nhân sự', 'Thư ký - Trợ lý',
-               'Ngành nghề khác', 'Hoạch định - Dự án', 'Nghệ thuật/ Điện ảnh', 'Thiết kế - Mỹ thuật',
-               'Quan hệ đối ngoại', 'Xuất khẩu lao động', 'Startup', 'Freelance', 'Tính chất công việc',
-               'QA-QC/ Thẩm định/ Giám định', 'Môi trường', 'Phi chính phủ/ Phi lợi nhuận', 'Lương cao',
-               'Việc làm cấp cao', 'Việc myjob_common_careerlàm Tết', 'Công chức / Viên chức', 'Phát triển thị trường',
-               'Giao nhận/ Vận chuyển/ Kho bãi', 'Làm đẹp/ Thể lực/ Spa', 'Thể dục/ Thể thao', 'Vận tải',
-               'Nghệ thuật/ Giải trí']
-    if not Career.objects.exists():
-        for career in careers:
-            Career.objects.create(name=career)
+    data = {}
+    nghe = [{'id': 1, 'name': 'Hành chính - Thư ký'}, {'id': 2, 'name': 'An ninh - Bảo vệ'},
+            {'id': 3, 'name': 'Thiết kế - Sáng tạo nghệ thuật'}, {'id': 4, 'name': 'Kiến trúc - Thiết kế nội thất'},
+            {'id': 5, 'name': 'Khách sạn - Nhà hàng - Du lịch'},
+            {'id': 6, 'name': 'Bán buôn - Bán lẻ - Quản lý cửa hàng'},
+            {'id': 7, 'name': 'IT Phần cứng - Mạng - Viễn Thông'}, {'id': 8, 'name': 'IT Phần mềm'},
+            {'id': 9, 'name': 'Sản xuất - Lắp ráp - Chế biến'},
+            {'id': 10, 'name': 'Vận hành máy - Bảo trì - Bảo dưỡng thiết bị'},
+            {'id': 11, 'name': 'Nông - Lâm - Ngư nghiệp'}, {'id': 12, 'name': 'Marketing'},
+            {'id': 13, 'name': 'Kinh doanh'}, {'id': 14, 'name': 'Thu mua - Kho Vận - Chuỗi cung ứng'},
+            {'id': 15, 'name': 'Xuất Nhập Khẩu'}, {'id': 16, 'name': 'Vận Tải - Lái xe - Giao nhận'},
+            {'id': 17, 'name': 'Kế toán'}, {'id': 18, 'name': 'Tài chính - Đầu tư'}, {'id': 19, 'name': 'Ngân hàng'},
+            {'id': 20, 'name': 'Khai thác năng lượng - Khoáng sản'}, {'id': 21, 'name': 'Y tế - Chăm sóc sức khỏe'},
+            {'id': 22, 'name': 'Nhân sự'}, {'id': 23, 'name': 'Bảo hiểm'},
+            {'id': 24, 'name': 'Thông tin - Truyền thông - Xuất bản - In ấn'}, {'id': 25, 'name': 'Pháp Lý - Tuân thủ'},
+            {'id': 26, 'name': 'Kiểm toán'}, {'id': 27, 'name': 'Quản lý dự án - Chương trình'},
+            {'id': 28, 'name': 'Quản lý tiêu chuẩn và chất lượng'}, {'id': 29, 'name': 'Bất động sản'},
+            {'id': 30, 'name': 'Chăm sóc khách hàng'}, {'id': 31, 'name': 'Xây dựng'},
+            {'id': 32, 'name': 'Giáo dục - Đào tạo'},
+            {'id': 33, 'name': 'Data Analytics - Warehousing, & Business Intelligence'},
+            {'id': 34, 'name': 'Khoa học - Kỹ thuật'}, {'id': 35, 'name': 'Nghề nghiệp khác'}]
+    for c in nghe:
+        career = Career.objects.create(name=c["name"])
+        data[c["id"]] = career.id
 
-    return var_res.response_data()
+    with open("C:/Users/khuy2/Desktop/map.json", "w", encoding="utf-8") as file:
+        json.dump({
+            "career_map": data
+        }, file, ensure_ascii=False)
+    return var_res.response_data(data="OKE")
 
 
 @api_view(http_method_names=["GET"])
@@ -66,7 +69,7 @@ def get_all_config(request):
         frequency_notification_tuple = utils.convert_tuple_or_list_to_options(var_sys.FREQUENCY_NOTIFICATION)
 
         # database
-        cities = City.objects.values_list("id", "name")
+        cities = City.objects.exclude(name__icontains="Toàn quốc").values_list("id", "name")
         careers = Career.objects.values_list("id", "name")
         city_tuple = utils.convert_tuple_or_list_to_options(cities)
         career_tuple = utils.convert_tuple_or_list_to_options(careers)

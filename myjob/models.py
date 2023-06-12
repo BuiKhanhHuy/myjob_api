@@ -22,6 +22,9 @@ class Feedback(MyJobBaseModel):
     class Meta:
         db_table = "myjob_myjob_feedback"
 
+    def __str__(self):
+        return self.content
+
 
 class Banner(MyJobBaseModel):
     image_url = models.URLField(null=True, blank=True)
@@ -34,7 +37,12 @@ class Banner(MyJobBaseModel):
                                                default=var_sys.DESCRIPTION_LOCATION[2][0])
     platform = models.CharField(max_length=3, choices=var_sys.PLATFORM_CHOICES,
                                 default=var_sys.DESCRIPTION_LOCATION[0][0])
+    type = models.IntegerField(choices=var_sys.BANNER_TYPE,
+                               default=var_sys.BANNER_TYPE[0][0])
     is_active = models.BooleanField(default=False)
 
     class Meta:
         db_table = "myjob_myjob_banner"
+
+    def __str__(self):
+        return str(self.id)

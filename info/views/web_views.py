@@ -589,11 +589,6 @@ class CompanyViewSet(viewsets.ViewSet,
             queryset = Company.objects.annotate(num_follow=Count('companyfollowed'),
                                                 num_job_post=Count('job_posts')
                                                 ) \
-                           .exclude(Q(company_image_public_id__isnull=True)
-                                    | Q(website_url__isnull=True)
-                                    | Q(field_operation__isnull=True)
-                                    | Q(employee_size__isnull=True)
-                                    | Q(since__isnull=True)) \
                            .order_by('-num_follow', '-num_job_post')[:10]
             serializer = CompanySerializer(queryset, many=True,
                                            fields=[

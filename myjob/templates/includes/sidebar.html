@@ -1,37 +1,22 @@
-{% load i18n static admin_argon %}
+{% load i18n static admin_volt %}
 
-<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 "
-       id="sidenav-main" style="z-index: 1000; ">
-    <div class="sidenav-header">
-        <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
-           aria-hidden="true" id="iconSidenav"></i>
-        <a class="navbar-brand m-0" href="/">
-            <img src="{% static 'img/dark-logo.png' %}" class="navbar-brand-img h-100" alt="main_logo">
-            <span class="ms-1 font-weight-bold">Administration MyJob</span>
-        </a>
-    </div>
-    <hr class="horizontal dark mt-0">
-    <div class="collapse navbar-collapse w-auto pb-5" id="sidenav-collapse-main" style="height: 100% !important; ">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                {% if request.user.is_superuser %}
-                    <a href="{% url 'admin:index' %}" class="nav-link {% if 'index' in segment %} active {% endif %}">
-                {% endif %}
-                <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                    <i class="fa fa-tachometer text-primary text-sm opacity-10"></i>
-                </div>
-                <span class="nav-link-text ms-0 mt-1">Dashboard</span>
+<nav id="sidebarMenu" class="sidebar d-lg-block bg-gray-800 text-white collapse" data-simplebar>
+    <div class="sidebar-inner px-2 pt-3">
+        <ul class="nav flex-column pt-3 pt-md-0">
+            <li class="nav-item {% if 'dashboard' in segment %}active{% endif %}">
+                <a href="{% url 'admin:index' %}" class="nav-link">
+          <span class="sidebar-icon">
+             <i class="fa fa-dashboard" style="font-size:20px;"></i>
+          </span>
+                    <span class="sidebar-text">Dashboard</span>
                 </a>
             </li>
-
-            <li class="nav-item">
-                {% if request.user.is_superuser %}
-                    <a class="nav-link " href="{% url 'notifications' %}">
-                {% endif %}
-                <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                    <i class="fa fa-bell text-primary text-sm opacity-10"></i>
-                </div>
-                <span class="nav-link-text ms-0 mt-1">Notifications</span>
+            <li class="nav-item {% if 'notifications' in segment %}active{% endif %}">
+                <a href="{% url 'myjob_notifications' %}" class="nav-link">
+          <span class="sidebar-icon">
+                <i class="fa fa-bell" style="font-size:20px;"></i>
+          </span>
+                    <span class="sidebar-text">Notifications</span>
                 </a>
             </li>
 
@@ -40,31 +25,44 @@
                 {% for app in app_list %}
                     {% if app.has_perms and not app.pinned %}
                         <li class="nav-item">
-                            <a class="nav-link {% if app_label != app.label and app.url not in request.path|urlencode %} collapsed{% endif %}"
-                               data-bs-toggle="collapse" data-bs-target="#submenu-{{ app.app_label }}"
-                               href="{{ app.url }}">
-                                <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                                    <i class="fa fa-plus-circle text-primary text-sm opacity-10"></i>
-                                </div>
-                                <span class="nav-link-text ms-0 mt-1">{{ app.label|slice:20 }}{% if app.label|length > 20 %}
-                                    ..{% endif %}</span>
-                            </a>
-
+              <span class="nav-link collapsed d-flex justify-content-between align-items-center"
+                    data-bs-toggle="collapse" data-bs-target="#submenu-dashboard{{ app.app_label }}">
+                <span>
+                  <span class="sidebar-icon">
+                    <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20"
+                         xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                  <span class="sidebar-text">{{ app.label|slice:16 }}{% if app.label|length > 16 %}..{% endif %}</span>
+                </span>
+                <span class="link-arrow">
+                  <svg class="icon icon-sm" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clip-rule="evenodd"></path>
+                  </svg>
+                </span>
+              </span>
                             {% if app.models %}
-                                <div class="multi-level ms-2 collapse {% if 'tables-bootstrap-' in segment or app_label == app.label or app.url in request.path|urlencode %} show {% endif %}"
-                                     role="list" id="submenu-{{ app.app_label }}"
-                                     aria-expanded="{% if app_label == app.label or app.url in request.path|urlencode %}true{% else %}false{% endif %}">
+                                <div
+                                        class="multi-level collapse {% if 'tables-bootstrap-' in segment or app_label == app.label or app.url in request.path|urlencode %} show {% endif %}"
+                                        role="list"
+                                        id="submenu-dashboard{{ app.app_label }}"
+                                        aria-expanded="{% if app_label == app.label or app.url in request.path|urlencode %}true{% else %}false{% endif %}">
                                     <ul class="flex-column nav">
                                         {% for model in app.models %}
                                             {% if model.url %}
-                                                <li class="nav-item{% if 'bootstrap-tables' in segment or model.url in request.path|urlencode %} active {% endif %} list-unstyled">
+                                                <li class="nav-item {% if 'bootstrap-tables' in segment or model.url in request.path|urlencode %} active {% endif %}">
                                                     <a class="nav-link" href="{{ model.url }}">
-                                                        <i class="fa fa-circle-thin text-primary text-sm opacity-10"></i>
-                                                        <span class="nav-link-text ms-0">{{ model.label }}</span>
+                                                        <span class="sidebar-text-contracted"> A </span>
+                                                        <span class="sidebar-text">{{ model.label }}</span>
                                                     </a>
                                                 </li>
                                             {% else %}
-                                                <li class="nav-item list-unstyled">{{ model.label }}</li>
+                                                <li class="nav-item">{{ model.label }}</li>
                                             {% endif %}
                                         {% endfor %}
                                     </ul>
@@ -74,53 +72,6 @@
                     {% endif %}
                 {% endfor %}
             {% endif %}
-
-
-            {#            {% if request.user.is_authenticated and  request.user.is_superuser %}#}
-            {#                <li class="nav-item">#}
-            {#                    <a class="nav-link " href="{% url 'tables' %}">#}
-            {#                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">#}
-            {#                            <i class="ni ni-calendar-grid-58 text-warning text-sm opacity-10"></i>#}
-            {#                        </div>#}
-            {#                        <span class="nav-link-text ms-1">Tables</span>#}
-            {#                    </a>#}
-            {#                </li>#}
-            {#                <li class="nav-item">#}
-            {#                    <a class="nav-link " href="{% url 'billing' %}">#}
-            {#                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">#}
-            {#                            <i class="ni ni-credit-card text-success text-sm opacity-10"></i>#}
-            {#                        </div>#}
-            {#                        <span class="nav-link-text ms-1">Billing</span>#}
-            {#                    </a>#}
-            {#                </li>#}
-            {#                <li class="nav-item">#}
-            {#                    <a class="nav-link " href="{% url 'vr' %}">#}
-            {#                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">#}
-            {#                            <i class="ni ni-app text-info text-sm opacity-10"></i>#}
-            {#                        </div>#}
-            {#                        <span class="nav-link-text ms-1">Virtual Reality</span>#}
-            {#                    </a>#}
-            {#                </li>#}
-            {#                <li class="nav-item">#}
-            {#                    <a class="nav-link " href="{% url 'rtl' %}">#}
-            {#                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">#}
-            {#                            <i class="ni ni-world-2 text-danger text-sm opacity-10"></i>#}
-            {#                        </div>#}
-            {#                        <span class="nav-link-text ms-1">RTL</span>#}
-            {#                    </a>#}
-            {#                </li>#}
-            {#                <li class="nav-item mt-3">#}
-            {#                    <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Account pages</h6>#}
-            {#                </li>#}
-            {#                <li class="nav-item">#}
-            {#                    <a class="nav-link " href="{% url 'profile' %}">#}
-            {#                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">#}
-            {#                            <i class="ni ni-single-02 text-dark text-sm opacity-10"></i>#}
-            {#                        </div>#}
-            {#                        <span class="nav-link-text ms-1">Profile</span>#}
-            {#                    </a>#}
-            {#                </li>#}
-            {#            {% endif %}#}
         </ul>
     </div>
-</aside>
+</nav>

@@ -146,7 +146,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     def get_job_post_number(self, company):
         now = datetime.datetime.now().date()
-        return company.job_posts.filter(deadline__gte=now).count()
+        return company.job_posts.filter(deadline__gte=now, is_verify=True).count()
 
     def check_followed(self, company):
         request = self.context.get('request', None)
@@ -414,7 +414,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         return fields
 
     def get_view_number(self, resume):
-        return 0
+        return resume.resumesaved_set.count()
 
     def check_saved(self, resume):
         request = self.context.get('request', None)
