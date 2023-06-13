@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-from django.views.decorators.csrf import csrf_exempt
 from configs import variable_system as var_sys
 from django.http import JsonResponse
 from django.shortcuts import render, redirect

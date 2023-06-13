@@ -6,6 +6,13 @@ from django_admin_listfilter_dropdown.filters import DropdownFilter, ChoiceDropd
 from django.conf import settings
 from helpers import helper
 
+from django_celery_beat.models import (
+    PeriodicTask
+)
+from django_celery_beat.admin import (
+    PeriodicTaskAdmin
+)
+
 from .models import (
     Feedback,
     Banner
@@ -50,6 +57,9 @@ class FeedbackAdmin(admin.ModelAdmin):
         ("rating", DropdownFilter),
         ("is_active", DropdownFilter),
     ]
+    fields = (
+        "content", "rating", "user", "is_active"
+    )
 
     form = FeedbackForm
 
@@ -81,7 +91,8 @@ class BannerAdmin(admin.ModelAdmin):
         if banner and banner.image_url:
             return mark_safe(
                 r"""<img src='{0}'
-                alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(banner.image_url)
+                alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(
+                    banner.image_url)
             )
         return "---"
 
@@ -137,5 +148,28 @@ class BannerAdmin(admin.ModelAdmin):
             banner.save()
 
 
+class CustomPeriodicTaskForm(forms.ModelForm):
+    class Meta:
+        model = PeriodicTask
+        fields = '__all__'
+        widgets = {
+            'one_off': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'enabled': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+        }
+
+
+class CustomPeriodicTaskAdmin(admin.ModelAdmin):
+    fields = ('name', 'task', 'interval', 'crontab',
+              'solar', 'clocked', 'args', 'kwargs',
+              'queue', 'exchange', 'routing_key', 'headers',
+              'priority', 'start_time', 'expires', 'expire_seconds',
+              'description', 'one_off', 'enabled')
+
+    form = CustomPeriodicTaskForm
+
+
 admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(Banner, BannerAdmin)
+
+admin.site.unregister(PeriodicTask)
+admin.site.register(PeriodicTask, CustomPeriodicTaskAdmin)

@@ -48,13 +48,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # third party api service
     'cloudinary',
-
-    # third party packages
     'django_admin_listfilter_dropdown',
     'ckeditor',
-
     'django_otp',
     'rest_framework',
     'django_filters',
@@ -65,14 +61,12 @@ INSTALLED_APPS = [
     'drf_social_oauth2',
     'celery',
     'django_celery_beat',
-
     # internal apps
     'common',
     'authentication',
     'info',
     'job',
     'myjob',
-
     'corsheaders'
 ]
 
