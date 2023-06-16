@@ -20,7 +20,7 @@ twilio==8.0.0
 
 ### 👉 Setup
 
-#### Clone project
+#### Clone repo
 ```bash
 git clone https://github.com/BuiKhanhHuy/myjob_api.git
 cd myjob_api
