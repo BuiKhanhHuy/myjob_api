@@ -38,7 +38,6 @@ class JobPostSerializer(serializers.ModelSerializer):
     salaryMax = serializers.IntegerField(source="salary_max", required=True)
     isHot = serializers.BooleanField(source="is_hot", required=False, allow_null=True, read_only=True)
     isUrgent = serializers.BooleanField(source="is_urgent", default=False)
-    isVerify = serializers.BooleanField(source='is_verify', read_only=True)
     contactPersonName = serializers.CharField(source="contact_person_name", required=True, max_length=100)
     contactPersonPhone = serializers.CharField(source="contact_person_phone", required=True, max_length=15)
     contactPersonEmail = serializers.EmailField(source="contact_person_email", required=True, max_length=100)
@@ -61,6 +60,7 @@ class JobPostSerializer(serializers.ModelSerializer):
     locationDict = common_serializers.LocationSerializer(source="location",
                                                          fields=['city'],
                                                          read_only=True)
+    status = serializers.IntegerField(read_only=True)
 
     views = serializers.IntegerField(read_only=True)
     appliedNumber = serializers.SerializerMethodField(method_name="get_applied_number", read_only=True)
@@ -112,7 +112,7 @@ class JobPostSerializer(serializers.ModelSerializer):
         fields = ('id', 'slug', 'jobName', 'deadline', 'quantity', 'genderRequired',
                   'jobDescription', 'jobRequirement', 'benefitsEnjoyed', 'career',
                   'position', 'typeOfWorkplace', 'experience', 'academicLevel',
-                  'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent', 'isVerify',
+                  'jobType', 'salaryMin', 'salaryMax', 'isHot', 'isUrgent', 'status',
                   'contactPersonName', 'contactPersonPhone', 'contactPersonEmail',
                   'location', 'createAt', 'updateAt', 'appliedNumber',
                   'isSaved', 'isApplied', 'companyDict', 'mobileCompanyDict', 'locationDict', 'views',
@@ -160,8 +160,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             instance.contact_person_name = validated_data.get('contact_person_name', instance.contact_person_name)
             instance.contact_person_phone = validated_data.get('contact_person_phone', instance.contact_person_phone)
             instance.contact_person_email = validated_data.get('contact_person_email', instance.contact_person_email)
-            if instance.is_verify:
-                instance.is_verify = False
+            instance.status = var_sys.JOB_POST_STATUS[0][0]
             location_obj = instance.location
 
             with transaction.atomic():

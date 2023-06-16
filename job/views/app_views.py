@@ -1,6 +1,11 @@
 import datetime
 from console.jobs import queue_mail
-from configs import variable_response as var_res, renderers, paginations
+from configs import (
+    variable_response as var_res,
+    variable_system as var_sys,
+    renderers,
+    paginations
+)
 from helpers import helper
 from django.conf import settings
 from django.db.models import F, Count
@@ -51,7 +56,7 @@ class JobPostViewSet(viewsets.ViewSet,
         return [perms_sys.AllowAny()]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+        queryset = self.filter_queryset(self.get_queryset().filter(status=var_sys.JOB_POST_STATUS[2][0],
                                                                    deadline__gte=datetime.datetime.now().date())
                                         .order_by('-create_at', '-update_at'))
 
@@ -77,7 +82,7 @@ class JobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
+        queryset = JobPost.objects.filter(status=var_sys.JOB_POST_STATUS[2][0], deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")
@@ -112,7 +117,7 @@ class JobPostViewSet(viewsets.ViewSet,
             url_path="job-posts-saved", url_name="job-posts-saved")
     def get_job_posts_saved(self, request):
         user = request.user
-        queryset = user.saved_job_posts.filter(is_verify=True) \
+        queryset = user.saved_job_posts.filter(status=var_sys.JOB_POST_STATUS[2][0]) \
             .order_by('update_at', 'create_at')
 
         page = self.paginate_queryset(queryset)
@@ -182,7 +187,7 @@ class JobPostViewSet(viewsets.ViewSet,
 
         # Tính toán khoảng cách và filter các dòng thỏa mãn
         queryset = self.filter_queryset(self.get_queryset()
-                                        .filter(is_verify=True, deadline__gte=datetime.datetime.now().date()
+                                        .filter(status=var_sys.JOB_POST_STATUS[2][0], deadline__gte=datetime.datetime.now().date()
                                                 ).annotate(
             lat_radian=Radians('location__lat'),
             lng_radian=Radians('location__lng'),

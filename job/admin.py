@@ -1,3 +1,4 @@
+from helpers import helper
 from django.contrib import admin
 from django import forms
 from .models import (
@@ -15,27 +16,26 @@ class JobPostForm(forms.ModelForm):
         widgets = {
             'is_hot': forms.CheckboxInput(attrs={'class': "form-check-input"}),
             'is_urgent': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_verify': forms.CheckboxInput(attrs={'class': "form-check-input"}),
         }
 
 
 class JobPostAdmin(admin.ModelAdmin):
     list_display = ("id", "job_name", "career", "deadline", "quantity", "is_hot",
-                    "is_urgent", "is_verify", "views", "shares")
+                    "is_urgent", "status", "views", "shares")
     list_display_links = ("id", "job_name",)
-    list_editable = ("is_hot", "is_urgent", "is_verify")
+    list_editable = ("is_hot", "is_urgent")
     search_fields = ("job_name", "career__name")
     list_filter = [
         ("is_hot", DropdownFilter),
         ("is_urgent", DropdownFilter),
-        ("is_verify", DropdownFilter),
+        ("status", ChoiceDropdownFilter),
         ("position", ChoiceDropdownFilter),
         ("experience", ChoiceDropdownFilter),
         ("academic_level", ChoiceDropdownFilter),
         ("type_of_workplace", ChoiceDropdownFilter),
         ("job_type", ChoiceDropdownFilter),
     ]
-    ordering = ("id", 'job_name', "is_hot", "is_urgent", "is_verify", "views", "shares")
+    ordering = ("id", 'job_name', "is_hot", "is_urgent", "status", "views", "shares")
     list_per_page = 25
 
     fields = ("job_name", "deadline", "quantity",
@@ -46,9 +46,22 @@ class JobPostAdmin(admin.ModelAdmin):
               "views", "shares", "career",
               "location", "user", "company",
               "gender_required", "job_description", "job_requirement", "benefits_enjoyed",
-              "is_hot", "is_urgent", "is_verify")
+              "is_hot", "is_urgent", "status")
 
     form = JobPostForm
+
+    def save_model(self, request, obj, form, change):
+        pre_status = None
+        if change:
+            job_post = JobPost.objects.filter(id=obj.id).first()
+            if job_post:
+                pre_status = job_post.status
+        super().save_model(request, obj, form, change)
+        if change:
+            new_status = obj.status
+            if pre_status != new_status:
+                # send notification
+                helper.add_job_post_verify_notification(obj)
 
 
 class SavedJobPostAdmin(admin.ModelAdmin):

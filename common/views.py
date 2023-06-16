@@ -54,7 +54,6 @@ def create_database(request):
 def get_all_config(request):
     try:
         # system
-        completed_profile_tuple = utils.convert_tuple_or_list_to_options(var_sys.COMPLETED_PROFILE)
         gender_tuple = utils.convert_tuple_or_list_to_options(var_sys.GENDER_CHOICES)
         marital_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.MARITAL_STATUS_CHOICES)
         language_tuple = utils.convert_tuple_or_list_to_options(var_sys.LANGUAGE_CHOICES)
@@ -67,6 +66,7 @@ def get_all_config(request):
         employee_size_tuple = utils.convert_tuple_or_list_to_options(var_sys.EMPLOYEE_SIZE_CHOICES)
         application_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.APPLICATION_STATUS)
         frequency_notification_tuple = utils.convert_tuple_or_list_to_options(var_sys.FREQUENCY_NOTIFICATION)
+        job_post_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_POST_STATUS)
 
         # database
         cities = City.objects.exclude(name__icontains="Toàn quốc").values_list("id", "name")
@@ -74,7 +74,6 @@ def get_all_config(request):
         city_tuple = utils.convert_tuple_or_list_to_options(cities)
         career_tuple = utils.convert_tuple_or_list_to_options(careers)
 
-        completed_profile_options = completed_profile_tuple[0]
         gender_options = gender_tuple[0]
         marital_status_options = marital_status_tuple[0]
         language_options = language_tuple[0]
@@ -89,8 +88,8 @@ def get_all_config(request):
         city_options = city_tuple[0]
         career_options = career_tuple[0]
         frequency_notification_options = frequency_notification_tuple[0]
+        job_post_status_options = job_post_status_tuple[0]
 
-        completed_profile_dict = completed_profile_tuple[1]
         gender_dict = gender_tuple[1]
         marital_status_dict = marital_status_tuple[1]
         language_dict = language_tuple[1]
@@ -105,9 +104,9 @@ def get_all_config(request):
         city_dict = city_tuple[1]
         career_dict = career_tuple[1]
         frequency_notification_dict = frequency_notification_tuple[1]
+        job_post_status_dict = job_post_status_tuple[1]
 
         res_data = {
-            "completedProfileOptions": completed_profile_options,
             "genderOptions": gender_options,
             "maritalStatusOptions": marital_status_options,
             "languageOptions": language_options,
@@ -122,8 +121,8 @@ def get_all_config(request):
             "cityOptions": city_options,
             "careerOptions": career_options,
             "frequencyNotificationOptions": frequency_notification_options,
+            "jobPostStatusOptions": job_post_status_options,
 
-            "completedProfileDict": completed_profile_dict,
             "genderDict": gender_dict,
             "maritalStatusDict": marital_status_dict,
             "languageDict": language_dict,
@@ -138,6 +137,7 @@ def get_all_config(request):
             "cityDict": city_dict,
             "careerDict": career_dict,
             "frequencyNotificationDict": frequency_notification_dict,
+            "jobPostStatusDict": job_post_status_dict
         }
     except Exception as ex:
         helper.print_log_error(func_name="get_all_config", error=ex)

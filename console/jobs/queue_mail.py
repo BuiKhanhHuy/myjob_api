@@ -163,7 +163,7 @@ def send_email_for_user(user_id, full_name, to_email, frequency):
 
         for job_post_notification in job_post_notifications:
             query = JobPost.objects.filter(
-                is_verify=True,
+                status=var_sys.JOB_POST_STATUS[2][0],
                 deadline__gte=datetime.now().date(),
                 job_name__icontains=job_post_notification.get("job_name", None),
                 career=job_post_notification.get("career", None),

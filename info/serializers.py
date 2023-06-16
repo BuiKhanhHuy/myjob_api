@@ -149,7 +149,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     def get_job_post_number(self, company):
         now = datetime.datetime.now().date()
-        return company.job_posts.filter(deadline__gte=now, is_verify=True).count()
+        return company.job_posts.filter(deadline__gte=now, status=var_sys.JOB_POST_STATUS[2][0]).count()
 
     def check_followed(self, company):
         request = self.context.get('request', None)

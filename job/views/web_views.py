@@ -67,7 +67,7 @@ def job_suggest_title_search(request):
                 words = json.loads(job_title_str)
             else:
                 print("Chưa tồn tại => set vào Redis")
-                job_title_list = JobPost.objects.filter(is_verify=True,
+                job_title_list = JobPost.objects.filter(status=var_sys.JOB_POST_STATUS[2][0],
                                                         deadline__gte=datetime.datetime.now().date()) \
                     .values_list("job_name", flat=True)
                 job_title_dict = {}
@@ -140,7 +140,8 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
+        queryset = JobPost.objects.filter(status=var_sys.JOB_POST_STATUS[2][0],
+                                          deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")
@@ -162,7 +163,6 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         # gui noti cho admin
-        print("GỬI NOTI")
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
@@ -170,6 +170,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        old_status = instance.status
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -179,11 +180,12 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        # gui noti yeu cau duyet bai
-        helper.add_post_verify_required_notifications(
-            company=user.company,
-            job_post=self.get_object()
-        )
+        # gui noti yeu cau duyet bai khi khac trang thai "cho duyet"
+        if old_status != var_sys.JOB_POST_STATUS[0][0]:
+            helper.add_post_verify_required_notifications(
+                company=user.company,
+                job_post=self.get_object()
+            )
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -196,7 +198,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
                 "id", "slug", "jobName", "createAt", "deadline",
-                "appliedNumber", "views", "isUrgent", "isVerify",
+                "appliedNumber", "views", "isUrgent", "status",
                 "isExpired"
             ])
             return self.get_paginated_response(serializer.data)
@@ -208,7 +210,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             url_path="export", url_name="job-posts-export")
     def export_job_posts(self, request):
         queryset = self.filter_queryset(self.get_queryset()
-                                        .filter(is_verify=True, user=request.user,
+                                        .filter(status=var_sys.JOB_POST_STATUS[2][0], user=request.user,
                                                 company=request.user.company)
                                         .order_by('update_at', 'create_at'))
         serializer = self.get_serializer(queryset, many=True, fields=[
@@ -225,7 +227,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             "id", "jobName", "academicLevel", "deadline", "quantity",
             "genderRequired",
             "jobDescription", "jobRequirement", "benefitsEnjoyed",
-            "career", 'isVerify',
+            "career", 'status',
             "position", "typeOfWorkplace", "experience",
             "jobType", "salaryMin", "salaryMax", "isUrgent",
             "contactPersonName", "contactPersonPhone",
@@ -247,7 +249,7 @@ class JobPostViewSet(viewsets.ViewSet,
     lookup_field = "slug"
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+        queryset = self.filter_queryset(self.get_queryset().filter(status=var_sys.JOB_POST_STATUS[2][0],
                                                                    deadline__gte=datetime.datetime.now().date())
                                         .order_by('-update_at', '-create_at'))
 
@@ -287,7 +289,7 @@ class JobPostViewSet(viewsets.ViewSet,
             url_path="job-posts-saved", url_name="job-posts-saved")
     def get_job_posts_saved(self, request):
         user = request.user
-        queryset = user.saved_job_posts.filter(is_verify=True) \
+        queryset = user.saved_job_posts.filter(status=var_sys.JOB_POST_STATUS[2][0]) \
             .order_by('update_at', 'create_at')
 
         page = self.paginate_queryset(queryset)
@@ -491,6 +493,8 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
         if data.get("status", None):
             stt = data["status"]
             job_post_activity = self.get_object()
+            if job_post_activity.status > stt:
+                return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
             job_post_activity.status = stt
             job_post_activity.save()
 
@@ -728,7 +732,8 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
         user = request.user
 
         total_job_post = JobPost.objects.filter(company=user.company).count()
-        total_job_posting_pending_approval = JobPost.objects.filter(company=user.company, is_verify=False).count()
+        total_job_posting_pending_approval = JobPost.objects.filter(company=user.company,
+                                                                    status=var_sys.JOB_POST_STATUS[0][0]).count()
         total_job_post_expired = JobPost.objects \
             .filter(company=user.company, deadline__lt=datetime.datetime.now().date()).count()
         total_apply = JobPostActivity.objects.filter(job_post__company=user.company).count()

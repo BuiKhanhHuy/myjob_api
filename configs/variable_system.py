@@ -12,7 +12,8 @@ NOTIFICATION_TYPE = {
     "APPLY_STATUS": "APPLY_STATUS",
     "COMPANY_FOLLOWED": "COMPANY_FOLLOWED",
     "APPLY_JOB": "APPLY_JOB",
-    "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED"
+    "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED",
+    "POST_VERIFY_RESULT": "POST_VERIFY_RESULT"
 }
 NOTIFICATION_IMAGE_DEFAULT = "https://res.cloudinary.com/dtnpj540t/image/upload/v1683799130/my-job/images_default/notification_image_default.png"
 
@@ -52,13 +53,10 @@ ROLE_CHOICES = (
     (JOB_SEEKER, 'Người tìm việc')
 )
 
-COMPLETED_PROFILE = (
-    (1, ''),
-    (2, ''),
-    (3, ''),
-    (4, ''),
-    (5, ''),
-    (6, ''),
+JOB_POST_STATUS = (
+    (1, 'Chờ duyệt'),
+    (2, 'Không duyệt'),
+    (3, 'Đã duyệt')
 )
 
 GENDER_CHOICES = (
