@@ -48,7 +48,7 @@ class JobPost(JobPostBaseModel):
     salary_max = models.IntegerField()
     is_hot = models.BooleanField(default=False)
     is_urgent = models.BooleanField(default=False)
-    is_verify = models.BooleanField(default=False)
+    status = models.IntegerField(choices=var_sys.JOB_POST_STATUS, default=var_sys.JOB_POST_STATUS[0][0])
     contact_person_name = models.CharField(max_length=100)
     contact_person_phone = models.CharField(max_length=15)
     contact_person_email = models.EmailField(max_length=100)
@@ -96,6 +96,8 @@ class JobPostActivity(JobPostBaseModel):
     phone = models.CharField(max_length=15, null=True)
 
     status = models.IntegerField(choices=var_sys.APPLICATION_STATUS, default=1)
+    is_sent_email = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
     # ForeignKey
     job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

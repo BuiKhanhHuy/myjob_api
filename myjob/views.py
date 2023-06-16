@@ -1069,5 +1069,4 @@ def send_notification_demo(request):
         content_of_type=body_content,
         user_id_list=user_list
     )
-    # queue_job.send_email_job_post_for_job_seeker_task(1)
     return var_res.response_data()

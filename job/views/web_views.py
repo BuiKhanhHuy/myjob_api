@@ -47,6 +47,9 @@ from info.models import (
     ResumeViewed,
     CompanyFollowed
 )
+from info.serializers import (
+    SendMailToJobSeekerSerializer
+)
 
 
 @api_view(http_method_names=['get'])
@@ -64,7 +67,7 @@ def job_suggest_title_search(request):
                 words = json.loads(job_title_str)
             else:
                 print("Chưa tồn tại => set vào Redis")
-                job_title_list = JobPost.objects.filter(is_verify=True,
+                job_title_list = JobPost.objects.filter(status=var_sys.JOB_POST_STATUS[2][0],
                                                         deadline__gte=datetime.datetime.now().date()) \
                     .values_list("job_name", flat=True)
                 job_title_dict = {}
@@ -137,7 +140,8 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         careers_id = [x[0] for x in resumes]
         cities_id = [x[1] for x in resumes]
 
-        queryset = JobPost.objects.filter(is_verify=True, deadline__gte=datetime.datetime.now().date()) \
+        queryset = JobPost.objects.filter(status=var_sys.JOB_POST_STATUS[2][0],
+                                          deadline__gte=datetime.datetime.now().date()) \
             .filter(career__in=careers_id, location__city__in=cities_id)
 
         queryset = queryset.order_by("-create_at", "-update_at")
@@ -159,7 +163,6 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         # gui noti cho admin
-        print("GỬI NOTI")
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
@@ -167,6 +170,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        old_status = instance.status
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -176,11 +180,12 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        # gui noti yeu cau duyet bai
-        helper.add_post_verify_required_notifications(
-            company=user.company,
-            job_post=self.get_object()
-        )
+        # gui noti yeu cau duyet bai khi khac trang thai "cho duyet"
+        if old_status != var_sys.JOB_POST_STATUS[0][0]:
+            helper.add_post_verify_required_notifications(
+                company=user.company,
+                job_post=self.get_object()
+            )
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -193,7 +198,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
                 "id", "slug", "jobName", "createAt", "deadline",
-                "appliedNumber", "views", "isUrgent", "isVerify",
+                "appliedNumber", "views", "isUrgent", "status",
                 "isExpired"
             ])
             return self.get_paginated_response(serializer.data)
@@ -205,7 +210,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             url_path="export", url_name="job-posts-export")
     def export_job_posts(self, request):
         queryset = self.filter_queryset(self.get_queryset()
-                                        .filter(is_verify=True, user=request.user,
+                                        .filter(status=var_sys.JOB_POST_STATUS[2][0], user=request.user,
                                                 company=request.user.company)
                                         .order_by('update_at', 'create_at'))
         serializer = self.get_serializer(queryset, many=True, fields=[
@@ -222,7 +227,7 @@ class PrivateJobPostViewSet(viewsets.ViewSet,
             "id", "jobName", "academicLevel", "deadline", "quantity",
             "genderRequired",
             "jobDescription", "jobRequirement", "benefitsEnjoyed",
-            "career", 'isVerify',
+            "career", 'status',
             "position", "typeOfWorkplace", "experience",
             "jobType", "salaryMin", "salaryMax", "isUrgent",
             "contactPersonName", "contactPersonPhone",
@@ -244,7 +249,7 @@ class JobPostViewSet(viewsets.ViewSet,
     lookup_field = "slug"
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(is_verify=True,
+        queryset = self.filter_queryset(self.get_queryset().filter(status=var_sys.JOB_POST_STATUS[2][0],
                                                                    deadline__gte=datetime.datetime.now().date())
                                         .order_by('-update_at', '-create_at'))
 
@@ -284,7 +289,7 @@ class JobPostViewSet(viewsets.ViewSet,
             url_path="job-posts-saved", url_name="job-posts-saved")
     def get_job_posts_saved(self, request):
         user = request.user
-        queryset = user.saved_job_posts.filter(is_verify=True) \
+        queryset = user.saved_job_posts.filter(status=var_sys.JOB_POST_STATUS[2][0]) \
             .order_by('update_at', 'create_at')
 
         page = self.paginate_queryset(queryset)
@@ -404,7 +409,8 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
 
 class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                                      generics.ListAPIView,
-                                     generics.UpdateAPIView):
+                                     generics.UpdateAPIView,
+                                     generics.DestroyAPIView):
     queryset = JobPostActivity.objects
     serializer_class = EmployerJobPostActivitySerializer
     permission_classes = [perms_custom.IsEmployerUser]
@@ -416,18 +422,29 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
     def list(self, request, *args, **kwargs):
         user = request.user
 
-        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company)
+        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company, is_deleted=False)
                                         .order_by('-id', 'create_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
-                "id", "fullName", "email", "title", "resumeSlug", "type", "jobName", "status", "createAt"
+                "id", "fullName", "email", "title", "resumeSlug", "type", "jobName", "status", "createAt", "isSentEmail"
             ])
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.is_deleted = True
+            instance.save()
+        except Exception as ex:
+            helper.print_log_error("delete job post activity", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=["get"], detail=False,
             url_path="chat", url_name="employer-job-posts-activity-chat")
@@ -439,7 +456,7 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                       fullName=F('user__full_name'),
                       userEmail=F('user__email'),
                       avatarUrl=F('user__avatar_url'),
-                      jobPostTitle=F('job_post__job_name'))\
+                      jobPostTitle=F('job_post__job_name')) \
             .values('id', 'userId', "fullName", 'userEmail', "avatarUrl", 'jobPostTitle')
             .order_by('-id', 'create_at')
         )
@@ -476,6 +493,8 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
         if data.get("status", None):
             stt = data["status"]
             job_post_activity = self.get_object()
+            if job_post_activity.status > stt:
+                return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
             job_post_activity.status = stt
             job_post_activity.save()
 
@@ -491,6 +510,48 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             )
             return var_res.Response(status=status.HTTP_200_OK)
         return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=["post"], detail=True,
+            url_path="send-email", url_name="send-email")
+    def send_email(self, request, pk):
+        try:
+            data = request.data
+            user = request.user
+            company = user.company
+
+            serializer = SendMailToJobSeekerSerializer(data=data)
+            if not serializer.is_valid():
+                return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                             errors=serializer.errors)
+            validate_data = serializer.data
+
+            to = [validate_data.get("email")]
+            is_send_me = validate_data.pop("isSendMe")
+            if is_send_me:
+                to.append(user.email)
+
+            email_data = {
+                'content': validate_data.get("content"),
+                'company_image': company.company_image_url,
+                'company_name': company.company_name,
+                'company_phone': company.company_phone,
+                'company_email': company.company_email,
+                'company_address': company.location.address,
+                'company_website_url': company.website_url
+            }
+            queue_mail.send_email_reply_job_seeker_task.delay(
+                to=to,
+                subject=validate_data.get("title"),
+                data=email_data
+            )
+            job_post_activity = self.get_object()
+            job_post_activity.is_sent_email = True
+            job_post_activity.save()
+        except Exception as ex:
+            helper.print_log_error("send_email", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.response_data()
 
 
 class JobPostNotificationViewSet(viewsets.ViewSet,
@@ -671,7 +732,8 @@ class EmployerStatisticViewSet(viewsets.ViewSet):
         user = request.user
 
         total_job_post = JobPost.objects.filter(company=user.company).count()
-        total_job_posting_pending_approval = JobPost.objects.filter(company=user.company, is_verify=False).count()
+        total_job_posting_pending_approval = JobPost.objects.filter(company=user.company,
+                                                                    status=var_sys.JOB_POST_STATUS[0][0]).count()
         total_job_post_expired = JobPost.objects \
             .filter(company=user.company, deadline__lt=datetime.datetime.now().date()).count()
         total_apply = JobPostActivity.objects.filter(job_post__company=user.company).count()

@@ -268,10 +268,10 @@ def job_post_chart(request):
     data2 = []
 
     queryset1 = JobPost.objects \
-        .filter(create_at__date__range=[start_date, end_date], is_verify=True) \
+        .filter(create_at__date__range=[start_date, end_date], status=var_sys.JOB_POST_STATUS[0][0]) \
         .order_by('create_at')
     queryset2 = JobPost.objects \
-        .filter(create_at__date__range=[start_date, end_date], is_verify=False) \
+        .filter(create_at__date__range=[start_date, end_date], status=var_sys.JOB_POST_STATUS[1][0]) \
         .order_by('create_at')
     if days <= 31:
         freq = "D"

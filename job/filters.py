@@ -23,14 +23,15 @@ class JobPostFilter(django_filters.FilterSet):
     jobTypeId = django_filters.ChoiceFilter(choices=var_sys.JOB_TYPE_CHOICES, field_name='job_type')
     genderId = django_filters.ChoiceFilter(choices=var_sys.GENDER_CHOICES, field_name='gender_required')
     isUrgent = django_filters.BooleanFilter(field_name='is_urgent')
+    statusId = django_filters.ChoiceFilter(choices=var_sys.JOB_POST_STATUS, field_name="status")
     excludeSlug = django_filters.CharFilter(method="exclude_slug")
     companyId = django_filters.NumberFilter(field_name="company")
-    # fId = 0 & fCreatedDate = 0 & fMailStatus = 0 & kw = z123123
+
     class Meta:
         model = JobPost
         fields = ['kw', 'careerId', 'cityId', 'positionId',
                   'experienceId', 'typeOfWorkplaceId', 'jobTypeId',
-                  'genderId', 'isUrgent', 'excludeSlug', 'companyId']
+                  'genderId', 'isUrgent', 'statusId', 'excludeSlug', 'companyId']
 
     def job_name_or_career_name(self, queryset, name, value):
         return queryset.filter(Q(job_name__icontains=value) | Q(career__name__icontains=value))

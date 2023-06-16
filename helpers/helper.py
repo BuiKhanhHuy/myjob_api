@@ -156,7 +156,7 @@ def add_post_verify_required_notifications(company, job_post):
         job_post_title = job_post.job_name
 
         title = company.company_name
-        content = f'Yêu cầu duyệt tin tuyển dụng "{job_post_title}"'
+        content = f'Request to browse job posting "{job_post_title}"'
         company_image = company.company_image_url
 
         user_id_list = list(User.objects.filter(is_staff=True).values_list('id', flat=True))
@@ -171,3 +171,16 @@ def add_post_verify_required_notifications(company, job_post):
                                                           type_name=type_name, user_id_list=user_id_list)
     except Exception as ex:
         print_log_error("add_post_verify_required_notifications", ex)
+
+
+def add_job_post_verify_notification(job_post):
+    try:
+        stt_str = [x[1] for x in var_sys.JOB_POST_STATUS if x[0] == job_post.status][0]
+        title = "Thông báo hệ thống"
+        content = f'Tin tuyển dụng "{job_post.job_name}" đã được chuyển sang trạng thái "{stt_str}"'
+
+        type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_RESULT"]
+        queue_notification.add_notification_to_user.delay(title=title, content=content,
+                                                          type_name=type_name, user_id_list=[job_post.user_id])
+    except Exception as ex:
+        print_log_error("add_job_post_verify_notification", ex)
