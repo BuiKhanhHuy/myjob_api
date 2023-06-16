@@ -132,9 +132,9 @@ CKEDITOR_CONFIGS = {
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 # Bo khi su dung sqlclient: mysqlclient==2.1.1
-# import pymysql
-#
-# pymysql.install_as_MySQLdb()
+import pymysql
+
+pymysql.install_as_MySQLdb()
 
 DATABASES = {
     'default': {
