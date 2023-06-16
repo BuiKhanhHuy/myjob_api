@@ -31,9 +31,6 @@ cd myjob_api
 |--> .env
 ```
 
-#### Import data from file `myjob_db.sql` 
- 
-
 ### 👉 Applocation Local server `environment` setup
 
 ```base
