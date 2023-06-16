@@ -47,6 +47,9 @@ from info.models import (
     ResumeViewed,
     CompanyFollowed
 )
+from info.serializers import (
+    SendMailToJobSeekerSerializer
+)
 
 
 @api_view(http_method_names=['get'])
@@ -404,7 +407,8 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
 
 class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                                      generics.ListAPIView,
-                                     generics.UpdateAPIView):
+                                     generics.UpdateAPIView,
+                                     generics.DestroyAPIView):
     queryset = JobPostActivity.objects
     serializer_class = EmployerJobPostActivitySerializer
     permission_classes = [perms_custom.IsEmployerUser]
@@ -416,18 +420,29 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
     def list(self, request, *args, **kwargs):
         user = request.user
 
-        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company)
+        queryset = self.filter_queryset(self.get_queryset().filter(job_post__company=user.company, is_deleted=False)
                                         .order_by('-id', 'create_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, fields=[
-                "id", "fullName", "email", "title", "resumeSlug", "type", "jobName", "status", "createAt"
+                "id", "fullName", "email", "title", "resumeSlug", "type", "jobName", "status", "createAt", "isSentEmail"
             ])
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return var_res.Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.is_deleted = True
+            instance.save()
+        except Exception as ex:
+            helper.print_log_error("delete job post activity", ex)
+            return var_res.Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=["get"], detail=False,
             url_path="chat", url_name="employer-job-posts-activity-chat")
@@ -439,7 +454,7 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
                       fullName=F('user__full_name'),
                       userEmail=F('user__email'),
                       avatarUrl=F('user__avatar_url'),
-                      jobPostTitle=F('job_post__job_name'))\
+                      jobPostTitle=F('job_post__job_name')) \
             .values('id', 'userId', "fullName", 'userEmail', "avatarUrl", 'jobPostTitle')
             .order_by('-id', 'create_at')
         )
@@ -491,6 +506,48 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             )
             return var_res.Response(status=status.HTTP_200_OK)
         return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=["post"], detail=True,
+            url_path="send-email", url_name="send-email")
+    def send_email(self, request, pk):
+        try:
+            data = request.data
+            user = request.user
+            company = user.company
+
+            serializer = SendMailToJobSeekerSerializer(data=data)
+            if not serializer.is_valid():
+                return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
+                                             errors=serializer.errors)
+            validate_data = serializer.data
+
+            to = [validate_data.get("email")]
+            is_send_me = validate_data.pop("isSendMe")
+            if is_send_me:
+                to.append(user.email)
+
+            email_data = {
+                'content': validate_data.get("content"),
+                'company_image': company.company_image_url,
+                'company_name': company.company_name,
+                'company_phone': company.company_phone,
+                'company_email': company.company_email,
+                'company_address': company.location.address,
+                'company_website_url': company.website_url
+            }
+            queue_mail.send_email_reply_job_seeker_task.delay(
+                to=to,
+                subject=validate_data.get("title"),
+                data=email_data
+            )
+            job_post_activity = self.get_object()
+            job_post_activity.is_sent_email = True
+            job_post_activity.save()
+        except Exception as ex:
+            helper.print_log_error("send_email", ex)
+            return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return var_res.response_data()
 
 
 class JobPostNotificationViewSet(viewsets.ViewSet,

@@ -268,6 +268,7 @@ class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
     resumeSlug = serializers.PrimaryKeyRelatedField(source="resume.slug", read_only=True)
     jobName = serializers.PrimaryKeyRelatedField(source="job_post.job_name", read_only=True)
     createAt = serializers.DateTimeField(source='create_at', read_only=True)
+    isSentEmail = serializers.BooleanField(source='is_sent_email', required=False)
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -283,7 +284,7 @@ class EmployerJobPostActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPostActivity
         fields = ("id", "fullName", "email", "phone", "title", "type",
-                  "resumeSlug", "jobName", "status", "createAt")
+                  "resumeSlug", "jobName", "status", "createAt", "isSentEmail")
 
 
 class EmployerJobPostActivityExportSerializer(serializers.ModelSerializer):

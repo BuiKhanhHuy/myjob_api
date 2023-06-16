@@ -396,6 +396,7 @@ class ResumeSerializer(serializers.ModelSerializer):
     jobSeekerProfileDict = JobSeekerProfileSerializer(source="job_seeker_profile",
                                                       fields=["id", "old"],
                                                       read_only=True)
+    lastViewedDate = serializers.SerializerMethodField(method_name='get_last_viewed_date', read_only=True)
     type = serializers.CharField(required=False, read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -428,6 +429,19 @@ class ResumeSerializer(serializers.ModelSerializer):
             return resume.resumesaved_set.filter(company=user.company).exists()
         return None
 
+    def get_last_viewed_date(self, resume):
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        company = request.user.company
+        if not company:
+            return None
+        resume_viewed = ResumeViewed.objects.filter(company=company, resume=resume).first()
+        if not resume_viewed:
+            return None
+
+        return resume_viewed.update_at
+
     class Meta:
         model = Resume
         fields = ("id", "slug", "title", "description",
@@ -436,7 +450,8 @@ class ResumeSerializer(serializers.ModelSerializer):
                   "typeOfWorkplace", "jobType", "isActive",
                   "career", "updateAt", "file",
                   "imageUrl", "fileUrl", "user", "city", 'isSaved',
-                  "viewEmployerNumber", "userDict", "jobSeekerProfileDict",
+                  "viewEmployerNumber", "lastViewedDate",
+                  "userDict", "jobSeekerProfileDict",
                   "type")
 
     def create(self, validated_data):
@@ -811,7 +826,7 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
     level = serializers.IntegerField(required=True)
 
     # slug field for web
-    resume = serializers.SlugRelatedField(required=False,  slug_field="slug", queryset=Resume.objects.all())
+    resume = serializers.SlugRelatedField(required=False, slug_field="slug", queryset=Resume.objects.all())
     # primary key field for app
     resumeId = serializers.PrimaryKeyRelatedField(
         source='resume',
@@ -899,6 +914,8 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
                                                  'id', 'name', 'level'
                                              ],
                                              read_only=True, many=True)
+    lastViewedDate = serializers.SerializerMethodField(method_name='get_last_viewed_date', read_only=True)
+    isSentEmail = serializers.SerializerMethodField(method_name='check_sent_email', read_only=True)
 
     def check_saved(self, resume):
         request = self.context.get('request', None)
@@ -908,6 +925,30 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
         if user.is_authenticated and user.role_name == var_sys.EMPLOYER:
             return resume.resumesaved_set.filter(company=user.company).exists()
         return None
+
+    def get_last_viewed_date(self, resume):
+        request = self.context.get('request', None)
+        if request is None:
+            return None
+        company = request.user.company
+        if not company:
+            return None
+        resume_viewed = ResumeViewed.objects.filter(company=company, resume=resume).first()
+        if not resume_viewed:
+            return None
+
+        return resume_viewed.update_at
+
+    def check_sent_email(self, resume):
+        request = self.context.get('request', None)
+        if request is None:
+            return False
+        company = request.user.company
+        if not company:
+            return False
+
+        contact_profile_exist = resume.contactprofile_set.filter(company=company, resume=resume).exists()
+        return contact_profile_exist
 
     class Meta:
         model = Resume
@@ -919,11 +960,11 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
                   "filePublicId", "city", 'isSaved', "type",
                   "user", "jobSeekerProfile",
                   "experiencesDetails", "educationDetails",
-                  "certificates", "languageSkills", "advancedSkills"
-                  )
+                  "certificates", "languageSkills", "advancedSkills",
+                  "lastViewedDate", "isSentEmail")
 
 
-class SendMailReplyToJobSeekerSerializer(serializers.Serializer):
+class SendMailToJobSeekerSerializer(serializers.Serializer):
     fullName = serializers.CharField(max_length=100, required=True)
     title = serializers.CharField(max_length=200, required=True)
     content = serializers.CharField(required=True)

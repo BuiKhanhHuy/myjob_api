@@ -234,3 +234,16 @@ class ResumeViewed(InfoBaseModel):
 
     def __str__(self):
         return f"{self.company} have watching {self.resume}"
+
+
+class ContactProfile(InfoBaseModel):
+    # ForeignKey
+    resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "myjob_info_contact_profile"
+        verbose_name_plural = "Contact profiles"
+
+    def __str__(self):
+        return f"{self.company} saved {self.resume}"
