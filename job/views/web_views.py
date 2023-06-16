@@ -437,9 +437,10 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             self.get_queryset().filter(job_post__company=user.company)
             .annotate(userId=F('user_id'),
                       fullName=F('user__full_name'),
+                      userEmail=F('user__email'),
                       avatarUrl=F('user__avatar_url'),
                       jobPostTitle=F('job_post__job_name'))\
-            .values('id', 'userId', "fullName", 'user__email', "avatarUrl", 'jobPostTitle')
+            .values('id', 'userId', "fullName", 'userEmail', "avatarUrl", 'jobPostTitle')
             .order_by('-id', 'create_at')
         )
         page = self.paginate_queryset(queryset)

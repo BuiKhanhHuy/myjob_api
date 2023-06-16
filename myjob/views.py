@@ -1,9 +1,8 @@
 import json
 import random
 import requests
-from django.utils.text import slugify
 from django.db import transaction
-from console.jobs import queue_notification
+from console.jobs import queue_notification, queue_job
 from twilio.rest import Client
 from django.conf import settings
 from helpers import helper, utils
@@ -24,7 +23,6 @@ from authentication.models import (
 from common.models import (
     Location,
     District,
-    City
 )
 from info.models import (
     Company,
@@ -1062,6 +1060,7 @@ def send_notification_demo(request):
     body_content = data.get('bodyContent', {})
     image_link = data.get("imageLink", None)
 
+    queue_job.send_email_job_post_for_job_seeker_task.delay(1)
     queue_notification.add_notification_to_user.delay(
         title=title,
         content=content,

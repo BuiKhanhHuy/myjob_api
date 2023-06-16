@@ -130,6 +130,9 @@ class CompanySerializer(serializers.ModelSerializer):
     companyImages = CompanyImageSerializer(source='company_images', many=True, read_only=True,
                                            fields=['id', 'imageUrl'])
 
+    mobileUserDict = auth_serializers.UserSerializer(source='user', read_only=True,
+                                                     fields=["id", "fullName", "email"])
+
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
 
@@ -166,7 +169,7 @@ class CompanySerializer(serializers.ModelSerializer):
                   'description',
                   'companyImageUrl', 'companyCoverImageUrl', 'locationDict',
                   'followNumber', 'jobPostNumber', 'isFollowed',
-                  'companyImages')
+                  'companyImages', 'mobileUserDict')
 
     def update(self, instance, validated_data):
         try:

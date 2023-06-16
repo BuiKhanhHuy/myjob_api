@@ -48,7 +48,7 @@ class JobPostSerializer(serializers.ModelSerializer):
 
     companyDict = info_serializers.CompanySerializer(source='company',
                                                      fields=['id', 'slug', 'employeeSize',
-                                                             'companyImageUrl', 'companyName'],
+                                                             'companyImageUrl', 'companyName', 'mobileUserDict'],
                                                      read_only=True)
     mobileCompanyDict = info_serializers.CompanySerializer(source='company',
                                                            fields=['id', 'slug', 'taxCode', 'companyName',

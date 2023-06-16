@@ -43,8 +43,8 @@ PLATFORM_CHOICES = (
     ('APP', 'Ứng dụng')
 )
 
-LINK_GOOGLE_PLAY = "https://drive.google.com/drive/folders/1W7phVOeKGF6H_M0UDUQWpEgHRSWRXeWE?usp=sharing"
-LINK_APPSTORE = "https://drive.google.com/drive/folders/1W7phVOeKGF6H_M0UDUQWpEgHRSWRXeWE?usp=sharing"
+LINK_GOOGLE_PLAY = "https://play.google.com/store/apps?hl=en"
+LINK_APPSTORE = "https://www.apple.com/vn/app-store/"
 
 ROLE_CHOICES = (
     (ADMIN, 'Quản trị viên'),

@@ -1,10 +1,19 @@
 import cloudinary.uploader
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from kombu.utils.json import loads
 from django import forms
 from django.utils.html import mark_safe
 from django_admin_listfilter_dropdown.filters import DropdownFilter, ChoiceDropdownFilter
 from django.conf import settings
 from helpers import helper
+
+from django_celery_beat.models import (
+    PeriodicTask
+)
+from django_celery_beat.admin import (
+    TaskChoiceField, PeriodicTaskAdmin
+)
 
 from .models import (
     Feedback,
@@ -50,6 +59,9 @@ class FeedbackAdmin(admin.ModelAdmin):
         ("rating", DropdownFilter),
         ("is_active", DropdownFilter),
     ]
+    fields = (
+        "content", "rating", "user", "is_active"
+    )
 
     form = FeedbackForm
 
@@ -81,7 +93,8 @@ class BannerAdmin(admin.ModelAdmin):
         if banner and banner.image_url:
             return mark_safe(
                 r"""<img src='{0}'
-                alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(banner.image_url)
+                alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(
+                    banner.image_url)
             )
         return "---"
 
@@ -137,5 +150,88 @@ class BannerAdmin(admin.ModelAdmin):
             banner.save()
 
 
+class CustomPeriodicTaskForm(forms.ModelForm):
+    """Form that lets you create and modify periodic tasks."""
+
+    regtask = TaskChoiceField(
+        label=_('Task (registered)'),
+        required=False,
+    )
+    task = forms.CharField(
+        label=_('Task (custom)'),
+        required=False,
+        max_length=200,
+    )
+
+    class Meta:
+        """Form metadata."""
+
+        model = PeriodicTask
+        exclude = ()
+        widgets = {
+            'one_off': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'enabled': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+        }
+
+    def clean(self):
+        data = super().clean()
+        regtask = data.get('regtask')
+        if regtask:
+            data['task'] = regtask
+        if not data['task']:
+            exc = forms.ValidationError(_('Need name of task'))
+            self._errors['task'] = self.error_class(exc.messages)
+            raise exc
+
+        if data.get('expire_seconds') is not None and data.get('expires'):
+            raise forms.ValidationError(
+                _('Only one can be set, in expires and expire_seconds')
+            )
+        return data
+
+    def _clean_json(self, field):
+        value = self.cleaned_data[field]
+        try:
+            loads(value)
+        except ValueError as exc:
+            raise forms.ValidationError(
+                _('Unable to parse JSON: %s') % exc,
+            )
+        return value
+
+    def clean_args(self):
+        return self._clean_json('args')
+
+    def clean_kwargs(self):
+        return self._clean_json('kwargs')
+
+
+class CustomPeriodicTaskAdmin(PeriodicTaskAdmin):
+    form = CustomPeriodicTaskForm
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'regtask', 'task', 'enabled', 'description',),
+            'classes': ('extrapretty', 'wide'),
+        }),
+        (_('Schedule'), {
+            'fields': ('interval', 'crontab', 'crontab_translation', 'solar',
+                       'clocked', 'start_time', 'last_run_at', 'one_off'),
+            'classes': ('extrapretty', 'wide'),
+        }),
+        (_('Arguments'), {
+            'fields': ('args', 'kwargs'),
+            'classes': ('extrapretty', 'wide'),
+        }),
+        (_('Execution Options'), {
+            'fields': ('expires', 'expire_seconds', 'queue', 'exchange',
+                       'routing_key', 'priority', 'headers'),
+            'classes': ('extrapretty', 'wide'),
+        }),
+    )
+
+
 admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(Banner, BannerAdmin)
+
+admin.site.unregister(PeriodicTask)
+admin.site.register(PeriodicTask, CustomPeriodicTaskAdmin)

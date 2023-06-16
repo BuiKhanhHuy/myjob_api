@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn myjob_api.wsgi --log-file - && celery -A myjob_api.celery worker --loglevel=info && celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler",
+    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn myjob_api.wsgi --log-file - && celery -A myjob_api.celery worker --pool=solo --loglevel=info && celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
