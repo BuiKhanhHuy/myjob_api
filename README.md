@@ -1,5 +1,5 @@
 <p align="center">
- <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/d25c4a6d-72f1-48ad-99f0-d196bf495806" width="200"  alt="Image" />
+ <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/ef0c454d-7947-46ab-a5e6-64ffe964bb3a" width="200"  alt="Image" />
 </p>
 
 <h1 align="center">Backend API for Job portal app (MyJob)</h3>
@@ -83,7 +83,7 @@ celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:Datab
 ```
 
 ### 👉 Go to http://localhost:8000/swagger/
-<img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/eb594bfe-1ade-43d2-b437-b102e8bc3f53"  alt="Image" /> 
+<img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/bdf34cb0-40e9-4403-9345-5e6f6299df3a" alt="Image" /> 
 
 ### 👉 Go to http://localhost:8000/admin/
 <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/c411ed48-6c1e-4940-a51a-8d30859aa90e" alt="Image" /> 
