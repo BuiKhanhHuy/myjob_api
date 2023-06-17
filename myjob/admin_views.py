@@ -266,12 +266,16 @@ def job_post_chart(request):
     labels = []
     data1 = []
     data2 = []
+    data3 = []
 
     queryset1 = JobPost.objects \
         .filter(create_at__date__range=[start_date, end_date], status=var_sys.JOB_POST_STATUS[0][0]) \
         .order_by('create_at')
     queryset2 = JobPost.objects \
         .filter(create_at__date__range=[start_date, end_date], status=var_sys.JOB_POST_STATUS[1][0]) \
+        .order_by('create_at')
+    queryset3 = JobPost.objects \
+        .filter(create_at__date__range=[start_date, end_date], status=var_sys.JOB_POST_STATUS[2][0]) \
         .order_by('create_at')
     if days <= 31:
         freq = "D"
@@ -282,6 +286,12 @@ def job_post_chart(request):
             .annotate(count=Count('id')) \
             .order_by('year', 'month', 'day')
         queryset2 = queryset2.annotate(year=ExtractYear('create_at'),
+                                       month=ExtractMonth('create_at'),
+                                       day=ExtractDay('create_at')) \
+            .values('year', 'month', 'day') \
+            .annotate(count=Count('id')) \
+            .order_by('year', 'month', 'day')
+        queryset3 = queryset3.annotate(year=ExtractYear('create_at'),
                                        month=ExtractMonth('create_at'),
                                        day=ExtractDay('create_at')) \
             .values('year', 'month', 'day') \
@@ -299,6 +309,11 @@ def job_post_chart(request):
             .values('year', 'month') \
             .annotate(count=Count('id')) \
             .order_by('year', 'month')
+        queryset3 = queryset3.annotate(year=ExtractYear('create_at'),
+                                       month=ExtractMonth('create_at')) \
+            .values('year', 'month') \
+            .annotate(count=Count('id')) \
+            .order_by('year', 'month')
     else:
         freq = "Y"
         queryset1 = queryset1.annotate(year=ExtractYear('create_at')) \
@@ -306,6 +321,10 @@ def job_post_chart(request):
             .annotate(count=Count('id')) \
             .order_by('year')
         queryset2 = queryset2.annotate(year=ExtractYear('create_at')) \
+            .values('year') \
+            .annotate(count=Count('id')) \
+            .order_by('year')
+        queryset3 = queryset3.annotate(year=ExtractYear('create_at')) \
             .values('year') \
             .annotate(count=Count('id')) \
             .order_by('year')
@@ -328,6 +347,11 @@ def job_post_chart(request):
                 data2.append(items2[0]['count'])
             else:
                 data2.append(0)
+            items3 = [x for x in queryset3 if x['year'] == y and x['month'] == m and x['day'] == d]
+            if len(items3) > 0:
+                data3.append(items3[0]['count'])
+            else:
+                data3.append(0)
         elif days <= 366:
             label = date.strftime("%m/%Y")
             items1 = [x for x in queryset1 if x['year'] == y and x['month'] == m]
@@ -340,6 +364,11 @@ def job_post_chart(request):
                 data2.append(items2[0]['count'])
             else:
                 data2.append(0)
+            items3 = [x for x in queryset3 if x['year'] == y and x['month'] == m]
+            if len(items3) > 0:
+                data3.append(items3[0]['count'])
+            else:
+                data3.append(0)
         else:
             label = date.strftime("%Y")
             items1 = [x for x in queryset1 if x['year'] == y]
@@ -352,6 +381,11 @@ def job_post_chart(request):
                 data2.append(items2[0]['count'])
             else:
                 data2.append(0)
+            items3 = [x for x in queryset3 if x['year'] == y]
+            if len(items3) > 0:
+                data3.append(items3[0]['count'])
+            else:
+                data3.append(0)
 
         labels.append(label)
 
@@ -359,10 +393,13 @@ def job_post_chart(request):
         "labels": labels,
         "data1": data1,
         "data2": data2,
-        "title1": "Đã duyệt",
-        "title2": "Chưa duyệt",
+        "data3": data3,
+        "title1": "Chờ duyệt",
+        "title2": "Không duyệt",
+        "title3": "Đã duyệt",
         "color1": "#F8BD7A",
-        "color2": "#000000"
+        "color2": "#ff3d00",
+        "color3": "#000000"
     })
 
 
