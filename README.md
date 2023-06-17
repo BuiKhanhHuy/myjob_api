@@ -23,6 +23,8 @@ twilio==8.0.0
 #### Clone repo
 ```bash
 git clone https://github.com/BuiKhanhHuy/myjob_api.git
+```
+```bash
 cd myjob_api
 ```
 
@@ -68,17 +70,31 @@ WEB_CLIENT_URL=
 
 ```base
 pip install virtualenv 
+```
+```base
 virtualenv venv
+```
+```base
 .\venv\Scripts\activate
+```
+```base
 pip install -r requirements.txt
+```
+```base
 python manage.py makemigrations
+```
+```base
 python manage.py migrate
+```
+```base
 python manage.py runserver
 ```
 
 ### 👉 `celery` command to below
 ```base
 celery -A myjob_api.celery worker --pool=solo --loglevel=info
+```
+```base
 celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
