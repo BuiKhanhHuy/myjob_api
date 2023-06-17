@@ -81,3 +81,7 @@ python manage.py runserver
 celery -A myjob_api.celery worker --pool=solo --loglevel=info
 celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
+
+### 👉 Go to http://localhost:8000/swagger/
+<img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/eb594bfe-1ade-43d2-b437-b102e8bc3f53"  alt="Image" /> 
+ 
