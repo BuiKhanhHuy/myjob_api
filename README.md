@@ -84,4 +84,6 @@ celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:Datab
 
 ### 👉 Go to http://localhost:8000/swagger/
 <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/eb594bfe-1ade-43d2-b437-b102e8bc3f53"  alt="Image" /> 
- 
+
+### 👉 Go to http://localhost:8000/admin/
+<img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/3f5bf791-697f-4bc4-be7c-421f7167dfa7" alt="Image" /> 
