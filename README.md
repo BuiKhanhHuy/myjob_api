@@ -87,3 +87,7 @@ celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:Datab
 
 ### 👉 Go to http://localhost:8000/admin/
 <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/c411ed48-6c1e-4940-a51a-8d30859aa90e" alt="Image" /> 
+
+### 👉 Frontend repo link
+* #### 🌐  [Web-app](https://github.com/BuiKhanhHuy/my-job-web-app) 
+* #### 📱  [Mobile-app](https://github.com/BuiKhanhHuy/MyJobApp) 
