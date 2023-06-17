@@ -1,5 +1,5 @@
 <p align="center">
- <img src="https://res.cloudinary.com/dtnpj540t/image/upload/v1681050602/my-job/my-company-media/myjob-dark-logo.png" width="200"  alt="Image" />
+ <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/d25c4a6d-72f1-48ad-99f0-d196bf495806" width="200"  alt="Image" />
 </p>
 
 <h1 align="center">Backend API for Job portal app (MyJob)</h3>
