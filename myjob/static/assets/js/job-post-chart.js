@@ -27,6 +27,8 @@ $(function () {
                         label: data?.title1, data: data?.data1 || [], backgroundColor: data?.color1, stack: 'Stack 0',
                     }, {
                         label: data?.title2, data: data?.data2 || [], backgroundColor: data?.color2, stack: 'Stack 0',
+                    }, {
+                        label: data?.title3, data: data?.data3 || [], backgroundColor: data?.color3, stack: 'Stack 0',
                     }]
                 };
                 myJobPostChart = new Chart(ctx, {

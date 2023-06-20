@@ -305,10 +305,6 @@ class CompanyFollowedAdmin(admin.ModelAdmin):
     list_display = ("id", "company", "user")
     list_display_links = ("id",)
     search_fields = ("company__company_name", "user__email")
-    list_filter = [
-        ("company", RelatedDropdownFilter),
-        ("user", RelatedDropdownFilter),
-    ]
     list_per_page = 25
 
 

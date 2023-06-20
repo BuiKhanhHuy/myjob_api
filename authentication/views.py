@@ -60,8 +60,27 @@ class CustomTokenView(TokenView):
                         return response_data(status=status.HTTP_400_BAD_REQUEST)
             return response_data(status=stt, data=json.loads(body))
         if stt == status.HTTP_400_BAD_REQUEST:
+            email = mutable_data.get("username", None)
+            password = mutable_data.get("password", "")
+
+            user = User.objects.filter(email=email).first()
+            if not user:
+                return response_data(status=stt, errors={
+                    "errorMessage": ["Email không chính xác."]
+                })
+            if not user.is_active:
+                return response_data(status=stt, errors={
+                    "errorMessage": [
+                        f"Tài khoản của bạn đã bị vô hiệu hóa. "
+                        f"Vui lòng liên hệ với bộ phận chăm sóc khách hàng của chúng tôi. "]
+                })
+            if not user.check_password(password):
+                return response_data(status=stt, errors={
+                    "errorMessage": ["Mật khẩu không chính xác."]
+                })
+
             return response_data(status=stt, errors={
-                "errorMessage": ["Email hoặc mật khẩu không chính xác."]
+                "errorMessage": ["Đã xảy ra lỗi trong quá trình đăng nhập."]
             })
         else:
             return response_data(status=stt)
@@ -76,6 +95,17 @@ class CustomConvertTokenView(ConvertTokenView):
                 request._request.POST[key] = value
 
             url, headers, body, stt = self.create_token_response(request._request)
+            if stt == status.HTTP_400_BAD_REQUEST:
+                error_body = json.loads(body)
+                error = error_body.get("error", "")
+                error_description = error_body.get("error_description", "")
+                if error == "invalid_grant" and error_description == "User inactive or deleted.":
+                    return response_data(status=stt, errors={
+                        "errorMessage": [
+                            "Tài khoản đăng nhập với email này đã bị vô hiệu hóa hoặc đã không còn tồn tại. "
+                            "Vui lòng liên hệ với bộ phận chăm sóc khách hàng của chúng tôi để được hỗ trợ."
+                        ]
+                    })
             return response_data(status=stt, data=json.loads(body))
         except BadRequest as ex:
             str_ex = str(ex)
@@ -101,6 +131,7 @@ class CustomRevokeTokenView(RevokeTokenView):
         for k, v in headers.items():
             response[k] = v
         return response
+
 
 @api_view(http_method_names=['post'])
 def check_email_exists(request):

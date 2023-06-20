@@ -1060,7 +1060,7 @@ def send_notification_demo(request):
     body_content = data.get('bodyContent', {})
     image_link = data.get("imageLink", None)
 
-    queue_job.send_email_job_post_for_job_seeker_task.delay(1)
+    # queue_job.send_email_job_post_for_job_seeker_task.delay(1)
     queue_notification.add_notification_to_user.delay(
         title=title,
         content=content,
