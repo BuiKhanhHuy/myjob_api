@@ -148,6 +148,31 @@ def send_email_confirm_application(to, subject, data=None, cc=None, bcc=None):
         return "Email confirm application sent failed with error!"
 
 
+# For admin
+@shared_task
+def send_an_account_deactivation_email(to, full_name, email, cc=None, bcc=None):
+    subject = "Thông báo: Tài khoản của bạn bị vô hiệu hóa"
+    data = {
+        "my_email": var_sys.COMPANY_INFO["EMAIL"],
+        "my_phone": var_sys.COMPANY_INFO["PHONE"],
+        "my_logo_link": var_sys.COMPANY_INFO["DARK_LOGO_LINK"],
+        "my_address": var_sys.COMPANY_INFO["ADDRESS"],
+        "my_company_name": var_sys.COMPANY_INFO["MY_COMPANY_NAME"],
+        "now": datetime.now().date().strftime(var_sys.DATE_TIME_FORMAT["dmY"]),
+        "full_name": full_name,
+        "email": email
+    }
+
+    email_html = render_to_string('deactivate-the-account.html', data)
+    text_content = strip_tags(email_html)
+    sent = utils.send_mail(subject, text_content, email_html, to=to, cc=cc, bcc=bcc)
+
+    if sent:
+        return 'Send an account deactivation email successfully.'
+    else:
+        return 'Send an account deactivation email failed!'
+
+
 @shared_task
 def send_email_for_user(user_id, full_name, to_email, frequency):
     try:

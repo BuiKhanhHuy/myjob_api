@@ -9,6 +9,7 @@ from .models import (
     ForgotPasswordToken
 )
 from django_admin_listfilter_dropdown.filters import (DropdownFilter)
+from console.jobs import queue_mail
 
 
 class UserForm(forms.ModelForm):
@@ -43,10 +44,8 @@ class UserForm(forms.ModelForm):
 class UserAdmin(admin.ModelAdmin):
     list_display = ("id", "show_avatar", "email", "full_name", "is_verify_email", "is_active", "role_name")
     list_display_links = ("id", "show_avatar", "email")
-    list_editable = ("is_active",)
     search_fields = ("full_name", "email")
     list_filter = [
-        ("email", DropdownFilter),
         ("role_name", DropdownFilter),
         ("is_verify_email", DropdownFilter),
         ("is_active", DropdownFilter),
@@ -76,6 +75,7 @@ class UserAdmin(admin.ModelAdmin):
     form = UserForm
 
     def save_model(self, request, user, form, change):
+        old_user = None
         if not change:
             user.set_password(user.password)
         else:
@@ -83,6 +83,9 @@ class UserAdmin(admin.ModelAdmin):
             if password_edit:
                 user.set_password(password_edit)
 
+            old_user = User.objects.filter(id=user.id).first()
+
+        # save
         super().save_model(request, user, form, change)
         if 'avatar_file' in request.FILES:
             file = request.FILES['avatar_file']
@@ -100,6 +103,14 @@ class UserAdmin(admin.ModelAdmin):
                 user.avatar_url = avatar_url
                 user.avatar_public_id = avatar_public_id
                 user.save()
+
+        if change:
+            new_is_active = user.is_active
+            if old_user and old_user.is_active and not new_is_active:
+                # Send an account deactivation email
+                queue_mail.send_an_account_deactivation_email.delay(
+                    to=[user.email],
+                    full_name=user.full_name, email=user.email)
 
 
 class ForgotPasswordTokenAdmin(admin.ModelAdmin):

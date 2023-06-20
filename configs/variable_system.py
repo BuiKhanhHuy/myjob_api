@@ -1,3 +1,5 @@
+from django.conf import settings
+
 ADMIN = 'ADMIN'
 EMPLOYER = 'EMPLOYER'
 JOB_SEEKER = 'JOB_SEEKER'
@@ -36,7 +38,8 @@ COMPANY_INFO = {
     "LIGHT_LOGO_LINK": "https://res.cloudinary.com/dtnpj540t/image/upload/v1681050660/my-job/my-company-media/myjob-light-logo.png",
     "EMAIL": "myjob.contact00000@gmail.com",
     "PHONE": "0888-425-094",
-    "ADDRESS": "1242 QL1A, Tân Tạo A, Bình Tân, TP. Hồ Chí Minh"
+    "ADDRESS": "1242 QL1A, Tân Tạo A, Bình Tân, TP. Hồ Chí Minh",
+    "MY_COMPANY_NAME": settings.COMPANY_NAME
 }
 
 PLATFORM_CHOICES = (

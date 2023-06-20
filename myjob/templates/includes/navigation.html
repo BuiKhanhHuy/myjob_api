@@ -4,13 +4,14 @@
     <div class="container-fluid px-0">
         <div class="d-flex justify-content-between w-100" id="navbarSupportedContent">
             <div class="d-flex align-items-center">
-                  <img alt="Logo" src="{% static 'assets/img/dark-text-logo.png' %}"
-                      class="avatar-md rounded" style="width: 100%;">
+                <img alt="Logo" src="{% static 'assets/img/dark-text-logo.png' %}"
+                     class="avatar-md rounded" style="width: 100%;">
             </div>
             <!-- Navbar links -->
             <ul class="navbar-nav align-items-center">
                 <li class="nav-item dropdown">
-                    <div class="nav-link text-dark notification-bell dropdown-toggle" id="bullet"  role="button" data-bs-toggle="dropdown"
+                    <div class="nav-link text-dark notification-bell dropdown-toggle" id="bullet" role="button"
+                         data-bs-toggle="dropdown"
                          data-bs-display="static" aria-expanded="false">
                         <svg class="icon icon-sm text-gray-900" fill="currentColor" viewBox="0 0 20 20"
                              xmlns="http://www.w3.org/2000/svg">
@@ -22,10 +23,12 @@
                     <div class="dropdown-menu dropdown-menu-lg dropdown-menu-center mt-2 py-0">
                         <div class="text-center text-primary fw-bold border-bottom border-light py-3">Notifications
                         </div>
-                        <div class="list-group list-group-flush" id="notification-content">
+                        <div style="overflow-y: auto; max-height: 500px;" id="notification-content">
                         </div>
-                         <div class="text-center text-primary fw-bold border-bottom border-light py-3">
-                             <button class="btn btn-sm btn-info" type="button" id="load-more">Load more</button>
+                        <div class="text-center text-primary fw-bold border-bottom border-light py-3">
+                            <button class="btn btn-sm btn-info" type="button" id="load-more" style="margin: 0 auto;">
+                                Load more
+                            </button>
                         </div>
                     </div>
                 </li>
@@ -81,3 +84,12 @@
         </div>
     </div>
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var dropdownButton = document.getElementById('load-more');
+        dropdownButton.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+    });
+</script>
