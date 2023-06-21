@@ -42,7 +42,6 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() 
 INSTALLED_APPS = [
     'admin_volt.apps.AdminVoltConfig',
     'django.contrib.admin',
-    'django_light',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -132,9 +131,9 @@ CKEDITOR_CONFIGS = {
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 # Bo khi su dung sqlclient: mysqlclient==2.1.1
-import pymysql
-
-pymysql.install_as_MySQLdb()
+# import pymysql
+#
+# pymysql.install_as_MySQLdb()
 
 DATABASES = {
     'default': {

@@ -72,9 +72,9 @@ class LocationAdmin(admin.ModelAdmin):
 
 
 class CareerAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "show_icon")
+    list_display = ("id", "name", "show_icon", "app_icon_name")
     list_display_links = ("id", "name",)
-    search_fields = ("name",)
+    search_fields = ("name", )
     ordering = ("id", 'name',)
     readonly_fields = ("show_icon",)
     list_per_page = 25
