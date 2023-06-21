@@ -112,18 +112,23 @@ class CompanyImageInlineAdmin(admin.StackedInline):
 
 
 # ADMIN
+@admin.register(JobSeekerProfile)
 class JobSeekerProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "phone", "birthday", "gender", "marital_status", "location")
     list_display_links = ("user",)
     search_fields = ("user__email", "phone")
+    readonly_fields = ('user',)
     list_filter = [
         ("gender", ChoiceDropdownFilter),
         ("marital_status", ChoiceDropdownFilter),
     ]
-    # readonly_fields = ("show_avatar", "avatar_public_id", "avatar_url", "password")
     list_per_page = 25
 
+    raw_id_fields = ('location',)
+    list_select_related = ('user', 'location')
 
+
+@admin.register(Resume)
 class ResumeAdmin(admin.ModelAdmin):
     list_display = ("title", "position", "experience", "academic_level",
                     "type_of_workplace", "job_type", "is_active", "user")
@@ -138,7 +143,8 @@ class ResumeAdmin(admin.ModelAdmin):
         ("is_active", DropdownFilter),
     ]
     ordering = ('is_active',)
-    readonly_fields = ("type", 'public_id', 'show_resume_image')
+    readonly_fields = ("type", 'public_id', 'show_resume_image',
+                       'job_seeker_profile', 'user')
     inlines = (EducationDetailInlineAdmin, ExperienceDetailInlineAdmin,
                CertificateInlineAdmin, LanguageSkillInlineAdmin,
                AdvancedSkillInlineAdmin)
@@ -149,6 +155,10 @@ class ResumeAdmin(admin.ModelAdmin):
               "job_seeker_profile", "user", "public_id", "type",
               "is_active", "show_resume_image", "resume_file",
               "description")
+
+    autocomplete_fields = ['city', 'career',
+                           'company_viewers', 'company_savers']
+    list_select_related = ('city', 'career',)
 
     def show_resume_image(self, resume):
         if resume:
@@ -185,6 +195,7 @@ class ResumeAdmin(admin.ModelAdmin):
                 obj.save()
 
 
+@admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ("id", "company_name", "field_operation", "company_email",
                     "company_phone", "employee_size", "tax_code", "user",)
@@ -196,6 +207,9 @@ class CompanyAdmin(admin.ModelAdmin):
     readonly_fields = ('show_company_image', 'show_company_cover_image')
     inlines = (CompanyImageInlineAdmin,)
     list_per_page = 25
+
+    raw_id_fields = ('user', 'location', 'followers')
+    list_select_related = ('user', 'location')
 
     fields = (
         "company_name",
@@ -284,13 +298,18 @@ class CompanyAdmin(admin.ModelAdmin):
             company.save()
 
 
+@admin.register(ResumeSaved)
 class ResumeSavedAdmin(admin.ModelAdmin):
     list_display = ("id", "resume", "company")
     list_display_links = ("id",)
     search_fields = ("resume__title", "company__company_email", "company__company_name")
     list_per_page = 25
 
+    readonly_fields = ('resume', 'company')
+    list_select_related = ('resume', 'company')
 
+
+@admin.register(ResumeViewed)
 class ResumeViewedAdmin(admin.ModelAdmin):
     list_display = ("id", "resume", "company", "views")
     list_display_links = ("id",)
@@ -298,19 +317,18 @@ class ResumeViewedAdmin(admin.ModelAdmin):
     search_fields = ("resume__title", "company__company_email", "company__company_name")
     list_per_page = 25
 
+    readonly_fields = ('resume', 'company')
+    list_select_related = ('resume', 'company')
+
     form = ResumeViewedForm
 
 
+@admin.register(CompanyFollowed)
 class CompanyFollowedAdmin(admin.ModelAdmin):
     list_display = ("id", "company", "user")
     list_display_links = ("id",)
     search_fields = ("company__company_name", "user__email")
     list_per_page = 25
 
-
-admin.site.register(JobSeekerProfile, JobSeekerProfileAdmin)
-admin.site.register(Resume, ResumeAdmin)
-admin.site.register(Company, CompanyAdmin)
-admin.site.register(ResumeSaved, ResumeSavedAdmin)
-admin.site.register(ResumeViewed, ResumeViewedAdmin)
-admin.site.register(CompanyFollowed, CompanyFollowedAdmin)
+    raw_id_fields = ('company', 'user')
+    list_select_related = ('company', 'user')
