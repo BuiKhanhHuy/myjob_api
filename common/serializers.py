@@ -15,6 +15,7 @@ class DistrictSerializer(serializers.ModelSerializer):
 class CareerSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=150)
     iconUrl = serializers.URLField(source='icon_url', max_length=300)
+    appIconName = serializers.CharField(source='app_icon_name', read_only=True)
     createAt = serializers.DateTimeField(source='create_at')
     updateAt = serializers.DateTimeField(source='update_at')
     jobPostTotal = serializers.SerializerMethodField(method_name='get_job_post_total')
@@ -36,7 +37,7 @@ class CareerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Career
-        fields = ('id', 'name', 'iconUrl', 'createAt', 'updateAt', 'jobPostTotal')
+        fields = ('id', 'name', 'iconUrl', 'appIconName', 'createAt', 'updateAt', 'jobPostTotal')
 
 
 class ProfileDistrictSerializers(serializers.ModelSerializer):

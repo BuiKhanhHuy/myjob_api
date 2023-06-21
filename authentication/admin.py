@@ -41,6 +41,7 @@ class UserForm(forms.ModelForm):
             self.fields['password_edit'].widget = forms.HiddenInput()
 
 
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ("id", "show_avatar", "email", "full_name", "is_verify_email", "is_active", "role_name")
     list_display_links = ("id", "show_avatar", "email")
@@ -113,6 +114,7 @@ class UserAdmin(admin.ModelAdmin):
                     full_name=user.full_name, email=user.email)
 
 
+@admin.register(ForgotPasswordToken)
 class ForgotPasswordTokenAdmin(admin.ModelAdmin):
     list_display = ("id", "token", "code", "expired_at", "is_active", "platform", "user")
     list_display_links = ("id", "token", "code")
@@ -125,6 +127,4 @@ class ForgotPasswordTokenAdmin(admin.ModelAdmin):
     readonly_fields = ("token", "code", "expired_at", "is_active", "platform", "user")
     list_per_page = 25
 
-
-admin.site.register(User, UserAdmin)
-admin.site.register(ForgotPasswordToken, ForgotPasswordTokenAdmin)
+    autocomplete_fields = ('user',)

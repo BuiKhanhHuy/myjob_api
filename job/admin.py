@@ -19,6 +19,17 @@ class JobPostForm(forms.ModelForm):
         }
 
 
+class JobPostActivityForm(forms.ModelForm):
+    class Meta:
+        model = JobPostActivity
+        fields = '__all__'
+        widgets = {
+            'is_sent_email': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+            'is_deleted': forms.CheckboxInput(attrs={'class': "form-check-input"}),
+        }
+
+
+@admin.register(JobPost)
 class JobPostAdmin(admin.ModelAdmin):
     list_display = ("id", "job_name", "career", "deadline", "quantity", "is_hot",
                     "is_urgent", "status", "views", "shares")
@@ -48,6 +59,10 @@ class JobPostAdmin(admin.ModelAdmin):
               "gender_required", "job_description", "job_requirement", "benefits_enjoyed",
               "is_hot", "is_urgent", "status")
 
+    readonly_fields = ('user', 'company')
+    autocomplete_fields = ('career', 'location')
+    list_select_related = ('career',)
+
     form = JobPostForm
 
     def save_model(self, request, obj, form, change):
@@ -64,6 +79,7 @@ class JobPostAdmin(admin.ModelAdmin):
                 helper.add_job_post_verify_notification(obj)
 
 
+@admin.register(SavedJobPost)
 class SavedJobPostAdmin(admin.ModelAdmin):
     list_display = ("id", "job_post", "user")
     list_display_links = ("id", "job_post",)
@@ -71,7 +87,10 @@ class SavedJobPostAdmin(admin.ModelAdmin):
     ordering = ("id",)
     list_per_page = 25
 
+    readonly_fields = ('job_post', 'user')
 
+
+@admin.register(JobPostActivity)
 class JobPostActivityAdmin(admin.ModelAdmin):
     list_display = ("id", "full_name", "email", "phone",
                     "job_post", "user", "resume",
@@ -83,8 +102,6 @@ class JobPostActivityAdmin(admin.ModelAdmin):
         ("status", ChoiceDropdownFilter),
     ]
     list_per_page = 25
+    readonly_fields = ('job_post', 'user', 'resume')
 
-
-admin.site.register(JobPost, JobPostAdmin)
-admin.site.register(SavedJobPost, SavedJobPostAdmin)
-admin.site.register(JobPostActivity, JobPostActivityAdmin)
+    form = JobPostActivityForm

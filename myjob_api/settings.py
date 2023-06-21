@@ -42,7 +42,6 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() 
 INSTALLED_APPS = [
     'admin_volt.apps.AdminVoltConfig',
     'django.contrib.admin',
-    'django_light',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

@@ -191,10 +191,10 @@ def get_all_careers(request):
 
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
-            serializer = CareerSerializer(page, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+            serializer = CareerSerializer(page, many=True, fields=['id', 'name', 'appIconName', 'jobPostTotal'])
             return paginator.get_paginated_response(serializer.data)
 
-        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'appIconName', 'jobPostTotal'])
         return var_res.response_data(data=serializer.data)
     except Exception as ex:
         helper.print_log_error("get_all_careers", ex)

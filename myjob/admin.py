@@ -49,6 +49,7 @@ class BannerForm(forms.ModelForm):
         self.fields['image_mobile_file'].required = False
 
 
+@admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
     list_display = ("id", "create_at", "content", "rating", "is_active", "user")
     list_display_links = ("id",)
@@ -63,9 +64,12 @@ class FeedbackAdmin(admin.ModelAdmin):
         "content", "rating", "user", "is_active"
     )
 
+    readonly_fields = ('user',)
+
     form = FeedbackForm
 
 
+@admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     list_display = ("id", "show_image_url",
                     "show_mobile_image_url", "description",
@@ -229,9 +233,6 @@ class CustomPeriodicTaskAdmin(PeriodicTaskAdmin):
         }),
     )
 
-
-admin.site.register(Feedback, FeedbackAdmin)
-admin.site.register(Banner, BannerAdmin)
 
 admin.site.unregister(PeriodicTask)
 admin.site.register(PeriodicTask, CustomPeriodicTaskAdmin)

@@ -40,6 +40,7 @@ class LocationInlineAdmin(admin.StackedInline):
     extra = 1
 
 
+@admin.register(City)
 class CityAdmin(admin.ModelAdmin):
     list_display = ("id", "name",)
     search_fields = ("name",)
@@ -48,6 +49,7 @@ class CityAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 
+@admin.register(District)
 class DistrictAdmin(admin.ModelAdmin):
     list_display = ("id", "name", 'city')
     list_display_links = ("id", "name",)
@@ -56,7 +58,11 @@ class DistrictAdmin(admin.ModelAdmin):
     ordering = ("id", 'name',)
     list_per_page = 25
 
+    autocomplete_fields = ('city',)
+    list_select_related = ('city',)
 
+
+@admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ("id", "city", 'district', 'lat', 'lng', 'address')
     list_display_links = ("id", "city",)
@@ -68,11 +74,15 @@ class LocationAdmin(admin.ModelAdmin):
     ordering = ("id", 'address',)
     list_per_page = 25
 
+    autocomplete_fields = ('city', 'district')
+    list_select_related = ('city',)
+
     form = LocationForm
 
 
+@admin.register(Career)
 class CareerAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "show_icon")
+    list_display = ("id", "name", "show_icon", "app_icon_name")
     list_display_links = ("id", "name",)
     search_fields = ("name",)
     ordering = ("id", 'name',)
@@ -110,9 +120,3 @@ class CareerAdmin(admin.ModelAdmin):
             else:
                 career.icon_url = career_image_url
                 career.save()
-
-
-admin.site.register(Career, CareerAdmin)
-admin.site.register(City, CityAdmin)
-admin.site.register(District, DistrictAdmin)
-admin.site.register(Location, LocationAdmin)
