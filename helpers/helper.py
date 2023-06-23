@@ -58,14 +58,14 @@ def send_email_verify_email(request, user, platform):
         user.pk, settings.MYJOB_AUTH["VERIFY_EMAIL_LINK_EXPIRE_SECONDS"]
     )
     token = email_verification_token.make_token(user=user)
-    func = f"api/auth/active-email/{encoded_data}/{token}/?redirectLogin={redirect_login}"
+    func = f"api/auth/active-email/{encoded_data}/{token}/?redirectLogin={redirect_login}&platform=WEB"
 
     protocol = 'https' if request.is_secure() else 'http'
     domain = request.META['HTTP_HOST']
 
     confirm_email_deeplink = None
     if role_name == var_sys.JOB_SEEKER and platform == "APP":
-        confirm_email_deeplink = f"MyJob://app/{settings.REDIRECT_LOGIN_CLIENT[role_name]}"
+        confirm_email_deeplink = f"{settings.DOMAIN_CLIENT[settings.APP_ENVIRONMENT]}active/{encoded_data}/{token}/APP"
 
     data = {
         "confirm_email_url": f'{protocol}://{domain}/{func}',

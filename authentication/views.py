@@ -174,30 +174,52 @@ def check_creds(request):
 
 @api_view(http_method_names=["GET"])
 def user_active(request, encoded_data, token):
-    if "redirectLogin" not in request.GET:
+    if "platform" not in request.GET:
         return HttpResponseNotFound()
 
-    redirect_login = request.GET.get("redirectLogin")
-    if redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.JOB_SEEKER] and \
-            redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.EMPLOYER]:
+    platform = request.GET.get("platform")
+    if platform != var_sys.PLATFORM_CHOICES[0][0] and platform != var_sys.PLATFORM_CHOICES[1][0]:
         return HttpResponseNotFound()
+
+    redirect_login = ''
+    if platform == var_sys.PLATFORM_CHOICES[0][0]:
+        if "redirectLogin" not in request.GET:
+            return HttpResponseNotFound()
+
+        redirect_login = request.GET.get("redirectLogin")
+        if redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.JOB_SEEKER] and \
+                redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.EMPLOYER]:
+            return HttpResponseNotFound()
 
     try:
         uid, expiration_time = helper.urlsafe_base64_decode_with_encoded_data(encoded_data)
         if uid is None or expiration_time is None:
-            return HttpResponseRedirect(
-                helper.get_full_client_url(
-                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+            if platform == var_sys.PLATFORM_CHOICES[0][0]:
+                return HttpResponseRedirect(
+                    helper.get_full_client_url(
+                        f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+            else:
+                response_data(status=status.HTTP_400_BAD_REQUEST, errors={
+                    "errorMessage": [
+                        "Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."]
+                })
 
         if not helper.check_expiration_time(expiration_time):
-            return HttpResponseRedirect(
-                helper.get_full_client_url(
-                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."))
+            if platform == var_sys.PLATFORM_CHOICES[0][0]:
+                return HttpResponseRedirect(
+                    helper.get_full_client_url(
+                        f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."))
+            else:
+                response_data(status=status.HTTP_400_BAD_REQUEST, errors={
+                    "errorMessage": [
+                        "Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."]
+                })
 
         user = User.objects.get(pk=uid)
     except Exception as ex:
         user = None
         helper.print_log_error("user_active", ex)
+
     if user is not None and email_verification_token.check_token(user, token):
         user.is_active = True
         user.is_verify_email = True
@@ -213,12 +235,21 @@ def user_active(request, encoded_data, token):
             noti_title,
             [user.id]
         )
-        return HttpResponseRedirect(
-            helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
+        if platform == var_sys.PLATFORM_CHOICES[0][0]:
+            return HttpResponseRedirect(
+                helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
+        else:
+            return response_data(status=status.HTTP_200_OK)
     else:
-        return HttpResponseRedirect(
-            helper.get_full_client_url(
-                f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+        if platform == var_sys.PLATFORM_CHOICES[0][0]:
+            return HttpResponseRedirect(
+                helper.get_full_client_url(
+                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+        else:
+            return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
+                "errorMessage": [
+                    "Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."]
+            })
 
 
 @api_view(http_method_names=["post"])
