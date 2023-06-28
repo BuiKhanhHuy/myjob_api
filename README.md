@@ -93,7 +93,7 @@ python manage.py runserver
 
 ### 👉 `celery` command to below
 ```base
-celery -A myjob_api.celery worker --pool=solo --loglevel=info
+celery -A myjob_api.celery worker --pool=prefork --loglevel=info
 ```
 ```base
 celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
