@@ -106,6 +106,9 @@ celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:Datab
 <img src="https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/c411ed48-6c1e-4940-a51a-8d30859aa90e" alt="Image" /> 
 
 ### 👉 Live demo: https://bkhuy-myjobapi-production.up.railway.app/admin/
+Test Admin Account:
+* Email: myjob.testadmin@gmail.com
+* Password: 123
 
 ### 👉 Frontend repo link
 * #### 🌐  [Web-app](https://github.com/BuiKhanhHuy/my-job-web-app) 
