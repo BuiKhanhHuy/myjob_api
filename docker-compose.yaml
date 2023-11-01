@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: myjob-db-container
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=P@ssword
+    volumes:
+      - ./data/myjob_db.sql:/docker-entrypoint-initdb.d/data.sql
+    networks:
+      - myjob-backend-network
+    ports:
+      - "3307:3306"
+    expose:
+      - 3006
+  backend:
+    image: myjob-backend
+    container_name: myjob-backend-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DEBUG=${DEBUG}
+      - APPEND_SLASH=${APPEND_SLASH}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
+      - DB_ENGINE=${DB_ENGINE}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - SERVICE_REDIS_HOST=${SERVICE_REDIS_HOST}
+      - SERVICE_REDIS_PASSWORD=${SERVICE_REDIS_PASSWORD}
+      - SERVICE_REDIS_PORT=${SERVICE_REDIS_PORT}
+      - SERVICE_REDIS_USERNAME=${SERVICE_REDIS_USERNAME}
+      - SERVICE_REDIS_DB=${SERVICE_REDIS_DB}
+      - SOCIAL_AUTH_FACEBOOK_KEY=${SOCIAL_AUTH_FACEBOOK_KEY}
+      - SOCIAL_AUTH_FACEBOOK_SECRET=${SOCIAL_AUTH_FACEBOOK_SECRET}
+      - SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=${SOCIAL_AUTH_GOOGLE_OAUTH2_KEY}
+      - SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=${SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE=${TWILIO_PHONE}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - WEB_CLIENT_URL=${WEB_CLIENT_URL}
+    networks:
+      - myjob-backend-network
+    ports:
+      - "8001:8000"
+    expose:
+      - 8000
+    depends_on:
+      - db
+
+networks:
+  myjob-backend-network:
+    name: myjob-backend-network
