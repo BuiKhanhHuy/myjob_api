@@ -9,6 +9,7 @@ services:
       - MYSQL_ROOT_PASSWORD=P@ssword
     volumes:
       - ./data/myjob_db.sql:/docker-entrypoint-initdb.d/data.sql
+      - myjob-volume:/var/lib/mysql
     networks:
       - myjob-backend-network
     ports:
@@ -66,3 +67,6 @@ services:
 networks:
   myjob-backend-network:
     name: myjob-backend-network
+
+volumes:
+  myjob-volume:
