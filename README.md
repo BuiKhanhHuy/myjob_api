@@ -18,7 +18,7 @@ cd myjob_api
 ```
 
 ### 👉 Update the data in the file `.env`
-Create .env file
+
 ```plaintext
 myjob_api/
   |-- ...
@@ -67,17 +67,22 @@ WEB_CLIENT_URL=http://localhost:3001 (your web client url)
 
 ### 👉 Go to all API: http://localhost:8001/swagger/
 
-![Image](https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/bdf34cb0-40e9-4403-9345-5e6f6299df3a)
+![Image](https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/d43ffe6c-9c40-4d7c-8772-588f34616021)
 
 ### 👉 Go to Admin page: http://localhost:8001/admin/
 
-![Image](https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/c411ed48-6c1e-4940-a51a-8d30859aa90e)
+![Image](https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/1259d6d4-f94a-4086-8cd6-d2abfba64c90)
+
+**Test administrator account:**
+
+*   Email: [myjob.contact00000@gmail.com](mailto:myjob.testadmin@gmail.com)
+*   Password: 123
 
 ## Live demo
 
 ### 👉 Link: https://huybk2-myjobapi-production.up.railway.app/admin/
 
-## Test administrator account
+### **👉** Test administrator account
 
 *   Email: myjob.testadmin@gmail.com
 *   Password: 123
