@@ -12,11 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import os
 from datetime import datetime
-from decouple import config
 from pathlib import Path
-from datetime import timedelta
-from celery.schedules import crontab
-from django.utils import timezone
+from decouple import config
 import cloudinary
 import firebase_admin
 from firebase_admin import credentials
@@ -131,9 +128,6 @@ CKEDITOR_CONFIGS = {
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 # Bo khi su dung sqlclient: mysqlclient==2.1.1
-# import pymysql
-#
-# pymysql.install_as_MySQLdb()
 
 DATABASES = {
     'default': {
