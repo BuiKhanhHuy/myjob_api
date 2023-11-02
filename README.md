@@ -17,8 +17,8 @@ git clone https://github.com/BuiKhanhHuy/myjob_api.git
 cd myjob_api
 ```
 
-### 👉 Update the data in the file `.env`
-
+### 👉 Update the data in `.env` file 
+Create `.env` file 
 ```plaintext
 myjob_api/
   |-- ...
