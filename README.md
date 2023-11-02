@@ -63,7 +63,44 @@ WEB_CLIENT_URL=http://localhost:3001 (your web client url)
 
 ### 👉 Run app
 
-<table><tbody><tr><td><h4>Docker</h4></td><td><h4>Manual (Windows)</h4></td></tr><tr><td><p>&nbsp;</p><pre><code class="language-python">docker compose -p myjob-api-project up -d </code></pre><p>&nbsp;</p></td><td><pre><code class="language-python">python -m venv venv</code></pre><pre><code class="language-python">venv\Scripts\activate</code></pre><pre><code class="language-python">pip install -r requirements.txt</code></pre><pre><code class="language-python">python manage.py migrate</code></pre><pre><code class="language-python">python manage.py runserver 0.0.0.0:8001</code></pre><p>→ New terminal in project</p><pre><code class="language-python">celery -A myjob_api.celery worker --pool=prefork --loglevel=info</code></pre><p>→ New terminal in project</p><pre><code class="language-python">celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler</code></pre><p><strong>→ Import data from </strong><code><strong>myjob_db.sql</strong></code><strong> file at:</strong></p><p>&nbsp;myjob_api/<br>&nbsp; &nbsp; &nbsp;|-- ...<br>&nbsp; &nbsp; &nbsp;|-- myjob_api<br>&nbsp; &nbsp; &nbsp;|-- myjob<br>&nbsp; &nbsp; &nbsp;|-- data/<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;|-- …<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;| myjob_db.sql 👈</p></td></tr></tbody></table>
+<table>
+  <tbody>
+    <tr>
+      <td><h4>Docker</h4></td>
+      <td><h4>Manual (Windows)</h4></td>
+    </tr>
+    <tr>
+      <td>
+        <p>&nbsp;</p>
+        <pre><code class="language-python">docker compose -p myjob-api-project up -d </code></pre>
+        <p>&nbsp;</p>
+      </td>
+      <td>
+        <pre><code class="language-python">python -m venv venv</code></pre>
+        <pre><code class="language-python">venv\Scripts\activate</code></pre>
+        <pre><code class="language-python">pip install -r requirements.txt</code></pre>
+        <pre><code class="language-python">python manage.py migrate</code></pre>
+        <pre><code class="language-python">python manage.py runserver 0.0.0.0:8001</code></pre>
+        <p>→ New terminal in project</p>
+        <pre><code class="language-python">celery -A myjob_api.celery worker --pool=prefork --loglevel=info</code></pre>
+        <p>→ New terminal in project</p>
+        <pre><code class="language-python">celery -A myjob_api beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler</code></pre>
+        <p>
+          <strong>→ Import data from </strong
+          ><code><strong>myjob_db.sql</strong></code
+          ><strong> file at:</strong>
+        </p>
+        <p>
+          &nbsp;myjob_api/<br />&nbsp; &nbsp; &nbsp;|-- ...<br />&nbsp;
+          &nbsp; &nbsp;|-- myjob_api<br />&nbsp; &nbsp; &nbsp;|-- myjob<br />&nbsp;
+          &nbsp; &nbsp;|-- data/<br />&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &nbsp; &nbsp;|-- …<br />&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &nbsp;| myjob_db.sql 👈
+        </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ### 👉 Go to all API: http://localhost:8001/swagger/
 
