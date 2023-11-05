@@ -117,7 +117,9 @@ WEB_CLIENT_URL=http://localhost:3001 (your web client url)
 
 ## Live demo
 
-### 👉 Link: http://myjob.id.vn/
+### 👉 Link: 
+* Admin: https://myjob-api-v1.onrender.com/admin/
+* Client: http://myjob.id.vn/
 
 ### **👉** Test administrator account
 
