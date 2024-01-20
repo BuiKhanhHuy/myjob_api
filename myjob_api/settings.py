@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'info',
     'job',
     'myjob',
+    'chatbot',
     'corsheaders'
 ]
 
@@ -320,10 +321,9 @@ MYJOB_AUTH = {
 
 REDIS_JOB_TITLE_EXPIRE_SECONDS = 14400
 
-# TWILIO
-TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
-TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN')
-TWILIO_PHONE = config('TWILIO_PHONE')
+# SMS
+SMS_BASE_URL = "https://qy1kdr.api.infobip.com"
+SMS_API_KEY = config('SMS_API_KEY')
 
 # FIREBASE
 # FIREBASE_CONFIG = os.path.join(BASE_DIR, 'configs', 'firebase-config.json')

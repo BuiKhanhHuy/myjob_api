@@ -49,7 +49,8 @@ urlpatterns = [
             path('accounts/register/', admin_views.register_view, name="register"),
             path('accounts/login/', admin_volt_views.UserLoginView.as_view(), name="login"),
             path('accounts/logout/', admin_volt_views.logout_view, name="logout"),
-            path('accounts/password-change/', admin_volt_views.UserPasswordChangeView.as_view(), name='password_change'),
+            path('accounts/password-change/', admin_volt_views.UserPasswordChangeView.as_view(),
+                 name='password_change'),
             path('accounts/password-change-done/', auth_views.PasswordChangeDoneView.as_view(
                 template_name='accounts/password-change-done.html'
             ), name="password_change_done"),
@@ -88,7 +89,8 @@ urlpatterns = [
             path('auth/', include('authentication.urls')),
             path('info/', include('info.urls')),
             path('job/', include('job.urls')),
-            path('myjob/', include('myjob.urls'))
+            path('myjob/', include('myjob.urls')),
+            path('chatbot/', include('chatbot.urls')),
         ]
     ))
 ]
