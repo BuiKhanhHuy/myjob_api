@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.conf import settings
 from django.db import transaction
+from console.jobs import queue_auth
 from .models import User
 from info.models import (
     JobSeekerProfile, Resume,
@@ -249,6 +250,16 @@ class UserSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
+    def update(self, user, validated_data):
+        full_name = validated_data.get("full_name", "Full name")
+
+        user.full_name = full_name
+        if not user.has_company:
+            queue_auth.update_info.delay(user.id, full_name)
+
+        user.save()
+        return user
+
     class Meta:
         model = User
         fields = ("id", "fullName", "email",
@@ -277,12 +288,33 @@ class AvatarSerializer(serializers.ModelSerializer):
             return None
         else:
             avatar_url = avatar_upload_result.get('secure_url')
+            # update in db
             user.avatar_url = avatar_url
             user.avatar_public_id = avatar_public_id
             user.save()
+
+            # update in firebase
+            if not user.has_company:
+                queue_auth.update_avatar.delay(user.id, avatar_url)
 
             return user
 
     class Meta:
         model = User
         fields = ('file', 'avatarUrl')
+
+
+class UserSettingSerializer(serializers.ModelSerializer):
+    emailNotificationActive = serializers.BooleanField(required=True, source='email_notification_active')
+    smsNotificationActive = serializers.BooleanField(required=True, source='sms_notification_active')
+
+    def update(self, user, validated_data):
+        user.email_notification_active = validated_data.get("email_notification_active", True)
+        user.sms_notification_active = validated_data.get("sms_notification_active", True)
+        user.save()
+
+        return user
+
+    class Meta:
+        model = User
+        fields = ('emailNotificationActive', 'smsNotificationActive')

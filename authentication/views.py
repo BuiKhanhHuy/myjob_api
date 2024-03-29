@@ -1,11 +1,10 @@
 import json
 import datetime
-
 import cloudinary.uploader
 import pytz
+import requests
 from django.conf import settings
 from django.db import transaction
-
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django_otp.oath import TOTP
@@ -17,11 +16,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.core.exceptions import BadRequest
 from drf_social_oauth2.views import TokenView, ConvertTokenView, RevokeTokenView
 from oauth2_provider.models import get_access_token_model
+from social_django.models import UserSocialAuth
 
-from console.jobs import queue_mail
+from console.jobs import queue_mail, queue_auth
 from .tokens_custom import email_verification_token
 from .models import User, ForgotPasswordToken
 from .serializers import (
@@ -32,7 +33,8 @@ from .serializers import (
     EmployerRegisterSerializer,
     JobSeekerRegisterSerializer,
     UserSerializer,
-    AvatarSerializer
+    AvatarSerializer,
+    UserSettingSerializer
 )
 
 
@@ -106,7 +108,9 @@ class CustomConvertTokenView(ConvertTokenView):
                             "Vui lòng liên hệ với bộ phận chăm sóc khách hàng của chúng tôi để được hỗ trợ."
                         ]
                     })
-            return response_data(status=stt, data=json.loads(body))
+            res_data = json.loads(body)
+            res_data['backend'] = mutable_data["backend"]
+            return response_data(status=stt, data=res_data)
         except BadRequest as ex:
             str_ex = str(ex)
             return response_data(
@@ -116,12 +120,37 @@ class CustomConvertTokenView(ConvertTokenView):
 
 
 class CustomRevokeTokenView(RevokeTokenView):
+    def facebook_revoke_token(self, access_token):
+        response = requests.delete(url=settings.SOCIAL_AUTH_FACEBOOK_OAUTH2_REVOKE_TOKEN_URL, headers={
+            "Authorization": "Bearer {}".format(access_token)
+        })
+        if response.status_code == status.HTTP_200_OK:
+            print(">>> Revoke facebook token success!")
+
+    def google_revoke_token(self, access_token):
+        pass
+
+
     def post(self, request, *args, **kwargs):
         # Use the rest framework `.data` to fake the post body of the django request.
         mutable_data = request.data.copy()
+        backend = mutable_data.pop("backend", None)
         request._request.POST = request._request.POST.copy()
         for key, value in mutable_data.items():
             request._request.POST[key] = value
+
+        # revoke social token
+        if backend and backend != "0" and backend != 'undefined':
+            social_auth_usersocialauth = UserSocialAuth.objects\
+                .filter(user=request.user, provider=backend).first()
+            if social_auth_usersocialauth:
+                extra_data = social_auth_usersocialauth.extra_data
+                if extra_data["expires"] is None:
+                    social_access_token = extra_data["access_token"]
+                    if backend == "facebook":
+                        self.facebook_revoke_token(social_access_token)
+                    elif backend == "google-oauth2":
+                        self.google_revoke_token(social_access_token)
 
         url, headers, body, status = self.create_revocation_response(request._request)
         response = Response(
@@ -454,10 +483,14 @@ def avatar(request):
                 destroy_result = cloudinary.uploader.destroy(user.avatar_public_id)
                 if not destroy_result.get("result", "") == "ok":
                     raise Exception("Something went wrong when upload image to cloudinary!")
-
+            # update in db
             user.avatar_url = var_sys.AVATAR_DEFAULT["AVATAR"]
             user.avatar_public_id = None
             user.save()
+
+            # update in firebase
+            if not user.has_company:
+                queue_auth.update_avatar.delay(user.id, var_sys.AVATAR_DEFAULT["AVATAR"])
         except Exception as ex:
             helper.print_log_error("delete_avatar", ex)
             return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -512,3 +545,23 @@ def get_user_info(request):
     user_info = request.user
     user_info_serializer = UserSerializer(user_info)
     return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
+
+
+class UserSettingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_setting = request.user
+        user_info_serializer = UserSettingSerializer(user_setting)
+        return response_data(status=status.HTTP_200_OK, data=user_info_serializer.data)
+
+    def put(self, request):
+        user_settings_serializer = UserSettingSerializer(request.user, data=request.data)
+        if not user_settings_serializer.is_valid():
+            return response_data(status=status.HTTP_400_BAD_REQUEST, errors=user_settings_serializer.errors)
+        try:
+            user_settings_serializer.save()
+        except Exception as ex:
+            helper.print_log_error("update_user_setting", ex)
+            return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return response_data(data=user_settings_serializer.data, status=status.HTTP_200_OK)

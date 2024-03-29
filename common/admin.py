@@ -4,6 +4,7 @@ from django.utils.html import mark_safe
 from django import forms
 from django.conf import settings
 from helpers import helper
+from myjob_api.admin import custom_admin_site
 from .models import (
     City,
     District,
@@ -17,10 +18,6 @@ class LocationForm(forms.ModelForm):
     class Meta:
         model = Location
         fields = '__all__'
-        widgets = {
-            'lat': forms.NumberInput(attrs={'class': "form-control"}),
-            'lng': forms.NumberInput(attrs={'class': "form-control"}),
-        }
 
 
 class CareerForm(forms.ModelForm):
@@ -40,7 +37,6 @@ class LocationInlineAdmin(admin.StackedInline):
     extra = 1
 
 
-@admin.register(City)
 class CityAdmin(admin.ModelAdmin):
     list_display = ("id", "name",)
     search_fields = ("name",)
@@ -49,7 +45,6 @@ class CityAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 
-@admin.register(District)
 class DistrictAdmin(admin.ModelAdmin):
     list_display = ("id", "name", 'city')
     list_display_links = ("id", "name",)
@@ -62,7 +57,6 @@ class DistrictAdmin(admin.ModelAdmin):
     list_select_related = ('city',)
 
 
-@admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ("id", "city", 'district', 'lat', 'lng', 'address')
     list_display_links = ("id", "city",)
@@ -80,7 +74,6 @@ class LocationAdmin(admin.ModelAdmin):
     form = LocationForm
 
 
-@admin.register(Career)
 class CareerAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "show_icon", "app_icon_name")
     list_display_links = ("id", "name",)
@@ -120,3 +113,9 @@ class CareerAdmin(admin.ModelAdmin):
             else:
                 career.icon_url = career_image_url
                 career.save()
+
+
+custom_admin_site.register(City, CityAdmin)
+custom_admin_site.register(District, DistrictAdmin)
+custom_admin_site.register(Location, LocationAdmin)
+custom_admin_site.register(Career, CareerAdmin)

@@ -1,0 +1,8 @@
+.daterangepicker .ranges li.active {
+    background-color: #417690 !important;
+    color: #fff;
+}
+
+.daterangepicker td.active, .daterangepicker td.active:hover {
+  background-color: #79aec8 !important;
+}

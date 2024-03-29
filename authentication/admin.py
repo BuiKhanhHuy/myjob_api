@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.utils.html import mark_safe
 from django import forms
 from helpers import helper
+from myjob_api.admin import custom_admin_site
 from .models import (
     User,
     ForgotPasswordToken
@@ -20,16 +21,6 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = '__all__'
-        widgets = {
-            'avatar_file': forms.FileInput(attrs={'class': "form-control"}),
-            'is_superuser': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_staff': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'email_notification_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'sms_notification_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'has_company': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_verify_email': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +32,6 @@ class UserForm(forms.ModelForm):
             self.fields['password_edit'].widget = forms.HiddenInput()
 
 
-@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ("id", "show_avatar", "email", "full_name", "is_verify_email", "is_active", "role_name")
     list_display_links = ("id", "show_avatar", "email")
@@ -50,17 +40,30 @@ class UserAdmin(admin.ModelAdmin):
         ("role_name", DropdownFilter),
         ("is_verify_email", DropdownFilter),
         ("is_active", DropdownFilter),
+        ("email_notification_active", DropdownFilter),
+        ("sms_notification_active", DropdownFilter),
+        ("has_company", DropdownFilter),
     ]
     ordering = ("id", "email", "full_name", "is_verify_email", "is_active", "role_name")
     readonly_fields = ("show_avatar",)
     list_per_page = 25
 
-    fields = (
-        'show_avatar', 'avatar_file', 'full_name', 'email', 'role_name', 'password', 'password_edit',
-        'user_permissions', 'groups',
-        'is_superuser', 'is_staff', 'is_active', 'is_verify_email', 'has_company',
-        'email_notification_active', 'sms_notification_active',
-        'last_login',
+    fieldsets = (
+        (None, {
+            'fields': ('show_avatar', 'avatar_file', 'full_name', 'email')
+        }),
+        ('Permission', {
+            'fields': ('password', 'password_edit', 'role_name', 'user_permissions',
+                       'groups', 'is_superuser', 'is_staff')
+        }),
+        ('Action', {
+            'fields': (
+                'is_active', 'is_verify_email', 'has_company',
+                'email_notification_active', 'sms_notification_active')
+        }),
+        ('Logs', {
+            'fields': ('last_login',)
+        }),
     )
 
     def show_avatar(self, user):
@@ -114,7 +117,6 @@ class UserAdmin(admin.ModelAdmin):
                     full_name=user.full_name, email=user.email)
 
 
-@admin.register(ForgotPasswordToken)
 class ForgotPasswordTokenAdmin(admin.ModelAdmin):
     list_display = ("id", "token", "code", "expired_at", "is_active", "platform", "user")
     list_display_links = ("id", "token", "code")
@@ -128,3 +130,7 @@ class ForgotPasswordTokenAdmin(admin.ModelAdmin):
     list_per_page = 25
 
     autocomplete_fields = ('user',)
+
+
+custom_admin_site.register(User, UserAdmin)
+custom_admin_site.register(ForgotPasswordToken, ForgotPasswordTokenAdmin)

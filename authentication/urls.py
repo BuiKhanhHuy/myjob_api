@@ -23,5 +23,6 @@ urlpatterns = [
     path('user-info/', views.get_user_info),
     path('job-seeker/register/', views.job_seeker_register),
     path('employer/register/', views.employer_register),
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('settings/', views.UserSettingAPIView.as_view())
 ]

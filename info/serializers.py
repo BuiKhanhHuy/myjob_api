@@ -7,6 +7,7 @@ from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db import transaction
+from console.jobs import queue_auth
 from .models import (
     JobSeekerProfile,
     Resume, ResumeViewed,
@@ -199,6 +200,10 @@ class CompanySerializer(serializers.ModelSerializer):
                     location_new = Location.objects.create(**validated_data["location"])
                     instance.location = location_new
                 instance.save()
+
+                # update in firebase
+                queue_auth.update_info.delay(instance.user_id, instance.company_name)
+
                 return instance
         except Exception as ex:
             helper.print_log_error("update company", ex)
@@ -238,9 +243,14 @@ class LogoCompanySerializer(serializers.ModelSerializer):
             return None
         else:
             logo_url = logo_upload_result.get('secure_url')
+
+            # update in db
             company.company_image_url = logo_url
             company.company_image_public_id = logo_public_id
             company.save()
+
+            # update in firebase
+            queue_auth.update_avatar.delay(company.user_id, logo_url)
 
             return company
 
@@ -329,8 +339,11 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
             instance.location = location_new
         user_obj.full_name = validated_data["user"].get("full_name", user_obj.full_name)
         user_obj.save()
-        instance.save()
 
+        # update in firebase
+        queue_auth.update_info.delay(user_obj.id, user_obj.full_name)
+
+        instance.save()
         return instance
 
 

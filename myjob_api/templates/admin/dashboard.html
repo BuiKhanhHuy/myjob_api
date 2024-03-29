@@ -1,0 +1,192 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    {{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+    <!-- chart -->
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }}  {% endblock %}
+
+{% if not is_popup %}
+    {% block breadcrumbs %}
+        <div class="breadcrumbs">
+            <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+            &rsaquo; <span>General</span>
+            &rsaquo; <a href="/admin/dashboard/">Dashboard</a>
+        </div>
+    {% endblock %}
+{% endif %}
+
+{% block content %}
+    <div id="content-main">
+        <div class="row">
+            <div class="col-12 col-sm-6 col-xl-3 mb-4">
+                <div class="card card-stats mb-4 mb-xl-0">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="h6 card-title text-uppercase mb-0 card-stats-text">Job seeker</h5>
+                                <span class="h2 font-weight-bold mb-0">{{ new_candidate.total }}</span>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa fa-user" style="font-size:40px; color: #ff0066;"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0 text-sm">
+                            <span class="text-success mr-2"><i
+                                    class="fa fa-arrow-up mr2"></i> {{ new_candidate.current_month_total }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-4">
+                <div class="card card-stats mb-4 mb-xl-0">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="h6 card-title text-uppercase card-stats-text mb-0">Employer</h5>
+                                <span class="h2 font-weight-bold mb-0">{{ new_employer.total }}</span>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa fa-building" style="font-size:30px; color: #ff9933;"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0 text-muted text-sm">
+                        <span class="text-success mr-2"><i
+                                class="fa fa-arrow-up mr2"></i> {{ new_employer.current_month_total }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-4">
+                <div class="card card-stats mb-4 mb-xl-0">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="h6 card-title text-uppercase card-stats-text mb-0">Job post</h5>
+                                <span class="h2 font-weight-bold mb-0">{{ job_post.total }}</span>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa fa-newspaper" style="font-size:30px; color:  #ffd600;"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0 text-muted text-sm">
+                        <span class="text-success mr-2"><i
+                                class="fa fa-arrow-up mr2"></i> {{ job_post.current_month_total }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-4">
+                <div class="card card-stats mb-4 mb-xl-0">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="h6 card-title text-uppercase card-stats-text mb-0">Apply</h5>
+                                <span class="h2 font-weight-bold mb-0">{{ job_post_activity.total }}</span>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa fa-address-card" style="font-size:30px; color: #6600ff;"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0 text-muted text-sm">
+                        <span class="text-success mr-2"><i
+                                class="fa fa-arrow-up mr2"></i> {{ job_post_activity.current_month_total }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-6 col-xxl-6" style="margin-bottom: 20px;">
+                <div class="card card-chart">
+                    <div class="card-header border-bottom align-items-center justify-content-between">
+                        <h2 class="fs-5 fw-bold mb-2">User chart</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="user-chart-filter"
+                             class=" rounded-2"
+                             style="cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%;">
+                            <i class="fa fa-calendar"></i>&nbsp;
+                            <span></span> <i class="fa fa-caret-down"></i>
+                        </div>
+                        <div class="chart mt-2">
+                            <canvas id="user-chart-line" class="chart-canvas" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-6 col-xxl-6" style="margin-bottom: 20px;">
+                <div class="card card-chart">
+                    <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+                        <h2 class="fs-5 fw-bold mb-2">Job Post Chart</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="job-post-chart-filter"
+                             class=" rounded-2"
+                             style="cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%; ">
+                            <i class="fa fa-calendar"></i>&nbsp;
+                            <span></span> <i class="fa fa-caret-down"></i>
+                        </div>
+                        <div class="chart mt-2">
+                            <canvas id="job-post-chart-bar" class="chart-canvas" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-6 col-xxl-6" style="margin-bottom: 20px;">
+                <div class="card card-chart">
+                    <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+                        <h2 class="fs-5 fw-bold  mb-2">Top 5 careers</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="career-chart-filter"
+                             class=" rounded-2"
+                             style="cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%; ">
+                            <i class="fa fa-calendar"></i>&nbsp;
+                            <span></span> <i class="fa fa-caret-down"></i>
+                        </div>
+                        <div class="chart mt-2">
+                            <canvas id="chart-career-pie" class="chart-canvas" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-6 col-xxl-6" style="margin-bottom: 20px;">
+                <div class="card card-chart">
+                    <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+                        <h2 class="fs-5 fw-bold mb-2">Application chart</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="application-chart-filter"
+                             class="rounded-2"
+                             style="cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%; ">
+                            <i class="fa fa-calendar"></i>&nbsp;
+                            <span></span> <i class="fa fa-caret-down"></i>
+                        </div>
+                        <div class="chart mt-2">
+                            <canvas id="application-chart-bar" class="chart-canvas" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        {% block admin_change_form_document_ready %}
+            <!-- Custom -->
+            <script src="{% static 'admin/js/user-chart.js' %}"></script>
+            <script src="{% static 'admin/js/job-post-chart.js' %}"></script>
+            <script src="{% static 'admin/js/career-chart.js' %}"></script>
+            <script src="{% static 'admin/js/application-chart.js' %}"></script>
+        {% endblock %}
+    </div>
+{% endblock %}

@@ -1,9 +1,12 @@
+import concurrent.futures
 import cloudinary.uploader
 from django.conf import settings
 from django.contrib import admin
 from django import forms
 from django.utils.html import mark_safe
 from helpers import helper
+from myjob_api.admin import custom_admin_site
+from configs import variable_system as var_sys
 from .models import (
     JobSeekerProfile,
     Resume,
@@ -22,6 +25,14 @@ from .models import (
 from django_admin_listfilter_dropdown.filters import (DropdownFilter, RelatedDropdownFilter, ChoiceDropdownFilter)
 
 
+class CompanyImageInlineForm(forms.ModelForm):
+    image_file = forms.FileField(required=False)
+
+    class Meta:
+        model = CompanyImage
+        fields = '__all__'
+
+
 class CompanyForm(forms.ModelForm):
     company_image_file = forms.FileField(required=False)
     company_cover_image_file = forms.FileField(required=False)
@@ -29,12 +40,6 @@ class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
         fields = '__all__'
-        widgets = {
-            'website_url': forms.URLInput(attrs={'class': "form-control"}),
-            'facebook_url': forms.URLInput(attrs={'class': "form-control"}),
-            'youtube_url': forms.URLInput(attrs={'class': "form-control"}),
-            'linkedin_url': forms.URLInput(attrs={'class': "form-control"}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,11 +53,6 @@ class ResumeForm(forms.ModelForm):
     class Meta:
         model = Company
         fields = '__all__'
-        widgets = {
-            'salary_min': forms.NumberInput(attrs={'class': "form-control"}),
-            'salary_max': forms.NumberInput(attrs={'class': "form-control"}),
-            'is_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,60 +63,70 @@ class ResumeViewedForm(forms.ModelForm):
     class Meta:
         model = ResumeViewed
         fields = '__all__'
-        widgets = {
-            'views': forms.NumberInput(attrs={'class': "form-control"}),
-        }
 
 
 # INLINE
 class EducationDetailInlineAdmin(admin.StackedInline):
     model = EducationDetail
-    classes = ('collapse',)
     fk_name = 'resume'
     extra = 1
 
 
 class ExperienceDetailInlineAdmin(admin.StackedInline):
     model = ExperienceDetail
-    classes = ('collapse',)
     fk_name = 'resume'
     extra = 1
 
 
 class CertificateInlineAdmin(admin.StackedInline):
     model = Certificate
-    classes = ('collapse',)
     fk_name = 'resume'
     extra = 1
 
 
 class LanguageSkillInlineAdmin(admin.StackedInline):
     model = LanguageSkill
-    classes = ('collapse',)
     fk_name = 'resume'
     extra = 1
 
 
 class AdvancedSkillInlineAdmin(admin.StackedInline):
     model = AdvancedSkill
-    classes = ('collapse',)
     fk_name = 'resume'
     extra = 1
 
 
 class CompanyImageInlineAdmin(admin.StackedInline):
     model = CompanyImage
-    classes = ('collapse',)
     fk_name = 'company'
     extra = 1
+    max_num = 5
+    fields = ('show_image', 'image_file', 'image_public_id', 'image_url')
+    readonly_fields = ('show_image', 'image_public_id', 'image_url')
+    form = CompanyImageInlineForm
+
+    def show_image(self, company_image):
+        if company_image:
+            if company_image.image_url:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 50px;object-fit:cover;" width='50px' height='50px'/>""".format(
+                        company_image.image_url,
+                        company_image.company.company_name)
+                )
+            else:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                        var_sys.NO_IMAGE, "No image")
+                )
 
 
 # ADMIN
-@admin.register(JobSeekerProfile)
 class JobSeekerProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "phone", "birthday", "gender", "marital_status", "location")
-    list_display_links = ("user",)
-    search_fields = ("user__email", "phone")
+    list_display = ("id", "user", "phone", "birthday", "gender", "marital_status", "location")
+    list_display_links = ("id", "user",)
+    search_fields = ("id", "user__email", "phone")
     readonly_fields = ('user',)
     list_filter = [
         ("gender", ChoiceDropdownFilter),
@@ -128,12 +138,11 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
     list_select_related = ('user', 'location')
 
 
-@admin.register(Resume)
 class ResumeAdmin(admin.ModelAdmin):
-    list_display = ("title", "position", "experience", "academic_level",
-                    "type_of_workplace", "job_type", "is_active", "user")
-    list_display_links = ("title",)
-    search_fields = ("title", "user__email")
+    list_display = ("id", "user", "title", "position", "experience", "academic_level",
+                    "type_of_workplace", "job_type", "is_active",)
+    list_display_links = ("id", "user", "title",)
+    search_fields = ("id", "title", "user__email")
     list_filter = [
         ("position", ChoiceDropdownFilter),
         ("experience", ChoiceDropdownFilter),
@@ -162,12 +171,19 @@ class ResumeAdmin(admin.ModelAdmin):
 
     def show_resume_image(self, resume):
         if resume:
-            return mark_safe(
-                r"""<img src='{0}'
-                alt='{1}' style="border-radius: 20px;object-fit:cover;" width='200px' height='200px'/>""".format(
-                    resume.image_url if resume.image_url else "https://diskominfo.mataramkota.go.id/themes/kenshin-kenshinschool/assets/images/default.jpg",
-                    resume.title)
-            )
+            if resume.image_url:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 20px;object-fit:cover;" width='' height='200px'/>""".format(
+                        resume.image_url,
+                        resume.title)
+                )
+            else:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                        var_sys.NO_IMAGE, "No image")
+                )
 
     show_resume_image.short_description = "Resume image"
 
@@ -195,62 +211,69 @@ class ResumeAdmin(admin.ModelAdmin):
                 obj.save()
 
 
-@admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
+    inlines = [CompanyImageInlineAdmin]
     list_display = ("id", "company_name", "field_operation", "company_email",
                     "company_phone", "employee_size", "tax_code", "user",)
     list_display_links = ("id", "company_name",)
-    search_fields = ("company_name", "field_operation", "company_email", "company_phone", "tax_code")
+    search_fields = ("id", "company_name", "field_operation", "company_email", "company_phone", "tax_code")
     list_filter = [
         ("employee_size", ChoiceDropdownFilter),
     ]
     readonly_fields = ('show_company_image', 'show_company_cover_image')
-    inlines = (CompanyImageInlineAdmin,)
     list_per_page = 25
 
     raw_id_fields = ('user', 'location', 'followers')
     list_select_related = ('user', 'location')
 
-    fields = (
-        "company_name",
-        "field_operation",
-        "company_email",
-        "company_phone",
-        "employee_size",
-        "tax_code",
-        "since",
-        "website_url",
-        "facebook_url",
-        "youtube_url",
-        "linkedin_url",
-        "user",
-        "location",
-        'show_company_image',
-        "company_image_file",
-        'show_company_cover_image',
-        "company_cover_image_file",
-        "description",
+    fieldsets = (
+        (None, {
+            'fields': ("company_name", 'field_operation', 'company_phone',
+                       'employee_size', 'tax_code', 'since', 'description',
+                       'website_url', 'user', 'location')
+        }),
+        ('Media', {
+            'fields': ('show_company_image', 'company_image_file',
+                       'show_company_cover_image', 'company_cover_image_file')
+        }),
+        ('Social network', {
+            'fields': ('facebook_url', 'youtube_url', 'linkedin_url')
+        }),
     )
 
     def show_company_image(self, company):
         if company:
-            return mark_safe(
-                r"""<img src='{0}'
-                alt='{1}' style="border-radius: 50px;object-fit:cover;" width='50px' height='50px'/>""".format(
-                    company.company_image_url,
-                    company.company_name)
-            )
+            if company.company_image_url:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 50px;object-fit:cover;" width='50px' height='50px'/>""".format(
+                        company.company_image_url,
+                        company.company_name)
+                )
+            else:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                        var_sys.NO_IMAGE, "No image")
+                )
 
     show_company_image.short_description = "Logo"
 
     def show_company_cover_image(self, company):
         if company:
-            return mark_safe(
-                r"""<img src='{0}'
-                alt='{1}' style="border-radius: 5px;" width='75%' height='200px'/>""".format(
-                    company.company_cover_image_url,
-                    company.company_name)
-            )
+            if company.company_cover_image_url:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 5px;" width='75%' height='220px'/>""".format(
+                        company.company_cover_image_url,
+                        company.company_name)
+                )
+            else:
+                return mark_safe(
+                    r"""<img src='{0}'
+                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                        var_sys.NO_IMAGE, "No image")
+                )
 
     show_company_cover_image.short_description = "Cover image"
 
@@ -258,10 +281,18 @@ class CompanyAdmin(admin.ModelAdmin):
 
     def save_model(self, request, company, form, change):
         super().save_model(request, company, form, change)
+        files = request.FILES
 
-        logo_file = request.FILES.get('company_image_file', None)
-        company_cover_image_file = request.FILES.get('company_cover_image_file', None)
+        # logo and cover_image
+        logo_file = files.pop('company_image_file', None)
+        company_cover_image_file = files.pop('company_cover_image_file', None)
 
+        # media
+        company_image_files = files
+        for a in company_image_files:
+            print(a)
+
+        # save company
         if logo_file:
             try:
                 company_image_upload_result = cloudinary.uploader.upload(
@@ -297,24 +328,30 @@ class CompanyAdmin(admin.ModelAdmin):
         if logo_file or company_cover_image_file:
             company.save()
 
+        # save company image
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(self._upload_file, company_image_files)
 
-@admin.register(ResumeSaved)
+    def _upload_file(self, file):
+        # TODO:
+        print("UPLOAD: ", file)
+
+
 class ResumeSavedAdmin(admin.ModelAdmin):
     list_display = ("id", "resume", "company")
     list_display_links = ("id",)
-    search_fields = ("resume__title", "company__company_email", "company__company_name")
+    search_fields = ("id", "resume__title", "company__company_email", "company__company_name")
     list_per_page = 25
 
     readonly_fields = ('resume', 'company')
     list_select_related = ('resume', 'company')
 
 
-@admin.register(ResumeViewed)
 class ResumeViewedAdmin(admin.ModelAdmin):
     list_display = ("id", "resume", "company", "views")
     list_display_links = ("id",)
     ordering = ('views', 'id')
-    search_fields = ("resume__title", "company__company_email", "company__company_name")
+    search_fields = ("id", "resume__title", "company__company_email", "company__company_name")
     list_per_page = 25
 
     readonly_fields = ('resume', 'company')
@@ -323,12 +360,19 @@ class ResumeViewedAdmin(admin.ModelAdmin):
     form = ResumeViewedForm
 
 
-@admin.register(CompanyFollowed)
 class CompanyFollowedAdmin(admin.ModelAdmin):
     list_display = ("id", "company", "user")
     list_display_links = ("id",)
-    search_fields = ("company__company_name", "user__email")
+    search_fields = ("id", "company__company_name", "user__email")
     list_per_page = 25
 
     raw_id_fields = ('company', 'user')
     list_select_related = ('company', 'user')
+
+
+custom_admin_site.register(JobSeekerProfile, JobSeekerProfileAdmin)
+custom_admin_site.register(Resume, ResumeAdmin)
+custom_admin_site.register(Company, CompanyAdmin)
+custom_admin_site.register(ResumeSaved, ResumeSavedAdmin)
+custom_admin_site.register(ResumeViewed, ResumeViewedAdmin)
+custom_admin_site.register(CompanyFollowed, CompanyFollowedAdmin)
