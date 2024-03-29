@@ -1,6 +1,8 @@
 from helpers import helper
 from django.contrib import admin
 from django import forms
+
+from myjob_api.admin import custom_admin_site
 from .models import (
     JobPost,
     SavedJobPost,
@@ -13,23 +15,14 @@ class JobPostForm(forms.ModelForm):
     class Meta:
         model = JobPost
         fields = '__all__'
-        widgets = {
-            'is_hot': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_urgent': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
 
 class JobPostActivityForm(forms.ModelForm):
     class Meta:
         model = JobPostActivity
         fields = '__all__'
-        widgets = {
-            'is_sent_email': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_deleted': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
 
-@admin.register(JobPost)
 class JobPostAdmin(admin.ModelAdmin):
     list_display = ("id", "job_name", "career", "deadline", "quantity", "is_hot",
                     "is_urgent", "status", "views", "shares")
@@ -49,15 +42,25 @@ class JobPostAdmin(admin.ModelAdmin):
     ordering = ("id", 'job_name', "is_hot", "is_urgent", "status", "views", "shares")
     list_per_page = 25
 
-    fields = ("job_name", "deadline", "quantity",
-              "position", "type_of_workplace",
-              "experience", "academic_level", "job_type",
-              "salary_min", "salary_max",
-              "contact_person_name", "contact_person_phone", "contact_person_email",
-              "views", "shares", "career",
-              "location", "user", "company",
-              "gender_required", "job_description", "job_requirement", "benefits_enjoyed",
-              "is_hot", "is_urgent", "status")
+    fieldsets = (
+        (None, {
+            'fields': ("job_name", "deadline", "quantity",
+                       "position", "type_of_workplace",
+                       "experience", "academic_level", "job_type",
+                       "salary_min", "salary_max", "career",
+                       "location", "is_hot", "is_urgent",
+                       "gender_required", "job_description", "job_requirement", "benefits_enjoyed")
+        }),
+        ('Contact info', {
+            'fields': ("contact_person_name", "contact_person_phone", "contact_person_email", "user", "company")
+        }),
+        ('Statistical', {
+            'fields': ("views", "shares",)
+        }),
+        ('Status', {
+            'fields': ("status",)
+        }),
+    )
 
     readonly_fields = ('user', 'company')
     autocomplete_fields = ('career', 'location')
@@ -79,7 +82,6 @@ class JobPostAdmin(admin.ModelAdmin):
                 helper.add_job_post_verify_notification(obj)
 
 
-@admin.register(SavedJobPost)
 class SavedJobPostAdmin(admin.ModelAdmin):
     list_display = ("id", "job_post", "user")
     list_display_links = ("id", "job_post",)
@@ -90,7 +92,6 @@ class SavedJobPostAdmin(admin.ModelAdmin):
     readonly_fields = ('job_post', 'user')
 
 
-@admin.register(JobPostActivity)
 class JobPostActivityAdmin(admin.ModelAdmin):
     list_display = ("id", "full_name", "email", "phone",
                     "job_post", "user", "resume",
@@ -105,3 +106,8 @@ class JobPostActivityAdmin(admin.ModelAdmin):
     readonly_fields = ('job_post', 'user', 'resume')
 
     form = JobPostActivityForm
+
+
+custom_admin_site.register(JobPost, JobPostAdmin)
+custom_admin_site.register(SavedJobPost, SavedJobPostAdmin)
+custom_admin_site.register(JobPostActivity, JobPostActivityAdmin)

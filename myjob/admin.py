@@ -1,5 +1,7 @@
 import cloudinary.uploader
 from django.contrib import admin
+from django.urls import path
+from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 from kombu.utils.json import loads
 from django import forms
@@ -14,7 +16,7 @@ from django_celery_beat.models import (
 from django_celery_beat.admin import (
     TaskChoiceField, PeriodicTaskAdmin
 )
-
+from myjob_api.admin import custom_admin_site
 from .models import (
     Feedback,
     Banner
@@ -25,9 +27,6 @@ class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
         fields = '__all__'
-        widgets = {
-            'is_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
 
 class BannerForm(forms.ModelForm):
@@ -37,11 +36,6 @@ class BannerForm(forms.ModelForm):
     class Meta:
         model = Banner
         fields = '__all__'
-        widgets = {
-            'button_link': forms.URLInput(attrs={'class': "form-control"}),
-            'is_show_button': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-            'is_active': forms.CheckboxInput(attrs={'class': "form-check-input"}),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,7 +43,6 @@ class BannerForm(forms.ModelForm):
         self.fields['image_mobile_file'].required = False
 
 
-@admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
     list_display = ("id", "create_at", "content", "rating", "is_active", "user")
     list_display_links = ("id",)
@@ -69,7 +62,6 @@ class FeedbackAdmin(admin.ModelAdmin):
     form = FeedbackForm
 
 
-@admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     list_display = ("id", "show_image_url",
                     "show_mobile_image_url", "description",
@@ -235,4 +227,6 @@ class CustomPeriodicTaskAdmin(PeriodicTaskAdmin):
 
 
 admin.site.unregister(PeriodicTask)
-admin.site.register(PeriodicTask, CustomPeriodicTaskAdmin)
+custom_admin_site.register(Feedback, FeedbackAdmin)
+custom_admin_site.register(Banner, BannerAdmin)
+custom_admin_site.register(PeriodicTask, CustomPeriodicTaskAdmin)

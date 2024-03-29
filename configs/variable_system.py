@@ -17,6 +17,7 @@ NOTIFICATION_TYPE = {
     "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED",
     "POST_VERIFY_RESULT": "POST_VERIFY_RESULT"
 }
+NO_IMAGE = "https://cdn-icons-png.flaticon.com/128/3460/3460724.png"
 NOTIFICATION_IMAGE_DEFAULT = "https://res.cloudinary.com/dtnpj540t/image/upload/v1683799130/my-job/images_default/notification_image_default.png"
 
 DATE_TIME_FORMAT = {

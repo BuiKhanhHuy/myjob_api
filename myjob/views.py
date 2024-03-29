@@ -3,7 +3,7 @@ import random
 import requests
 from django.db import transaction
 from console.jobs import queue_notification, queue_job
-from twilio.rest import Client
+from infobip_channels.sms.channel import SMSChannel
 from django.conf import settings
 from helpers import helper, utils
 from configs import renderers
@@ -1004,20 +1004,34 @@ def send_sms_download_app(request):
     if not phone:
         return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
                                      errors={"phone": ["Số điện thoại không hợp lệ."]})
-    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     try:
-        message = client.messages.create(from_=settings.TWILIO_PHONE,
-                                         body=f'Tin nhắn được gửi từ {settings.COMPANY_NAME}, '
-                                              f'Ứng dụng và Website giới thiệu việc làm. '
-                                              f'Với {settings.COMPANY_NAME}, '
-                                              f'bạn có thể tìm kiếm các công việc phù hợp với nhu cầu '
-                                              f'và kinh nghiệm của mình chỉ trong vài phút. '
-                                              f'Để tải ứng dụng, bạn có thể truy cập vào link sau: '
-                                              f'Android: {var_sys.LINK_GOOGLE_PLAY}; iOS: {var_sys.LINK_APPSTORE}. '
-                                              f'Hãy cùng trải nghiệm và tìm kiếm công '
-                                              f'việc mơ ước của bạn với {settings.COMPANY_NAME} nhé!',
-                                         to=f"+84{phone[1:None]}")
-        print(message, "=>", f"+84{phone[1:None]}")
+        # Initialize the SMS channel with your credentials.
+        channel = SMSChannel.from_auth_params(
+            {
+                "base_url": settings.SMS_BASE_URL,
+                "api_key": settings.SMS_API_KEY,
+            }
+        )
+        # Send a message with the desired fields.
+        sms_response = channel.send_sms_message(
+            {
+                "messages": [
+                    {
+                        "destinations": [{"to": phone}],
+                        "text": f'Tin nhắn được gửi từ {settings.COMPANY_NAME}, '
+                                f'Ứng dụng và Website giới thiệu việc làm. '
+                                f'Với {settings.COMPANY_NAME}, '
+                                f'bạn có thể tìm kiếm các công việc phù hợp với nhu cầu '
+                                f'và kinh nghiệm của mình chỉ trong vài phút. '
+                                f'Để tải ứng dụng, bạn có thể truy cập vào link sau: '
+                                f'Android: {var_sys.LINK_GOOGLE_PLAY}; iOS: {var_sys.LINK_APPSTORE}. '
+                                f'Hãy cùng trải nghiệm và tìm kiếm công '
+                                f'việc mơ ước của bạn với {settings.COMPANY_NAME} nhé!'
+                    }
+                ]
+            }
+        )
+        print(">> SMS SEND: ", sms_response)
     except Exception as ex:
         helper.print_log_error("send_sms_download_app", ex)
         var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
