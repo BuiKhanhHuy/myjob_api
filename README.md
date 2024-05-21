@@ -126,6 +126,9 @@ WEB_CLIENT_URL=http://localhost:3001 (your web client url)
 *   Email: myjob.testadmin@gmail.com
 *   Password: 123
 
+## dbdiagram
+![dbdiagram](https://github.com/BuiKhanhHuy/myjob_api/assets/69914972/b44bc3e3-2f06-40f5-8a73-440725193c59)
+
 ## Frontend repo link
 
 ### 🌐 [Web-app](https://github.com/BuiKhanhHuy/my-job-web-app)
