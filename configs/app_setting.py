@@ -1,5 +1,9 @@
-ROUTES_PREFIX = "api/"
+# Environment: Development
+ENV_DEV = "development"
+ENV_PROD = "production"
 
+# Refix for all routes
+ROUTES_PREFIX = "api/"
 COMMON_PREFIX = "common/"
 AUTHENTICATION_PREFIX = "auth/"
 INFO_PREFIX = "info/"

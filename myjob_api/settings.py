@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
+import json
 from datetime import datetime
 from pathlib import Path
 from decouple import config
@@ -305,7 +306,7 @@ CLOUDINARY_DIRECTORY = {
 }
 
 DOMAIN_CLIENT = {
-    "local": "http://localhost:3000/",
+    "development": "http://localhost:3000/",
     "production": config('WEB_CLIENT_URL'),
 }
 
@@ -327,25 +328,6 @@ SMS_BASE_URL = "https://qy1kdr.api.infobip.com"
 SMS_API_KEY = config('SMS_API_KEY')
 
 # FIREBASE
-# FIREBASE_CONFIG = os.path.join(BASE_DIR, 'configs', 'firebase-config.json')
-FIREBASE_CONFIG_ADMIN = {
-    "type": "service_account",
-    "project_id": "myjobpro-6283b",
-    "private_key_id": "559120960e53f0ea7c3682ac8a642a831907d55a",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCKAobXQqIZG1YB\nY2Yxie7yhAig+uxiQLhZTDelDzwTWZuHAXUyN4VyH/mA9bozZ6MntXvBHr08zdq8\ngFypwdXGWxN8uuMT5fpM4umOvhP8lQsI9cyMumswMQw8Zx9QpbUHOnzwe2KrxPNS\nMtckwmC3zSspduo3TY77Tmy0rkcgaMiY3wu1e1dbf8JQYfNxnkyQySdfUlMOBtoj\nQqF3IUHCoTnLYX1dFUUyb1pl7CsTXs9hrfbWCdkS54/+xdqmlx3Fw/2IU3q56buo\niVDbB6uH8YeBgvpPOiIkRqgZjcsFjARBDIAFTQ1TMV+xYFHqNTikg7ysnCfBI7PE\nB/4evi0vAgMBAAECgf8QmaEbXE96ietOayZZay5PhsQYyt2dyCThVCdEUpPqbsC5\n3T3zvMAn0XiSMwjkiecGeLHK0LKngZHwP/08xXS17XCAemqqNWA0F4eJs38FHfsN\nOzJozbiaA7ywW5GXiMdsZTWVhYzGD/ouSbcHhg72rx4IMxBvtbWyJwrNFL9BPGRO\n8q4VXTydbu1MCEQJ4Sfy8rN9xkb7iSgR4TyHvGBuaJ/x+ph7cB/6Bgm446DYkjfy\nkUPLRCbJ8SsbNVCxJ3G3pQXJ6yb744QnxA2Ktghf5BzwEO9P8VNHtYSxAgkgS+xi\nJpcTJyFH4S5b3IcIHkqHd8VDFZRmHS2UUW53kZUCgYEAvK73ApgqpeNKQEvVUSyL\nyE7XEYTEICsVPX6jqGDPpiuZhVe7WDYqfrEGmTzkM2fZkjnUza969UaCfmGSASc1\nNTK5gKTCLgNFYQnS4fkdYRdeNQnhnNh8oO5bPWgebl773ggpxtMF2xJRxgGQzIuw\nq1Wqxpzsi1kc4S/i3oZIMaMCgYEAuz9jhNk4vWdIbDs7NLDAzarTb1/6rfYJs2NU\nizkFOhYgr8krBttouBvNaSQpc28O5EmQbM/RWFcfxa3xYn0AdY5ZMjbjm8tJtp3J\nfHHrZQAp4dS731YZOwYvZiWbmsz2vu8riTDD0hUyjAuEBWVQshoAV4IkGfX6ufTm\nRmM7RwUCgYBq5g3YEHIJLi7BIrWmmcBQKiq7KCcduor8HiWGneLHWGhQHZZssbN9\nt7nvU4pOfYXMzKr+JW9aSypfg9P+h0Ij86sZcT76ZqwGAFTT5hl5Co47KnACNrzV\nSHW04qprCbFU5/cTSDdHGKfvsK9i07myOITapcl2YXR1OHYmcJmyVQKBgGe8kpID\nFiA4nDL6Da7/TZGj1keZ0POXn4A2w5vuFys7HxjERoYiAD4fiQl680v0dzeaWd0u\ntThP7FZEK7r4rcxy9I+RQUAKu+fkOsArDNKD6LAof30X4hqFLrVUmISGkRzuvBvh\nXFuDSuGzb4zduHszVIUmoIGReTqUpw7P4wNRAoGBAK7ew5uFdJ4frnatlmIFGdup\neP5W1T88pXYUlwZfEko+5c+vBSREymk6PfMEIQl7mIdC+CcPOiWN85vhKpzOvybD\n+U2jIy5YjIJnAeQgMgD0Oe0SgK3Hj97kdDAjx8Kwws/s/aeN3j/fcPgYOmfI7mTL\nq/KXfFFLcv+JjbRv1MCQ\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk-19bjz@myjobpro-6283b.iam.gserviceaccount.com",
-    "client_id": "106415384504593012065",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-19bjz%40myjobpro-6283b.iam.gserviceaccount.com"
-}
-
-cred = credentials.Certificate(FIREBASE_CONFIG_ADMIN)
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://myjobpro-6283b-default-rtdb.asia-southeast1.firebasedatabase.app/'
-})
-
 FIREBASE_CONFIG = {
     "apiKey": config('FIREBASE_API_KEY', default=''),
     "authDomain": config('FIREBASE_AUTH_DOMAIN', default=''),
@@ -355,6 +337,18 @@ FIREBASE_CONFIG = {
     "appId": config('FIREBASE_APP_ID', default=''),
     "databaseURL": config('FIREBASE_DATABASE_URL', default=''),
 }
+# Load Firebase credentials
+FIREBASE_CREDENTIALS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
+if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
+    with open(FIREBASE_CREDENTIALS_PATH, "r") as f:
+        FIREBASE_SERVER_CONFIG = json.load(f)
+else:
+    FIREBASE_SERVER_CONFIG = {}
+# Initialize Firebase
+cred = credentials.Certificate(FIREBASE_SERVER_CONFIG)
+firebase_admin.initialize_app(cred, {
+    'databaseURL': config('FIREBASE_DATABASE_URL', default='')
+})
 
 COMPANY_NAME = "MyJob"
 
