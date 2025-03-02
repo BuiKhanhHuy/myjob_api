@@ -1,3 +1,5 @@
+import { ENDPOINTS } from "./init.js";
+
 var myApplicationChart = undefined;
 
 $(function () {
@@ -11,7 +13,7 @@ $(function () {
         }
         const ctx = document.getElementById("application-chart-bar").getContext("2d");
 
-        fetch('/admin/api/application-chart/', {
+        fetch(ENDPOINTS['STATISTICAL_APPLICATION_CHART'], {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': Cookies.get('csrftoken'),

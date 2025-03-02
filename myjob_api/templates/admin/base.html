@@ -58,6 +58,11 @@
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
 
     <!-- myjob custom -->
+    <script>
+        // Get the firebase config from the server and set it in the window object
+        window.settings = {{ settings|safe }};
+    </script>
+    <script src="{% static 'admin/js/init.js' %}" type="module"></script>
     <script src="{% static 'admin/js/fire-base-config.js' %}" type="module"></script>
     <script src="{% static 'admin/js/notification.js' %}" type="module"></script>
 
@@ -182,7 +187,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
         crossorigin="anonymous"></script>
-<script src="{% static 'admin/js/init.js' %}"></script>
 <script src="{% static 'admin/js/loading.js' %}"></script>
 <script>
     const currentSuperuserId = '{{ request.user.id }}';

@@ -328,7 +328,7 @@ SMS_API_KEY = config('SMS_API_KEY')
 
 # FIREBASE
 # FIREBASE_CONFIG = os.path.join(BASE_DIR, 'configs', 'firebase-config.json')
-FIREBASE_CONFIG = {
+FIREBASE_CONFIG_ADMIN = {
     "type": "service_account",
     "project_id": "myjobpro-6283b",
     "private_key_id": "559120960e53f0ea7c3682ac8a642a831907d55a",
@@ -341,10 +341,20 @@ FIREBASE_CONFIG = {
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-19bjz%40myjobpro-6283b.iam.gserviceaccount.com"
 }
 
-cred = credentials.Certificate(FIREBASE_CONFIG)
+cred = credentials.Certificate(FIREBASE_CONFIG_ADMIN)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://myjobpro-6283b-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
+
+FIREBASE_CONFIG = {
+    "apiKey": config('FIREBASE_API_KEY', default=''),
+    "authDomain": config('FIREBASE_AUTH_DOMAIN', default=''),
+    "projectId": config('FIREBASE_PROJECT_ID', default=''),
+    "storageBucket": config('FIREBASE_STORAGE_BUCKET', default=''),
+    "messagingSenderId": config('FIREBASE_MESSAGING_SENDER_ID', default=''),
+    "appId": config('FIREBASE_APP_ID', default=''),
+    "databaseURL": config('FIREBASE_DATABASE_URL', default=''),
+}
 
 COMPANY_NAME = "MyJob"
 

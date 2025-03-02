@@ -183,10 +183,10 @@
     <div>
         {% block admin_change_form_document_ready %}
             <!-- Custom -->
-            <script src="{% static 'admin/js/user-chart.js' %}"></script>
-            <script src="{% static 'admin/js/job-post-chart.js' %}"></script>
-            <script src="{% static 'admin/js/career-chart.js' %}"></script>
-            <script src="{% static 'admin/js/application-chart.js' %}"></script>
+            <script src="{% static 'admin/js/user-chart.js' %}" type="module"></script>
+            <script src="{% static 'admin/js/job-post-chart.js' %}" type="module"></script>
+            <script src="{% static 'admin/js/career-chart.js' %}" type="module"></script>
+            <script src="{% static 'admin/js/application-chart.js' %}" type="module"></script>
         {% endblock %}
     </div>
 {% endblock %}
