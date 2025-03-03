@@ -2,7 +2,7 @@ import json
 from configs import variable_system as var_sys
 from django.conf import settings
 from helpers import utils, helper
-from configs import variable_response as var_res, paginations
+from configs import variable_response as var_res, paginations, app_setting
 from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -18,6 +18,9 @@ from .serializers import (
 
 @api_view(http_method_names=["POST"])
 def create_database(request):
+    if settings.APP_ENVIRONMENT == app_setting.ENV_PROD:
+        return var_res.response_data(status=status.HTTP_403_FORBIDDEN)
+
     data = {}
     nghe = [{'id': 1, 'name': 'Hành chính - Thư ký'}, {'id': 2, 'name': 'An ninh - Bảo vệ'},
             {'id': 3, 'name': 'Thiết kế - Sáng tạo nghệ thuật'}, {'id': 4, 'name': 'Kiến trúc - Thiết kế nội thất'},
@@ -52,6 +55,9 @@ def create_database(request):
 
 @api_view(http_method_names=["GET"])
 def get_all_config(request):
+    # exclude city name
+    exclude_city_name = 'Toàn quốc'
+
     try:
         # system
         gender_tuple = utils.convert_tuple_or_list_to_options(var_sys.GENDER_CHOICES)
@@ -69,7 +75,7 @@ def get_all_config(request):
         job_post_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_POST_STATUS)
 
         # database
-        cities = City.objects.exclude(name__icontains="Toàn quốc").values_list("id", "name")
+        cities = City.objects.exclude(name__icontains=exclude_city_name).values_list("id", "name")
         careers = Career.objects.values_list("id", "name")
         city_tuple = utils.convert_tuple_or_list_to_options(cities)
         career_tuple = utils.convert_tuple_or_list_to_options(careers)

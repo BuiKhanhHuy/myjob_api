@@ -10,6 +10,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django_otp.oath import TOTP
 from configs import variable_system as var_sys
 from configs.variable_response import response_data
+from configs.messages import ERROR_MESSAGES, SUCCESS_MESSAGES, SYSTEM_MESSAGES
 from helpers import helper
 from django.http import HttpResponseRedirect, HttpResponseNotFound
 from rest_framework.decorators import api_view, permission_classes
@@ -68,21 +69,19 @@ class CustomTokenView(TokenView):
             user = User.objects.filter(email=email).first()
             if not user:
                 return response_data(status=stt, errors={
-                    "errorMessage": ["Email không chính xác."]
+                    "errorMessage": [ERROR_MESSAGES["INVALID_EMAIL"]]
                 })
             if not user.is_active:
                 return response_data(status=stt, errors={
-                    "errorMessage": [
-                        f"Tài khoản của bạn đã bị vô hiệu hóa. "
-                        f"Vui lòng liên hệ với bộ phận chăm sóc khách hàng của chúng tôi. "]
+                    "errorMessage": [ERROR_MESSAGES["ACCOUNT_DISABLED"]]
                 })
             if not user.check_password(password):
                 return response_data(status=stt, errors={
-                    "errorMessage": ["Mật khẩu không chính xác."]
+                    "errorMessage": [ERROR_MESSAGES["INCORRECT_PASSWORD"]]
                 })
 
             return response_data(status=stt, errors={
-                "errorMessage": ["Đã xảy ra lỗi trong quá trình đăng nhập."]
+                "errorMessage": [ERROR_MESSAGES["LOGIN_ERROR"]]
             })
         else:
             return response_data(status=stt)
@@ -103,10 +102,7 @@ class CustomConvertTokenView(ConvertTokenView):
                 error_description = error_body.get("error_description", "")
                 if error == "invalid_grant" and error_description == "User inactive or deleted.":
                     return response_data(status=stt, errors={
-                        "errorMessage": [
-                            "Tài khoản đăng nhập với email này đã bị vô hiệu hóa hoặc đã không còn tồn tại. "
-                            "Vui lòng liên hệ với bộ phận chăm sóc khách hàng của chúng tôi để được hỗ trợ."
-                        ]
+                        "errorMessage": [ERROR_MESSAGES["ACCOUNT_DEACTIVATED"]]
                     })
             res_data = json.loads(body)
             res_data['backend'] = mutable_data["backend"]
@@ -226,22 +222,19 @@ def user_active(request, encoded_data, token):
             if platform == var_sys.PLATFORM_CHOICES[0][0]:
                 return HttpResponseRedirect(
                     helper.get_full_client_url(
-                        f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+                        f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}"))
             else:
                 response_data(status=status.HTTP_400_BAD_REQUEST, errors={
-                    "errorMessage": [
-                        "Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."]
-                })
+                    "errorMessage": [ERROR_MESSAGES["INVALID_EMAIL_VERIFICATION"]]})
 
         if not helper.check_expiration_time(expiration_time):
             if platform == var_sys.PLATFORM_CHOICES[0][0]:
                 return HttpResponseRedirect(
                     helper.get_full_client_url(
-                        f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."))
+                        f"{redirect_login}/?errorMessage={ERROR_MESSAGES['EMAIL_VERIFICATION_EXPIRED']}"))
             else:
                 response_data(status=status.HTTP_400_BAD_REQUEST, errors={
-                    "errorMessage": [
-                        "Rất tiếc, có vẻ như liên kết xác thực email đã hết hạn."]
+                    "errorMessage": [ERROR_MESSAGES["EMAIL_VERIFICATION_EXPIRED"]]
                 })
 
         user = User.objects.get(pk=uid)
@@ -254,9 +247,9 @@ def user_active(request, encoded_data, token):
         user.is_verify_email = True
         user.save()
 
-        noti_title = "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm công việc mơ ước của bạn."
+        noti_title = SYSTEM_MESSAGES["WELCOME_JOBSEEKER"]
         if user.role_name == var_sys.EMPLOYER:
-            noti_title = "Chào mừng bạn đến với MyJob! hệ thống giới thiệu việc làm nhanh chóng và tiện lợi để tìm kiếm nhân tài cho công ty của bạn!"
+            noti_title = SYSTEM_MESSAGES["WELCOME_EMPLOYER"]
 
         # add notification welcome
         helper.add_system_notifications(
@@ -266,18 +259,17 @@ def user_active(request, encoded_data, token):
         )
         if platform == var_sys.PLATFORM_CHOICES[0][0]:
             return HttpResponseRedirect(
-                helper.get_full_client_url(f"{redirect_login}/?successMessage=Email đã được xác thực."))
+                helper.get_full_client_url(f"{redirect_login}/?successMessage={SUCCESS_MESSAGES['EMAIL_VERIFIED']}"))
         else:
             return response_data(status=status.HTTP_200_OK)
     else:
         if platform == var_sys.PLATFORM_CHOICES[0][0]:
             return HttpResponseRedirect(
                 helper.get_full_client_url(
-                    f"{redirect_login}/?errorMessage=Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."))
+                    f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}"))
         else:
             return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
-                "errorMessage": [
-                    "Rất tiếc, có vẻ như liên kết xác thực email không hợp lệ."]
+                "errorMessage": [ERROR_MESSAGES["INVALID_EMAIL_VERIFICATION"]]
             })
 
 
@@ -306,9 +298,7 @@ def forgot_password(request):
                     "TIME_REQUIRED_FORGOT_PASSWORD"
                 ]:
                     return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
-                        "errorMessage": [
-                            "Bạn vừa gửi yêu cầu gửi email quên mật khẩu vui lòng kiểm tra hộp thư hoặc đợi thêm 2 "
-                            "phút để gửi lại email."]
+                        "errorMessage": [ERROR_MESSAGES["PASSWORD_RESET_EMAIL_COOLDOWN"] ]
                     })
 
             with transaction.atomic():
@@ -344,8 +334,7 @@ def forgot_password(request):
         return response_data()
     else:
         return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
-            "errorMessage": [
-                "Email này chưa được sử dụng, bạn hãy đăng ký tham gia MyJob."]
+            "errorMessage": [ERROR_MESSAGES["EMAIL_NOT_REGISTERED"]]
         })
 
 
@@ -370,14 +359,14 @@ def reset_password(request):
             if not forgot_password_tokens.exists():
                 return response_data(
                     status=status.HTTP_400_BAD_REQUEST,
-                    errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết xác nhận quên mật khẩu không hợp lệ."]}
+                    errors={"errorMessage": [ERROR_MESSAGES["INVALID_PASSWORD_RESET_LINK"]]}
                 )
             else:
                 forgot_password_token = forgot_password_tokens.first()
                 if forgot_password_token.expired_at < now:
                     return response_data(
                         status=status.HTTP_400_BAD_REQUEST,
-                        errors={"errorMessage": ["Rất tiếc, có vẻ như liên kết xác nhận quên mật khẩu đã hết hạn."]}
+                        errors={"errorMessage": [ERROR_MESSAGES["PASSWORD_RESET_LINK_EXPIRED"]]}
                     )
                 else:
                     with transaction.atomic():
@@ -396,14 +385,14 @@ def reset_password(request):
             if not forgot_password_tokens.exists():
                 return response_data(
                     status=status.HTTP_400_BAD_REQUEST,
-                    errors={"code": ["Mã xác nhận quên mật khẩu không hợp lệ."]}
+                    errors={"code": [ERROR_MESSAGES["INVALID_PASSWORD_RESET_CODE"]]}
                 )
             else:
                 forgot_password_token = forgot_password_tokens.first()
                 if forgot_password_token.expired_at < now or not forgot_password_token.is_active:
                     return response_data(
                         status=status.HTTP_400_BAD_REQUEST,
-                        errors={"code": ["Mã xác nhận quên mật khẩu đã hết hạn."]}
+                        errors={"code": [ERROR_MESSAGES["PASSWORD_RESET_CODE_EXPIRED"]]}
                     )
                 else:
                     with transaction.atomic():
@@ -482,7 +471,7 @@ def avatar(request):
             if user.avatar_public_id:
                 destroy_result = cloudinary.uploader.destroy(user.avatar_public_id)
                 if not destroy_result.get("result", "") == "ok":
-                    raise Exception("Something went wrong when upload image to cloudinary!")
+                    raise Exception(ERROR_MESSAGES["CLOUDINARY_UPLOAD_ERROR"])
             # update in db
             user.avatar_url = var_sys.AVATAR_DEFAULT["AVATAR"]
             user.avatar_public_id = None

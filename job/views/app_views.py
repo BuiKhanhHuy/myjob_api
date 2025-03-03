@@ -6,6 +6,7 @@ from configs import (
     renderers,
     paginations
 )
+from configs.messages import ERROR_MESSAGES
 from helpers import helper
 from django.conf import settings
 from django.db.models import F, Count
@@ -318,7 +319,7 @@ class JobPostNotificationViewSet(viewsets.ViewSet,
         else:
             if JobPostNotification.objects.filter(user=user, is_active=True).count() >= 3:
                 return var_res.Response(status=status.HTTP_400_BAD_REQUEST,
-                                        data={"errorMessage": ["Tối đa 3 thông báo việc làm được bật"]})
+                                        data={"errorMessage": [ERROR_MESSAGES["MAX_ACTIVE_JOB_NOTIFICATIONS"]]})
             job_post_notification.is_active = True
             job_post_notification.save()
 

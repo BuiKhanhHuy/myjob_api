@@ -22,7 +22,7 @@ from .models import (
     ResumeViewed,
 
 )
-from django_admin_listfilter_dropdown.filters import (DropdownFilter, RelatedDropdownFilter, ChoiceDropdownFilter)
+from django_admin_listfilter_dropdown.filters import (DropdownFilter, ChoiceDropdownFilter)
 
 
 class CompanyImageInlineForm(forms.ModelForm):

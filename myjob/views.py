@@ -4,6 +4,7 @@ from django.conf import settings
 from helpers import helper, utils
 from configs import renderers
 from configs import variable_response as var_res, variable_system as var_sys, app_setting as app_set
+from configs.messages import NOTIFICATION_MESSAGES, ERROR_MESSAGES
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import viewsets
@@ -44,11 +45,11 @@ def send_sms_download_app(request):
     data = request.data
     if "phone" not in data:
         return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
-                                     errors={"phone": ["Số điện thoại là bắt buộc."]})
+                                     errors={"phone": [ERROR_MESSAGES["PHONE_REQUIRED"]]})
     phone = data.get("phone")
     if not phone:
         return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
-                                     errors={"phone": ["Số điện thoại không hợp lệ."]})
+                                     errors={"phone": [ERROR_MESSAGES["INVALID_PHONE"]]})
     try:
         # Initialize the SMS channel with your credentials.
         channel = SMSChannel.from_auth_params(
@@ -63,15 +64,11 @@ def send_sms_download_app(request):
                 "messages": [
                     {
                         "destinations": [{"to": phone}],
-                        "text": f'Tin nhắn được gửi từ {settings.COMPANY_NAME}, '
-                                f'Ứng dụng và Website giới thiệu việc làm. '
-                                f'Với {settings.COMPANY_NAME}, '
-                                f'bạn có thể tìm kiếm các công việc phù hợp với nhu cầu '
-                                f'và kinh nghiệm của mình chỉ trong vài phút. '
-                                f'Để tải ứng dụng, bạn có thể truy cập vào link sau: '
-                                f'Android: {var_sys.LINK_GOOGLE_PLAY}; iOS: {var_sys.LINK_APPSTORE}. '
-                                f'Hãy cùng trải nghiệm và tìm kiếm công '
-                                f'việc mơ ước của bạn với {settings.COMPANY_NAME} nhé!'
+                        "text": NOTIFICATION_MESSAGES["DOWNLOAD_APP_MESSAGE"].format(
+                            company_name=settings.COMPANY_NAME,
+                            link_google_play=var_sys.LINK_GOOGLE_PLAY,
+                            link_appstore=var_sys.LINK_APPSTORE
+                        )
                     }
                 ]
             }

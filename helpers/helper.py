@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 
 from configs import variable_system as var_sys
+from configs.messages import NOTIFICATION_MESSAGES
 from console.jobs import queue_mail, queue_notification
 from authentication.tokens_custom import email_verification_token
 from authentication.models import User
@@ -133,8 +134,9 @@ def add_company_followed_notifications(title, content, avatar, user_id):
 
 def add_apply_job_notifications(job_post_activity):
     try:
-        title = f"Ứng viên {job_post_activity.full_name} - {job_post_activity.email}"
-        content = f'Đã ứng tuyển vị trí "{job_post_activity.job_post.job_name}"'
+        title = NOTIFICATION_MESSAGES["APPLICANT_APPLICATION"].format(full_name=job_post_activity.full_name,
+                                                                     email=job_post_activity.email)
+        content = NOTIFICATION_MESSAGES["JOB_APPLICATION_SUBMITTED"].format(job_name=job_post_activity.job_post.job_name)
         avatar = job_post_activity.user.avatar_url
         content_of_type = {
             "resume_id": job_post_activity.resume_id,
@@ -156,7 +158,7 @@ def add_post_verify_required_notifications(company, job_post):
         job_post_title = job_post.job_name
 
         title = company.company_name
-        content = f'Request to browse job posting "{job_post_title}"'
+        content = NOTIFICATION_MESSAGES["JOB_POSTING_REQUEST"].format(job_post_title=job_post_title)
         company_image = company.company_image_url
 
         user_id_list = list(User.objects.filter(is_staff=True).values_list('id', flat=True))
@@ -176,8 +178,8 @@ def add_post_verify_required_notifications(company, job_post):
 def add_job_post_verify_notification(job_post):
     try:
         stt_str = [x[1] for x in var_sys.JOB_POST_STATUS if x[0] == job_post.status][0]
-        title = "Thông báo hệ thống"
-        content = f'Tin tuyển dụng "{job_post.job_name}" đã được chuyển sang trạng thái "{stt_str}"'
+        title = NOTIFICATION_MESSAGES["SYSTEM_NOTIFICATION"]
+        content = NOTIFICATION_MESSAGES["JOB_STATUS_CHANGE"].format(job_name=job_post.job_name, status=stt_str)
 
         type_name = var_sys.NOTIFICATION_TYPE["POST_VERIFY_RESULT"]
         queue_notification.add_notification_to_user.delay(title=title, content=content,

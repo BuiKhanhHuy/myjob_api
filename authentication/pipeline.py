@@ -1,5 +1,6 @@
 from django.core.exceptions import BadRequest
 from configs import variable_system as var_sys
+from configs.messages import ERROR_MESSAGES, SYSTEM_MESSAGES
 from helpers import helper
 from .models import User
 
@@ -16,9 +17,7 @@ def custom_social_user(strategy, details, user=None, *args, **kwargs):
             user = User.objects.get(email=email)
             # check if the current user is an employer or not
             if user.role_name == var_sys.EMPLOYER:
-                raise BadRequest(
-                    'Email tài khoản mạng xã hội bạn vừa liên kết đã tồn tại, vui lòng đăng nhập bằng tài khoản khác.'
-                )
+                raise BadRequest(ERROR_MESSAGES['SOCIAL_EMAIL_EXISTS'])
             return {
                 'is_new': False,
                 'user': user
@@ -40,7 +39,7 @@ def custom_create_user(strategy, backend, user=None, *args, **kwargs):
     email = kwargs.get('response').get('email')
 
     if not email:
-        raise Exception('Email is required for registration')
+        raise Exception(ERROR_MESSAGES['EMAIL_REQUIRED'])
 
     user = User.objects.create_user(
         email=email,
@@ -51,9 +50,7 @@ def custom_create_user(strategy, backend, user=None, *args, **kwargs):
 
     # send noti welcome
     helper.add_system_notifications(
-        "Chào mừng bạn!",
-        "Chào mừng bạn đến với MyJob! Hãy sẵn sàng khám phá và trải nghiệm hệ thống của chúng tôi để tìm kiếm "
-        "công việc mơ ước của bạn.",
+        f"{SYSTEM_MESSAGES['WELCOME_TITLE']} {SYSTEM_MESSAGES['WELCOME_JOBSEEKER']}",
         [user.id]
     )
 

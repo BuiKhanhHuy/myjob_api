@@ -10,6 +10,7 @@ from fast_autocomplete import AutoComplete
 from console.jobs import queue_mail
 from configs import variable_response as var_res, variable_system as var_sys, \
     renderers, paginations, table_export
+from configs.messages import APPLICATION_STATUS_MESSAGES, ERROR_MESSAGES
 from helpers import utils, helper
 from helpers.redis_service import RedisService
 from django.conf import settings
@@ -500,7 +501,10 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
 
             # send notification
             notification_title = job_post_activity.job_post.company.company_name
-            notification_content = f'Hồ sơ ứng tuyển của bạn vào vị trí "{job_post_activity.job_post.job_name}" được cập nhật trạng thái sang "{[x for x in var_sys.APPLICATION_STATUS if x[0] == stt][0][1]}"'
+            notification_content = APPLICATION_STATUS_MESSAGES["STATUS_UPDATED"].format(
+                job_name=job_post_activity.job_post.job_name,
+                status=[x for x in var_sys.APPLICATION_STATUS if x[0] == stt][0][1]
+            )
             company_img = job_post_activity.job_post.company.company_image_url
             helper.add_apply_status_notifications(
                 notification_title,
@@ -600,7 +604,7 @@ class JobPostNotificationViewSet(viewsets.ViewSet,
         else:
             if JobPostNotification.objects.filter(user=user, is_active=True).count() >= 3:
                 return var_res.Response(status=status.HTTP_400_BAD_REQUEST,
-                                        data={"errorMessage": ["Tối đa 3 thông báo việc làm được bật"]})
+                                        data={"errorMessage": [ERROR_MESSAGES["MAX_ACTIVE_JOB_NOTIFICATIONS"]]})
             job_post_notification.is_active = True
             job_post_notification.save()
 
