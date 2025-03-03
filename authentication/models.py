@@ -12,11 +12,16 @@ class AuthBaseModel(models.Model):
 
 
 class UserManager(BaseUserManager):
+    invalid_email_message = 'Users should have a email'
+    invalid_full_name_message = 'Users should have a full name'
+    super_user_required_password_message = 'Super users should have a password'
+    role_name_required_message = 'Role name is required'
+    
     def create_user(self, email, full_name, password=None, **extra_fields):
         if email is None:
-            raise ValueError('Users should have a email')
+            raise ValueError(self.invalid_email_message)
         if full_name is None:
-            raise ValueError('Users should have a full name')
+            raise ValueError(self.invalid_full_name_message)
 
         user = self.model(email=self.normalize_email(email), full_name=full_name, **extra_fields)
         user.set_password(password)
@@ -26,7 +31,7 @@ class UserManager(BaseUserManager):
 
     def create_superuser(self, email, full_name, password=None, **extra_fields):
         if password is None:
-            raise ValueError('Super users should have a password')
+            raise ValueError(self.super_user_required_password_message)
 
         user = self.create_user_with_role_name(email, full_name, var_sys.ADMIN,
                                                password=password,
@@ -38,7 +43,7 @@ class UserManager(BaseUserManager):
 
     def create_user_with_role_name(self, email, full_name, role_name, password=None, **extra_fields):
         if role_name is None:
-            raise ValueError("Role name is required!")
+            raise ValueError(self.role_name_required_message)
         user = self.create_user(email, full_name, password, **extra_fields)
         user.role_name = role_name
         user.save()

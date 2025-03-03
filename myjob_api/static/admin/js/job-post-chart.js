@@ -1,3 +1,5 @@
+import { ENDPOINTS } from "./init.js";
+
 var myJobPostChart = undefined;
 
 $(function () {
@@ -11,7 +13,7 @@ $(function () {
         }
         const ctx = document.getElementById("job-post-chart-bar").getContext("2d");
 
-        fetch('/admin/api/job-post-chart/', {
+        fetch(ENDPOINTS['STATISTICAL_JOB_POST_CHART'], {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': Cookies.get('csrftoken'),

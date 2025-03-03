@@ -1,6 +1,7 @@
 import cloudinary.uploader
 
 from configs import variable_system as var_sys
+from configs.messages import ERROR_MESSAGES
 from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -28,7 +29,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
     def validate_platform(self, platform):
         if platform not in ["WEB", "APP"]:
-            raise serializers.ValidationError("platform không hợp lệ.")
+            raise serializers.ValidationError(ERROR_MESSAGES['INVALID_PLATFORM'])
         return platform
 
 
@@ -44,10 +45,10 @@ class UpdatePasswordSerializer(serializers.Serializer):
         new_pass = attrs.get('newPassword', '')
         confirm_pass = attrs.get('confirmPassword', '')
         if not new_pass == confirm_pass:
-            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+            raise serializers.ValidationError({'confirmPassword': ERROR_MESSAGES['CONFIRM_PASSWORD_MISMATCH']})
 
         if not user.check_password(old_pass):
-            raise serializers.ValidationError({'oldPassword': 'Mật khẩu hiện tại không chính xác.'})
+            raise serializers.ValidationError({'oldPassword': ERROR_MESSAGES['CURRENT_PASSWORD_INCORRECT']})
         return attrs
 
     def update(self, instance, validated_data):
@@ -79,17 +80,17 @@ class ResetPasswordSerializer(serializers.Serializer):
         new_pass = attrs.get('newPassword', '')
         confirm_pass = attrs.get('confirmPassword', '')
         if not new_pass == confirm_pass:
-            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+            raise serializers.ValidationError({'confirmPassword': ERROR_MESSAGES['CONFIRM_PASSWORD_MISMATCH']})
 
         platform = attrs.get("platform", "")
         if platform not in ["APP", "WEB"]:
-            raise serializers.ValidationError({'platform': 'platform không hợp lệ.'})
+            raise serializers.ValidationError({'platform': ERROR_MESSAGES['INVALID_PLATFORM']})
         if platform == "APP":
             if not attrs.get("code", None):
-                raise serializers.ValidationError({'code': 'code là bắt buộc.'})
+                raise serializers.ValidationError({'code': ERROR_MESSAGES['CODE_REQUIRED']})
         elif platform == "WEB":
             if not attrs.get("token", None):
-                raise serializers.ValidationError({'token': 'token là bắt buộc.'})
+                raise serializers.ValidationError({'token': ERROR_MESSAGES['TOKEN_REQUIRED']})
         return attrs
 
 
@@ -97,14 +98,14 @@ class JobSeekerRegisterSerializer(serializers.Serializer):
     fullName = serializers.CharField(source="full_name", required=True, max_length=100)
     email = serializers.EmailField(required=True, max_length=100,
                                    validators=[UniqueValidator(queryset=User.objects.all(),
-                                                               message="Email đã tồn tại.")])
+                                                               message=ERROR_MESSAGES['EMAIL_EXISTS'])])
     password = serializers.CharField(required=True, max_length=100)
     confirmPassword = serializers.CharField(required=True, max_length=100)
     platform = serializers.CharField(required=True, max_length=3)
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["confirmPassword"]:
-            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác.'})
+            raise serializers.ValidationError({'confirmPassword': ERROR_MESSAGES['CONFIRM_PASSWORD_MISMATCH']})
         return attrs
 
     def create(self, validated_data):
@@ -132,16 +133,16 @@ class JobSeekerRegisterSerializer(serializers.Serializer):
 class CompanyRegisterSerializer(serializers.ModelSerializer):
     companyName = serializers.CharField(source="company_name", required=True, max_length=255,
                                         validators=[UniqueValidator(Company.objects.all(),
-                                                                    message='Tên công ty đã tồn tại.')])
+                                                                    message=ERROR_MESSAGES['COMPANY_NAME_EXISTS'])])
     companyEmail = serializers.EmailField(source='company_email', required=True, max_length=100,
                                           validators=[UniqueValidator(Company.objects.all(),
-                                                                      message='Email công ty đã tồn tại.')])
+                                                                      message=ERROR_MESSAGES['COMPANY_EMAIL_EXISTS'])])
     companyPhone = serializers.CharField(source='company_phone', required=False, max_length=15,
                                          validators=[UniqueValidator(Company.objects.all(),
-                                                                     message='Số điện thoại công ty đã tồn tại.')])
+                                                                     message=ERROR_MESSAGES['COMPANY_PHONE_EXISTS'])])
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
                                     validators=[UniqueValidator(Company.objects.all(),
-                                                                message='Mã số thuế công ty đã tồn tại.')])
+                                                                message=ERROR_MESSAGES['COMPANY_TAX_CODE_EXISTS'])])
     fieldOperation = serializers.CharField(source="field_operation", required=False,
                                            max_length=255,
                                            allow_null=True,
@@ -177,7 +178,7 @@ class EmployerRegisterSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if not attrs["password"] == attrs["confirmPassword"]:
-            raise serializers.ValidationError({'confirmPassword': 'Mật khẩu xác nhận không chính xác!'})
+            raise serializers.ValidationError({'confirmPassword': ERROR_MESSAGES['CONFIRM_PASSWORD_MISMATCH']})
         return attrs
 
     def create(self, validated_data):

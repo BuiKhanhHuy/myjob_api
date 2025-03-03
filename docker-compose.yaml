@@ -11,7 +11,7 @@ services:
       - ./data/myjob_db.sql:/docker-entrypoint-initdb.d/data.sql
       - myjob-volume:/var/lib/mysql
     networks:
-      - myjob-backend-network
+      - myjob-network
     ports:
       - "3307:3306"
     expose:
@@ -48,15 +48,13 @@ services:
       - SOCIAL_AUTH_FACEBOOK_SECRET=${SOCIAL_AUTH_FACEBOOK_SECRET}
       - SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=${SOCIAL_AUTH_GOOGLE_OAUTH2_KEY}
       - SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=${SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET}
-      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
-      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
-      - TWILIO_PHONE=${TWILIO_PHONE}
+      - SMS_API_KEY=${SMS_API_KEY}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - WEB_CLIENT_URL=${WEB_CLIENT_URL}
     networks:
-      - myjob-backend-network
+      - myjob-network
     ports:
       - "8001:8000"
     expose:
@@ -65,8 +63,8 @@ services:
       - db
 
 networks:
-  myjob-backend-network:
-    name: myjob-backend-network
+  myjob-network:
+    name: myjob-network
 
 volumes:
   myjob-volume:
