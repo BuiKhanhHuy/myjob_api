@@ -13,7 +13,7 @@ from info.models import (
     JobSeekerProfile, Resume,
     Company
 )
-from common.models import Location
+from common.models import Location, File
 from common.serializers import LocationSerializer
 
 
@@ -210,7 +210,7 @@ class UserSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     fullName = serializers.CharField(source="full_name")
     email = serializers.CharField()
-    avatarUrl = serializers.URLField(source="avatar_url")
+    avatarUrl = serializers.SerializerMethodField(method_name="get_avatar_url", read_only=True)
     isActive = serializers.BooleanField(source='is_active')
     isVerifyEmail = serializers.BooleanField(source='is_verify_email')
     roleName = serializers.CharField(source="role_name")
@@ -219,6 +219,11 @@ class UserSerializer(serializers.ModelSerializer):
     jobSeekerProfile = serializers.SerializerMethodField(method_name="get_job_seeker_profile", read_only=True)
     companyId = serializers.PrimaryKeyRelatedField(source='company', read_only=True)
     company = serializers.SerializerMethodField(method_name='get_company')
+    
+    def get_avatar_url(self, user):
+        if user.avatar:
+            return user.avatar.get_full_url()
+        return var_sys.AVATAR_DEFAULT["AVATAR"]
 
     def get_job_seeker_profile(self, user):
         if user.role_name == var_sys.JOB_SEEKER:
@@ -272,33 +277,49 @@ class UserSerializer(serializers.ModelSerializer):
 
 class AvatarSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, write_only=True)
-    avatarUrl = serializers.CharField(source="avatar_url",
-                                      required=False,
-                                      max_length=300,
-                                      read_only=True)
+    avatarUrl = serializers.SerializerMethodField(method_name="get_avatar_url", read_only=True)
+    
+    def get_avatar_url(self, user):
+        if user.avatar:
+            return user.avatar.get_full_url()
+        return var_sys.AVATAR_DEFAULT["AVATAR"]
 
     def update(self, user, validated_data):
         file = validated_data.pop('file')
 
         try:
-            avatar_upload_result = cloudinary.uploader.upload(file,
+            with transaction.atomic():
+                avatar_upload_result = cloudinary.uploader.upload(file,
                                                               folder=settings.CLOUDINARY_DIRECTORY["avatar"],
                                                               public_id=user.id)
-            avatar_public_id = avatar_upload_result.get('public_id')
+                avatar_data = {
+                    "public_id": avatar_upload_result.get("public_id"),
+                    "version": avatar_upload_result.get("version"),
+                    "format": avatar_upload_result.get("format"),
+                    "resource_type": avatar_upload_result.get("resource_type"),
+                    "uploaded_at": avatar_upload_result.get("created_at"),
+                    "bytes": avatar_upload_result.get("bytes"),
+                    "metadata": avatar_upload_result
+                }
+                if user.avatar:
+                    # Update avatar
+                    for key, value in avatar_data.items():
+                        setattr(user.avatar, key, value)
+                    user.avatar.save()
+                else:
+                    # Create avatar
+                    avatar = File(**avatar_data)
+                    avatar.save()
+                    user.avatar = avatar
+                user.save()
+
+                # update in firebase
+                if not user.has_company:
+                    queue_auth.update_avatar.delay(user.id, user.avatar.get_full_url())
+            
+            return user
         except:
             return None
-        else:
-            avatar_url = avatar_upload_result.get('secure_url')
-            # update in db
-            user.avatar_url = avatar_url
-            user.avatar_public_id = avatar_public_id
-            user.save()
-
-            # update in firebase
-            if not user.has_company:
-                queue_auth.update_avatar.delay(user.id, avatar_url)
-
-            return user
 
     class Meta:
         model = User

@@ -314,7 +314,7 @@ class CompanyAdmin(admin.ModelAdmin):
                 company_cover_image_upload_result = cloudinary.uploader.upload(
                     company_cover_image_file,
                     folder=settings.CLOUDINARY_DIRECTORY[
-                        "coverImage"],
+                        "cover_image"],
                     public_id=company.id
                 )
                 company_cover_image_url = company_cover_image_upload_result.get('secure_url')

@@ -1,5 +1,5 @@
 from django.db import models
-from authentication.models import User
+from django.conf import settings
 
 
 class CommonBaseModel(models.Model):
@@ -60,3 +60,26 @@ class Career(CommonBaseModel):
 
     def __str__(self):
         return self.name
+
+
+class File(CommonBaseModel):
+    RESOURCE_TYPES = [
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('raw', 'Raw File'),
+    ]
+
+    public_id = models.CharField(max_length=255, unique=True)
+    version = models.CharField(max_length=20, null=True, blank=True)
+    format = models.CharField(max_length=50)
+    resource_type = models.CharField(max_length=50, choices=RESOURCE_TYPES)
+    uploaded_at = models.DateTimeField(null=False, blank=False)
+    bytes = models.IntegerField(default=0)
+    metadata = models.JSONField(blank=True, null=True)
+    
+    def get_full_url(self):
+        return f"{settings.CLOUDINARY_PATH.format(self.version) + self.public_id}.{self.format}"
+
+    class Meta:
+        db_table = "myjob_files"
+        ordering = ['-create_at']

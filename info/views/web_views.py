@@ -666,7 +666,7 @@ class CompanyViewSet(viewsets.ViewSet,
         helper.add_company_followed_notifications(
             notification_title,
             notification_content,
-            user.avatar_url,
+            user.avatar.get_full_url() if user.avatar else var_sys.AVATAR_DEFAULT["AVATAR"],
             company.user_id
         )
         return Response(data={

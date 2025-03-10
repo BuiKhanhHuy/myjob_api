@@ -119,7 +119,7 @@ class BannerAdmin(admin.ModelAdmin):
                 banner_image_upload_result = cloudinary.uploader.upload(
                     image_file,
                     folder=settings.CLOUDINARY_DIRECTORY[
-                        "webBanner"],
+                        "web_banner"],
                     public_id=banner.id
                 )
                 banner_image_url = banner_image_upload_result.get('secure_url')
@@ -133,7 +133,7 @@ class BannerAdmin(admin.ModelAdmin):
                 banner_mobile_image_upload_result = cloudinary.uploader.upload(
                     image_mobile_file,
                     folder=settings.CLOUDINARY_DIRECTORY[
-                        "mobileBanner"],
+                        "mobile_banner"],
                     public_id=banner.id
                 )
                 banner_mobile_image_url = banner_mobile_image_upload_result.get('secure_url')

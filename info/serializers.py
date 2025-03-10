@@ -270,7 +270,7 @@ class CompanyCoverImageSerializer(serializers.ModelSerializer):
         try:
             company_cover_image_upload_result = cloudinary.uploader.upload(file,
                                                                            folder=settings.CLOUDINARY_DIRECTORY[
-                                                                               "coverImage"],
+                                                                               "cover_image"],
                                                                            public_id=company.id)
             company_cover_image_public_id = company_cover_image_upload_result.get('public_id')
         except:

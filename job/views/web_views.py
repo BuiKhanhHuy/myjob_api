@@ -14,7 +14,7 @@ from configs.messages import APPLICATION_STATUS_MESSAGES, ERROR_MESSAGES
 from helpers import utils, helper
 from helpers.redis_service import RedisService
 from django.conf import settings
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Q, Sum, Case, When, CharField
 from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view
@@ -44,6 +44,7 @@ from ..serializers import (
     JobPostNotificationSerializer,
     StatisticsSerializer
 )
+from common.models import File
 from info.models import (
     ResumeViewed,
     CompanyFollowed
@@ -456,7 +457,11 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             .annotate(userId=F('user_id'),
                       fullName=F('user__full_name'),
                       userEmail=F('user__email'),
-                      avatarUrl=F('user__avatar_url'),
+                      avatarUrl=Case(
+                          When(user__avatar__isnull=False, then=F('user__avatar__id')),
+                          default=None,
+                          output_field=CharField(),
+                      ),
                       jobPostTitle=F('job_post__job_name')) \
             .values('id', 'userId', "fullName", 'userEmail', "avatarUrl", 'jobPostTitle')
             .order_by('-id', 'create_at')
@@ -465,6 +470,12 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
         res_data = page
 
         if page is not None:
+            for item in res_data:
+                if item['avatarUrl']:
+                    avatar = File.objects.get(id=item['avatarUrl'])
+                    item['avatarUrl'] = avatar.get_full_url() if avatar else var_sys.AVATAR_DEFAULT["AVATAR"]
+                else:
+                    item['avatarUrl'] = var_sys.AVATAR_DEFAULT["AVATAR"]
             return self.get_paginated_response(res_data)
         return var_res.Response(res_data)
 

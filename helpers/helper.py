@@ -137,7 +137,10 @@ def add_apply_job_notifications(job_post_activity):
         title = NOTIFICATION_MESSAGES["APPLICANT_APPLICATION"].format(full_name=job_post_activity.full_name,
                                                                      email=job_post_activity.email)
         content = NOTIFICATION_MESSAGES["JOB_APPLICATION_SUBMITTED"].format(job_name=job_post_activity.job_post.job_name)
-        avatar = job_post_activity.user.avatar_url
+        # Avatar
+        avatar = job_post_activity.user.avatar
+        avatar_url = avatar.get_full_url() if avatar else var_sys.AVATAR_DEFAULT["AVATAR"]
+        # Content
         content_of_type = {
             "resume_id": job_post_activity.resume_id,
             "resume_slug": job_post_activity.resume.slug
@@ -145,7 +148,7 @@ def add_apply_job_notifications(job_post_activity):
         user_id = job_post_activity.job_post.user_id
         type_name = var_sys.NOTIFICATION_TYPE["APPLY_JOB"]
         queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                          image=avatar,
+                                                          image=avatar_url,
                                                           content_of_type=content_of_type,
                                                           type_name=type_name, user_id_list=[user_id])
     except Exception as ex:

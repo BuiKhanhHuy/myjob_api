@@ -104,7 +104,7 @@ class CareerAdmin(admin.ModelAdmin):
                 career_image_upload_result = cloudinary.uploader.upload(
                     icon_file,
                     folder=settings.CLOUDINARY_DIRECTORY[
-                        "careerImage"],
+                        "career_image"],
                     public_id=career.id
                 )
                 career_image_url = career_image_upload_result.get('secure_url')

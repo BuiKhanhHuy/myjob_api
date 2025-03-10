@@ -468,14 +468,14 @@ def avatar(request):
     elif request.method == "DELETE":
         user = request.user
         try:
-            if user.avatar_public_id:
-                destroy_result = cloudinary.uploader.destroy(user.avatar_public_id)
+            if user.avatar:
+                destroy_result = cloudinary.uploader.destroy(user.avatar.public_id)
                 if not destroy_result.get("result", "") == "ok":
-                    raise Exception(ERROR_MESSAGES["CLOUDINARY_UPLOAD_ERROR"])
-            # update in db
-            user.avatar_url = var_sys.AVATAR_DEFAULT["AVATAR"]
-            user.avatar_public_id = None
-            user.save()
+                    helper.print_log_error("destroy_avatar_in_cloud", ERROR_MESSAGES["CLOUDINARY_UPLOAD_ERROR"])
+                # Delete file in DB
+                user.avatar.delete()
+                user.avatar = None
+                user.save()
 
             # update in firebase
             if not user.has_company:
@@ -485,7 +485,7 @@ def avatar(request):
             return response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return response_data(status=status.HTTP_200_OK, data={
-                "avatarUrl": user.avatar_url
+                "avatarUrl": user.avatar.get_full_url() if user.avatar else var_sys.AVATAR_DEFAULT["AVATAR"]
             })
     else:
         return response_data(status=status.HTTP_405_METHOD_NOT_ALLOWED)
