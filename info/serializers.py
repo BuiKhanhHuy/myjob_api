@@ -3,6 +3,7 @@ from datetime import date
 import cloudinary.uploader
 from django.conf import settings
 from configs import variable_system as var_sys
+from configs.messages import ERROR_MESSAGES
 from helpers import helper
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -53,7 +54,7 @@ class CompanyImageSerializer(serializers.ModelSerializer):
         if user.role_name == var_sys.EMPLOYER:
             company = user.company
             if CompanyImage.objects.filter(company=company).count() + count_upload_file > 15:
-                raise serializers.ValidationError({'errorMessage': 'Tối đa 15 ảnh'})
+                raise serializers.ValidationError({'errorMessage': ERROR_MESSAGES["MAXIMUM_IMAGES"]})
         return attrs
 
     def create(self, validated_data):
@@ -91,10 +92,10 @@ class CompanyImageSerializer(serializers.ModelSerializer):
 class CompanySerializer(serializers.ModelSerializer):
     taxCode = serializers.CharField(source="tax_code", required=True, max_length=30,
                                     validators=[UniqueValidator(Company.objects.all(),
-                                                                message="Mã số thuế công ty đã tồn tại.")])
+                                                                message=ERROR_MESSAGES["COMPANY_TAX_CODE_EXISTS"])])
     companyName = serializers.CharField(source="company_name", required=True,
                                         validators=[UniqueValidator(Company.objects.all(),
-                                                                    message='Tên công ty đã tồn tại.')])
+                                                                    message=ERROR_MESSAGES["COMPANY_NAME_EXISTS"])])
     employeeSize = serializers.IntegerField(source="employee_size", required=True)
     fieldOperation = serializers.CharField(source="field_operation", required=True,
                                            max_length=255)
@@ -103,7 +104,7 @@ class CompanySerializer(serializers.ModelSerializer):
                                                                                  var_sys.DATE_TIME_FORMAT["Ymd"]])
     companyEmail = serializers.CharField(source="company_email", required=True,
                                          max_length=100, validators=[UniqueValidator(Company.objects.all(),
-                                                                                     message='Email công ty đã tồn tại.')])
+                                                                                     message=ERROR_MESSAGES["COMPANY_EMAIL_EXISTS"])])
     companyPhone = serializers.CharField(source="company_phone", required=True,
                                          max_length=15, validators=[
             UniqueValidator(Company.objects.all(),
@@ -703,7 +704,7 @@ class EducationSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if EducationDetail.objects.count() >= 10:
-            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin học vấn'})
+            raise serializers.ValidationError({'errorMessage': ERROR_MESSAGES["MAXIMUM_EDUCATION"]})
         return attrs
 
     class Meta:
@@ -745,7 +746,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if ExperienceDetail.objects.count() >= 10:
-            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin kinh nghiệm làm việc'})
+            raise serializers.ValidationError({'errorMessage': ERROR_MESSAGES["MAXIMUM_EXPERIENCE"]})
         return attrs
 
     class Meta:
@@ -787,7 +788,7 @@ class CertificateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if Certificate.objects.count() >= 10:
-            raise serializers.ValidationError({'errorMessage': 'Tối đa 10 thông tin chứng chỉ'})
+            raise serializers.ValidationError({'errorMessage': ERROR_MESSAGES["MAXIMUM_CERTIFICATE"]})
         return attrs
 
     class Meta:
@@ -809,6 +810,7 @@ class LanguageSkillSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    # TODO:
     # def validate_language(self, language):
     #     request = self.context['request']
     #
@@ -847,6 +849,7 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    # TODO:
     # def validate_name(self, name):
     #     request = self.context['request']
     #
@@ -869,7 +872,7 @@ class AdvancedSkillSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if AdvancedSkill.objects.count() >= 15:
-            raise serializers.ValidationError({'errorMessage': 'Tối đa 15 thông tin kỹ năng chuyên môn'})
+            raise serializers.ValidationError({'errorMessage': ERROR_MESSAGES["MAXIMUM_ADVANCED"]})
         return attrs
 
     class Meta:

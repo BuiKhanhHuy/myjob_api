@@ -1,3 +1,5 @@
+import { ENDPOINTS } from "./init.js";
+
 var myCareerChart = undefined;
 
 $(function () {
@@ -11,7 +13,7 @@ $(function () {
         }
         const ctx1 = document.getElementById("chart-career-pie").getContext("2d");
 
-        fetch('/admin/api/career-chart/', {
+        fetch(ENDPOINTS['STATISTICAL_CAREER_CHART'], {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': Cookies.get('csrftoken'),

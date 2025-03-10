@@ -3,6 +3,7 @@ from django.conf import settings
 from datetime import datetime
 from helpers import utils, helper
 from celery import shared_task
+from configs.messages import MAIL_MESSAGES
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from job.models import (
@@ -15,7 +16,7 @@ from job.models import (
 def send_email_verify_email_task(to, data=None, cc=None, bcc=None):
     if data is None:
         data = {}
-    subject = "Xác thực email"
+    subject = MAIL_MESSAGES["EMAIL_VERIFICATION_SUBJECT"]
 
     data["my_email"] = var_sys.COMPANY_INFO["EMAIL"]
     data["my_phone"] = var_sys.COMPANY_INFO["PHONE"]
@@ -35,7 +36,7 @@ def send_email_verify_email_task(to, data=None, cc=None, bcc=None):
 
 @shared_task
 def send_email_reset_password_for_web_task(to, reset_password_url, cc=None, bcc=None):
-    subject = "Đặt lại mật khẩu"
+    subject = MAIL_MESSAGES["PASSWORD_RESET_SUBJECT"]
 
     data = {
         "my_email": var_sys.COMPANY_INFO["EMAIL"],
@@ -58,7 +59,7 @@ def send_email_reset_password_for_web_task(to, reset_password_url, cc=None, bcc=
 
 @shared_task
 def send_email_reset_password_for_app_task(to, full_name, code, cc=None, bcc=None):
-    subject = f"{code} là mã xác nhận quên mật khẩu tài khoản MyJob của bạn"
+    subject = MAIL_MESSAGES["PASSWORD_RESET_SUBJECT"].format(code=code)
 
     data = {
         "my_email": var_sys.COMPANY_INFO["EMAIL"],
@@ -151,7 +152,7 @@ def send_email_confirm_application(to, subject, data=None, cc=None, bcc=None):
 # For admin
 @shared_task
 def send_an_account_deactivation_email(to, full_name, email, cc=None, bcc=None):
-    subject = "Thông báo: Tài khoản của bạn bị vô hiệu hóa"
+    subject = MAIL_MESSAGES["ACCOUNT_DISABLED_SUBJECT"]
     data = {
         "my_email": var_sys.COMPANY_INFO["EMAIL"],
         "my_phone": var_sys.COMPANY_INFO["PHONE"],
@@ -177,12 +178,12 @@ def send_an_account_deactivation_email(to, full_name, email, cc=None, bcc=None):
 def send_email_for_user(user_id, full_name, to_email, frequency):
     try:
         job_post_list = []
-        # lay danh sach cai dat thong bao
+        # Get list job post notification
         job_post_notifications = JobPostNotification.objects \
             .filter(user_id=user_id, is_active=True, frequency=frequency) \
             .values("job_name", "position", "experience", "salary", "career", "city")
 
-        # huy do chua co thiet lap thong bao
+        # Cancel send email if not setting up job notifications
         if job_post_notifications.count() == 0:
             return f'Send job notification email to {to_email} cancel. Due to not setting up job notifications'
 
@@ -214,25 +215,22 @@ def send_email_for_user(user_id, full_name, to_email, frequency):
         if total_result == 0:
             return f"Send job notification email to {to_email} cancel. Can't find any suitable job"
 
-        subject = f'Việc làm {job_post_list[0].get("job_name")} '
+        subject = MAIL_MESSAGES["JOB_NAME_SUBJECT"][0].format(job_name=job_post_list[0].get("job_name"))
         if total_result > 1:
-            subject += f"và {total_result - 1} công việc khác "
+            subject += MAIL_MESSAGES["JOB_NAME_SUBJECT"][1].format(total_result=total_result - 1)
 
-        subject += "cho bạn"
+        subject += f" {MAIL_MESSAGES['JOB_NAME_SUBJECT'][2]}"
         app_env = settings.APP_ENVIRONMENT
         domain = settings.DOMAIN_CLIENT[app_env]
         data = {
             "my_address": var_sys.COMPANY_INFO["ADDRESS"],
             "full_name": full_name,
-            "description": f"Chúng tôi đã tìm thấy {total_result} công việc phù hợp với yêu cầu của bạn.",
+            "description": MAIL_MESSAGES["JOB_NOTIFICATION_FOUND"].format(total_result=total_result),
             "job_post_link": f"{domain}viec-lam/",
             "company_link": f"{domain}cong-ty/",
             "job_post_notification_link": f"{domain}ung-vien/viec-lam-cua-toi/?tab=3",
             "job_post_list": job_post_list
         }
-        # print("subject: ", subject)
-        # print("data: ", data)
-        # print("\n")
 
         email_html = render_to_string('suggested-job-post.html', data)
         text_content = strip_tags(email_html)

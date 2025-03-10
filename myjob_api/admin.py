@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from django.http import JsonResponse
 from django.shortcuts import redirect
-
+from django.conf import settings
 from configs import variable_system as var_sys
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.contrib import admin
@@ -29,6 +29,15 @@ class CustomAdminSite(admin.AdminSite):
     dashboard_template = "admin/dashboard.html"
     notifications_template = "admin/notifications.html"
     site_url = "/admin/dashboard/"
+    
+    # Add custom context to the admin site
+    def each_context(self, request):
+        context = super().each_context(request)
+        # Add settings to the context
+        context["settings"] = {
+            "firebase": settings.FIREBASE_CONFIG
+        }
+        return context
 
     def user_chart(self, request):
         # x <= 31 => by day

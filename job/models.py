@@ -25,9 +25,6 @@ class JobPostBaseModel(models.Model):
 
 class JobPost(JobPostBaseModel):
     job_name = models.CharField(max_length=255)
-    # slug = AutoSlugField(populate_from='job_name', unique=True,
-    #                      slugify_function=custom_slugify_function,
-    #                      max_length=300)
     slug = AutoSlugField(populate_from='job_name', unique=True,
                          unique_with=['id'],
                          slugify=slugify, max_length=300)

@@ -4,6 +4,7 @@ from console.jobs import queue_mail
 from helpers import utils
 from configs import variable_system as var_sys, table_export
 from configs import variable_response as var_res, renderers, paginations
+from configs.messages import NOTIFICATION_MESSAGES, ERROR_MESSAGES
 from django.db.models import Count, Q, F
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
@@ -74,7 +75,7 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
 
         job_seeker_profile = self.get_object()
         if not job_seeker_profile:
-            raise Exception("User doesn't have job_seeker_profile.")
+            raise Exception(ERROR_MESSAGES["USER_DOESNT_HAVE_JOB_SEEKER_PROFILE"])
 
         resumes = job_seeker_profile.resumes
         # get all
@@ -315,7 +316,7 @@ class ResumeViewSet(viewsets.ViewSet,
             is_saved = True
         # send notification
         company = user.company
-        notification_content = "Đã lưu hồ sơ của bạn" if is_saved else "Đã hủy lưu hồ sơ của bạn"
+        notification_content = NOTIFICATION_MESSAGES['RESUME_SAVED'] if is_saved else NOTIFICATION_MESSAGES['RESUME_UNSAVED']
         helper.add_employer_saved_resume_notifications(
             company.company_name,
             notification_content,
@@ -661,7 +662,7 @@ class CompanyViewSet(viewsets.ViewSet,
             is_followed = True
         # send notification
         notification_title = f"{user.full_name} - {user.email}"
-        notification_content = "Đã theo dõi bạn" if is_followed else "Đã hủy theo dõi bạn"
+        notification_content = NOTIFICATION_MESSAGES["FOLLOW_NOTIFICATION"] if is_followed else NOTIFICATION_MESSAGES["UNFOLLOW_NOTIFICATION"]
         helper.add_company_followed_notifications(
             notification_title,
             notification_content,
@@ -678,7 +679,7 @@ class CompanyFollowedAPIView(views.APIView):
     renderer_classes = [renderers.MyJSONRenderer]
     pagination_class = paginations.CustomPagination
 
-    # danh sach cong ty dang follow
+    # The list company are following
     def get(self, request):
         user = request.user
 

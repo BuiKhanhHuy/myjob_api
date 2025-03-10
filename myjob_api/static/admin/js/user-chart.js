@@ -1,3 +1,5 @@
+import { ENDPOINTS } from "./init.js";
+
 var myUserChart = undefined;
 
 $(function () {
@@ -11,7 +13,7 @@ $(function () {
         }
         const ctx = document.getElementById("user-chart-line").getContext("2d");
 
-        fetch('/admin/api/user-chart/', {
+        fetch(ENDPOINTS['STATISTICAL_USER_CHART'], {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': Cookies.get('csrftoken'),

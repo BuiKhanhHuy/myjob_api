@@ -1,10 +1,11 @@
 import {
     collection, getDocs, limit, onSnapshot, query, where, startAfter, orderBy, updateDoc, doc
 } from "https://www.gstatic.com/firebasejs/9.9.3/firebase-firestore.js";
+import { PAGE_SIZE_DEFAULT } from "./init.js";
 import db from './fire-base-config.js'
 import {showDetail} from "./notification.js";
 
-const PAGE_SIZE_PAGE = 10;
+const PAGE_SIZE_PAGE = PAGE_SIZE_DEFAULT;
 var page = 1;
 var totalNotificationPage = 0
 var lastVisiblePage = null;
