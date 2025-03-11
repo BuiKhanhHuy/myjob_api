@@ -8,7 +8,9 @@ from django import forms
 from django.utils.html import mark_safe
 from django_admin_listfilter_dropdown.filters import DropdownFilter, ChoiceDropdownFilter
 from django.conf import settings
+from django.db import transaction
 from helpers import helper
+from configs import variable_system as var_sys
 
 from django_celery_beat.models import (
     PeriodicTask
@@ -17,6 +19,7 @@ from django_celery_beat.admin import (
     TaskChoiceField, PeriodicTaskAdmin
 )
 from myjob_api.admin import custom_admin_site
+from common.models import File
 from .models import (
     Feedback,
     Banner
@@ -44,7 +47,8 @@ class BannerForm(forms.ModelForm):
 
 
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ("id", "create_at", "content", "rating", "is_active", "user")
+    list_display = ("id", "create_at", "content",
+                    "rating", "is_active", "user")
     list_display_links = ("id",)
     list_editable = ("is_active",)
     search_fields = ("content",)
@@ -86,20 +90,20 @@ class BannerAdmin(admin.ModelAdmin):
     )
 
     def show_image_url(self, banner):
-        if banner and banner.image_url:
+        if banner and banner.image:
             return mark_safe(
                 r"""<img src='{0}'
                 alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(
-                    banner.image_url)
+                    banner.image.get_full_url())
             )
         return "---"
 
     def show_mobile_image_url(self, banner):
-        if banner and banner.image_mobile_url:
+        if banner and banner.image_mobile:
             return mark_safe(
                 r"""<img src='{0}'
                 alt='background' style="border-radius: 5px; object-fit:cover;" width='220px' height='110px'/>""".format(
-                    banner.image_mobile_url)
+                    banner.image_mobile.get_full_url())
             )
         return "---"
 
@@ -109,39 +113,79 @@ class BannerAdmin(admin.ModelAdmin):
     form = BannerForm
 
     def save_model(self, request, banner, form, change):
+        # Call the parent class's save_model method
         super().save_model(request, banner, form, change)
 
+        # Get the uploaded image files
         image_file = request.FILES.get('image_file', None)
         image_mobile_file = request.FILES.get('image_mobile_file', None)
 
+        # If a web banner image is uploaded
         if image_file:
             try:
-                banner_image_upload_result = cloudinary.uploader.upload(
-                    image_file,
-                    folder=settings.CLOUDINARY_DIRECTORY[
-                        "web_banner"],
-                    public_id=banner.id
-                )
-                banner_image_url = banner_image_upload_result.get('secure_url')
+                # Upload the image to cloudinary
+                with transaction.atomic():
+                    banner_image_upload_result = cloudinary.uploader.upload(
+                        image_file,
+                        folder=settings.CLOUDINARY_DIRECTORY["web_banner"],
+                        public_id=banner.id
+                    )
+                    # Prepare the image data
+                    image_data = {
+                        "public_id": banner_image_upload_result.get("public_id"),
+                        "version": banner_image_upload_result.get("version"),
+                        "format": banner_image_upload_result.get("format"),
+                        "resource_type": banner_image_upload_result.get("resource_type"),
+                        "uploaded_at": banner_image_upload_result.get("created_at"),
+                        "bytes": banner_image_upload_result.get("bytes"),
+                        "metadata": banner_image_upload_result
+                    }
+                    # If the banner already has an image, update it
+                    if banner.image:
+                        for key, value in image_data.items():
+                            setattr(banner.image, key, value)
+                        banner.image.save()
+                    # If the banner does not have an image, create a new one
+                    else:
+                        image_new = File.objects.create(**image_data)
+                        banner.image = image_new
             except Exception as ex:
                 helper.print_log_error("banner_image_save_model", ex)
-            else:
-                banner.image_url = banner_image_url
 
+        # If a mobile banner image is uploaded
         if image_mobile_file:
             try:
-                banner_mobile_image_upload_result = cloudinary.uploader.upload(
-                    image_mobile_file,
-                    folder=settings.CLOUDINARY_DIRECTORY[
-                        "mobile_banner"],
-                    public_id=banner.id
-                )
-                banner_mobile_image_url = banner_mobile_image_upload_result.get('secure_url')
+                # Upload the image to cloudinary
+                with transaction.atomic():
+                    banner_mobile_image_upload_result = cloudinary.uploader.upload(
+                        image_mobile_file,
+                        folder=settings.CLOUDINARY_DIRECTORY["mobile_banner"],
+                        public_id=banner.id
+                    )
+                    # Prepare the image data
+                    banner_mobile_image_data = {
+                        "public_id": banner_mobile_image_upload_result.get("public_id"),
+                        "version": banner_mobile_image_upload_result.get("version"),
+                        "format": banner_mobile_image_upload_result.get("format"),
+                        "resource_type": banner_mobile_image_upload_result.get("resource_type"),
+                        "uploaded_at": banner_mobile_image_upload_result.get("created_at"),
+                        "bytes": banner_mobile_image_upload_result.get("bytes"),
+                        "metadata": banner_mobile_image_upload_result
+                    }
+                    # If the banner already has a mobile image, update it
+                    if banner.image_mobile:
+                        for key, value in banner_mobile_image_data.items():
+                            setattr(banner.image_mobile, key, value)
+                        banner.image_mobile.save()
+                    # If the banner does not have a mobile image, create a new one
+                    else:
+                        banner_mobile_image_new = File.objects.create(
+                            **banner_mobile_image_data)
+                        banner.image_mobile = banner_mobile_image_new
             except Exception as ex:
                 helper.print_log_error("banner_mobile_image_save_model", ex)
-            else:
-                banner.image_mobile_url = banner_mobile_image_url
 
+        # If a web banner or mobile banner image is uploaded, save the banner
         if image_file or image_mobile_file:
             banner.save()
 

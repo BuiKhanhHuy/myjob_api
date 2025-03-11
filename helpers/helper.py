@@ -162,7 +162,7 @@ def add_post_verify_required_notifications(company, job_post):
 
         title = company.company_name
         content = NOTIFICATION_MESSAGES["JOB_POSTING_REQUEST"].format(job_post_title=job_post_title)
-        company_image = company.company_image_url
+        company_image = company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
 
         user_id_list = list(User.objects.filter(is_staff=True).values_list('id', flat=True))
 

@@ -52,8 +52,8 @@ class Location(CommonBaseModel):
 
 class Career(CommonBaseModel):
     name = models.CharField(max_length=150)
-    icon_url = models.URLField(max_length=300)
     app_icon_name = models.CharField(max_length=50, null=True)
+    icon = models.OneToOneField("File", on_delete=models.SET_NULL, null=True)
 
     class Meta:
         db_table = "myjob_common_career"
@@ -69,7 +69,7 @@ class File(CommonBaseModel):
         ('raw', 'Raw File'),
     ]
 
-    public_id = models.CharField(max_length=255, unique=True)
+    public_id = models.CharField(max_length=255)
     version = models.CharField(max_length=20, null=True, blank=True)
     format = models.CharField(max_length=50)
     resource_type = models.CharField(max_length=50, choices=RESOURCE_TYPES)

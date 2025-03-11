@@ -5,7 +5,8 @@ from helpers import utils
 from configs import variable_system as var_sys, table_export
 from configs import variable_response as var_res, renderers, paginations
 from configs.messages import NOTIFICATION_MESSAGES, ERROR_MESSAGES
-from django.db.models import Count, Q, F
+from django.db.models import Count, F
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from helpers import helper
 from rest_framework import viewsets, generics, views
@@ -320,7 +321,7 @@ class ResumeViewSet(viewsets.ViewSet,
         helper.add_employer_saved_resume_notifications(
             company.company_name,
             notification_content,
-            company.company_image_url,
+            company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
             self.get_object().user_id
         )
         return Response(data={
@@ -344,7 +345,7 @@ class ResumeViewSet(viewsets.ViewSet,
             helper.add_employer_viewed_resume_notifications(
                 company.company_name,
                 "Đã xem hồ sơ của bạn",
-                company.company_image_url,
+                company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
                 self.get_object().user_id
             )
         except Exception as ex:
@@ -374,7 +375,7 @@ class ResumeViewSet(viewsets.ViewSet,
 
             email_data = {
                 'content': validate_data.get("content"),
-                'company_image': company.company_image_url,
+                'company_image': company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
                 'company_name': company.company_name,
                 'company_phone': company.company_phone,
                 'company_email': company.company_email,
@@ -724,8 +725,15 @@ class CompanyImageViewSet(viewsets.ViewSet,
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        image_public_id = instance.image_public_id
-        if image_public_id:
-            cloudinary.uploader.destroy(image_public_id)
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            with transaction.atomic():
+                image = instance.image
+                if image:
+                    cloudinary.uploader.destroy(image.public_id)
+                    image.delete()
+                self.perform_destroy(instance)
+        except Exception as ex:
+            helper.print_log_error("destroy", ex)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(status=status.HTTP_204_NO_CONTENT)

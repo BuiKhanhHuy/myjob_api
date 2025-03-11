@@ -23,7 +23,7 @@ from .models import (
     CompanyImage
 )
 from common.models import (
-    Location
+    Location, File
 )
 
 from authentication import serializers as auth_serializers
@@ -31,7 +31,7 @@ from common import serializers as common_serializers
 
 
 class CompanyImageSerializer(serializers.ModelSerializer):
-    imageUrl = serializers.CharField(source='image_url', required=False, read_only=True)
+    imageUrl = serializers.SerializerMethodField(method_name='get_image_url', read_only=True)
     files = serializers.ListField(required=True, write_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -44,6 +44,12 @@ class CompanyImageSerializer(serializers.ModelSerializer):
             existing = set(self.fields)
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
+                
+    def get_image_url(self, company_image):
+        if company_image.image:
+            return company_image.image.get_full_url()
+        
+        return None
 
     def validate(self, attrs):
         files = attrs.get("files", [])
@@ -58,30 +64,48 @@ class CompanyImageSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        # Extract the 'files' field from the validated data
         files = validated_data.pop('files', [])
+        # Get the request from the context
         request = self.context["request"]
 
+        # Initialize an empty list to store the file names
         file_name_list = []
-        for file in files:
-            company_image = CompanyImage.objects.create(company=request.user.company)
-            company_image_upload_result = cloudinary.uploader.upload(
-                file,
-                folder=settings.CLOUDINARY_DIRECTORY[
-                    "company_image"],
-                public_id=company_image.id
-            )
-            company_image_public_id = company_image_upload_result.get('public_id')
-            company_image_url = company_image_upload_result["secure_url"]
+        # Start a database transaction
+        with transaction.atomic():
+            # Loop through each file in the 'files' list
+            for file in files:
+                # Create a new CompanyImage object for the current user's company
+                company_image = CompanyImage.objects.create(company=request.user.company)
+                # Upload the file to Cloudinary
+                company_image_upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=settings.CLOUDINARY_DIRECTORY["company_image"],
+                    public_id=company_image.id
+                )
+          
+                # Create a new File object for the uploaded image
+                image = File.objects.create(
+                    public_id=company_image_upload_result.get("public_id"),
+                    version=company_image_upload_result.get("version"),
+                    format=company_image_upload_result.get("format"),
+                    resource_type=company_image_upload_result.get("resource_type"),
+                    uploaded_at=company_image_upload_result.get("created_at"),
+                    bytes=company_image_upload_result.get("bytes"),
+                    metadata=company_image_upload_result
+                )
+                # Set the image of the CompanyImage object to the uploaded image
+                company_image.image = image
+                # Save the CompanyImage object
+                company_image.save()
 
-            company_image.image_url = company_image_url
-            company_image.image_public_id = company_image_public_id
-            company_image.save()
+                # Add the file name and URL to the list
+                file_name_list.append({
+                    'id': company_image.id,
+                    'imageUrl': company_image.image.get_full_url() if company_image.image else None
+                })
 
-            file_name_list.append({
-                'id': company_image.id,
-                'imageUrl': company_image.image_url
-            })
-
+        # Return the list of file names and URLs
         return file_name_list
 
     class Meta:
@@ -120,8 +144,8 @@ class CompanySerializer(serializers.ModelSerializer):
                                        allow_null=True, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-    companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
-    companyCoverImageUrl = serializers.URLField(source='company_cover_image_url', read_only=True)
+    companyImageUrl = serializers.SerializerMethodField(method_name='get_company_logo_url', read_only=True)
+    companyCoverImageUrl = serializers.SerializerMethodField(method_name='get_company_cover_image_url', read_only=True)
     locationDict = common_serializers.LocationSerializer(source="location",
                                                          fields=['city'],
                                                          read_only=True)
@@ -145,6 +169,20 @@ class CompanySerializer(serializers.ModelSerializer):
             existing = set(self.fields)
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
+                
+    def get_company_logo_url(self, company):
+        logo = company.logo
+        if logo:
+            return logo.get_full_url()
+
+        return var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
+    
+    def get_company_cover_image_url(self, company):
+        cover_image = company.cover_image
+        if cover_image:
+            return cover_image.get_full_url()
+        
+        return var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"]
 
     def get_follow_number(self, company):
         return company.companyfollowed_set.filter().count()
@@ -226,62 +264,111 @@ class CompanyFollowedSerializer(serializers.ModelSerializer):
 
 class LogoCompanySerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, write_only=True)
-    companyImageUrl = serializers.CharField(source='company_image_url', read_only=True)
+    companyImageUrl = serializers.SerializerMethodField(method_name='get_company_logo_url', read_only=True)
 
     class Meta:
         model = Company
         fields = ('file', 'companyImageUrl')
+        
+    def get_company_logo_url(self, company):
+        logo = company.logo
+        if logo:
+            return logo.get_full_url()
+
+        return var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
 
     def update(self, company, validated_data):
         file = validated_data.pop('file')
 
         try:
-            logo_upload_result = cloudinary.uploader.upload(file,
-                                                            folder=settings.CLOUDINARY_DIRECTORY["logo"],
-                                                            public_id=company.id)
-            logo_public_id = logo_upload_result.get('public_id')
-        except:
-            return None
-        else:
-            logo_url = logo_upload_result.get('secure_url')
+            with transaction.atomic():
+                # Upload the logo to Cloudinary
+                logo_upload_result = cloudinary.uploader.upload(file,
+                                                                folder=settings.CLOUDINARY_DIRECTORY["logo"],
+                                                                public_id=company.id)
+                # Prepare the data for the company logo
+                company_logo_data = {
+                    "public_id": logo_upload_result.get("public_id"),
+                    "version": logo_upload_result.get("version"),
+                    "format": logo_upload_result.get("format"),
+                    "resource_type": logo_upload_result.get("resource_type"),
+                    "uploaded_at": logo_upload_result.get("created_at"),
+                    "bytes": logo_upload_result.get("bytes"),
+                    "metadata": logo_upload_result
+                }
+                # Check if the company already has a logo
+                if company.logo:
+                    # Update the existing logo
+                    for key, value in company_logo_data.items():
+                        setattr(company.logo, key, value)
+                    company.logo.save()
+                else:
+                    # Create a new logo if it doesn't exist
+                    company_logo = File.objects.create(**company_logo_data)
+                    company.logo = company_logo
+                company.save()
 
-            # update in db
-            company.company_image_url = logo_url
-            company.company_image_public_id = logo_public_id
-            company.save()
-
-            # update in firebase
-            queue_auth.update_avatar.delay(company.user_id, logo_url)
+                # Update the company avatar in Firebase
+                queue_auth.update_avatar.delay(company.user_id, company.logo.get_full_url())
 
             return company
+        except Exception as e:
+            # Log the error if any occurs during the process
+            helper.print_log_error("update company logo", e)
+            return None
 
 
 class CompanyCoverImageSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True, write_only=True)
-    companyCoverImageUrl = serializers.CharField(source='company_cover_image_url', read_only=True)
+    companyCoverImageUrl = serializers.SerializerMethodField(method_name='get_company_cover_image_url', read_only=True)
 
     class Meta:
         model = Company
         fields = ('file', 'companyCoverImageUrl')
+        
+    def get_company_cover_image_url(self, company):
+        cover_image = company.cover_image
+        if cover_image:
+            return cover_image.get_full_url()
+        
+        return var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"]
 
     def update(self, company, validated_data):
         file = validated_data.pop('file')
 
         try:
-            company_cover_image_upload_result = cloudinary.uploader.upload(file,
+            with transaction.atomic():
+                # Upload the company cover image to Cloudinary
+                company_cover_image_upload_result = cloudinary.uploader.upload(file,
                                                                            folder=settings.CLOUDINARY_DIRECTORY[
                                                                                "cover_image"],
                                                                            public_id=company.id)
-            company_cover_image_public_id = company_cover_image_upload_result.get('public_id')
+                # Prepare the data for the company cover image
+                company_cover_image_data = {
+                    "public_id": company_cover_image_upload_result.get("public_id"),
+                    "version": company_cover_image_upload_result.get("version"),
+                    "format": company_cover_image_upload_result.get("format"),
+                    "resource_type": company_cover_image_upload_result.get("resource_type"),
+                    "uploaded_at": company_cover_image_upload_result.get("created_at"),
+                    "bytes": company_cover_image_upload_result.get("bytes"),
+                    "metadata": company_cover_image_upload_result
+                }
+                # Check if the company already has a cover image
+                if company.cover_image:
+                    # Update the existing cover image
+                    for key, value in company_cover_image_data.items():
+                        setattr(company.cover_image, key, value)
+                    company.cover_image.save()
+                else:
+                    # Create a new cover image if it doesn't exist
+                    cover_image_new = File.objects.create(**company_cover_image_data)
+                    company.cover_image = cover_image_new
+             
+            # Save the company instance to reflect the changes
+            company.save()
+            return company
         except:
             return None
-        else:
-            company_cover_image_url = company_cover_image_upload_result.get('secure_url')
-            company.company_cover_image_url = company_cover_image_url
-            company.company_cover_image_public_id = company_cover_image_public_id
-            company.save()
-
-            return company
 
 
 class JobSeekerProfileSerializer(serializers.ModelSerializer):
@@ -350,7 +437,7 @@ class JobSeekerProfileSerializer(serializers.ModelSerializer):
 
 class CvSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True, max_length=200)
-    fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    fileUrl = serializers.SerializerMethodField(method_name="get_cv_file_url", read_only=True)
     file = serializers.FileField(required=True, write_only=True)
 
     updateAt = serializers.DateTimeField(source='update_at', read_only=True)
@@ -369,19 +456,44 @@ class CvSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = ("id", "slug", "title", "fileUrl", "file", "updateAt")
+        
+    def get_cv_file_url(self, resume):
+        cv_file = resume.file
+        if cv_file:
+            return cv_file.get_full_url()
+        return None
 
     def update(self, instance, validated_data):
+        # Extract the PDF file from validated data
         pdf_file = validated_data.pop('file')
 
+        # Upload the PDF file to Cloudinary
         pdf_upload_result = cloudinary.uploader.upload(pdf_file,
                                                        folder=settings.CLOUDINARY_DIRECTORY["cv"],
                                                        public_id=instance.id)
-        pdf_public_id = pdf_upload_result.get('public_id')
-        image_url = cloudinary.utils.cloudinary_url(pdf_public_id + ".jpg")[0]
-
-        instance.file_url = pdf_upload_result["secure_url"]
-        instance.image_url = image_url
-        instance.public_id = pdf_public_id
+        
+        # Prepare the data for the PDF file
+        pdf_data = {
+            "public_id": pdf_upload_result.get("public_id"),
+            "version": pdf_upload_result.get("version"),
+            "format": pdf_upload_result.get("format"),
+            "resource_type": pdf_upload_result.get("resource_type"),
+            "uploaded_at": pdf_upload_result.get("created_at"),
+            "bytes": pdf_upload_result.get("bytes"),
+            "metadata": pdf_upload_result
+        }
+        
+        # Update or create the PDF file
+        if instance.file:
+            # Update existing PDF file
+            for key, value in pdf_data.items():
+                setattr(instance.file, key, value)
+            instance.file.save()
+        else:
+            # Create a new PDF file if it doesn't exist
+            instance.file = File.objects.create(**pdf_data)
+        
+        # Save the instance to ensure any other changes are persisted
         instance.save()
 
         return instance
@@ -399,8 +511,8 @@ class ResumeSerializer(serializers.ModelSerializer):
     jobType = serializers.IntegerField(source="job_type", required=True)
     isActive = serializers.BooleanField(source="is_active", default=False)
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
-    imageUrl = serializers.URLField(source="image_url", required=False, read_only=True)
-    fileUrl = serializers.URLField(source="file_url", required=False, read_only=True)
+    imageUrl = serializers.SerializerMethodField(method_name="get_cv_image_url", read_only=True)
+    fileUrl = serializers.SerializerMethodField(method_name="get_cv_file_url", read_only=True)
     file = serializers.FileField(required=True, write_only=True)
     user = auth_serializers.UserSerializer(fields=["id", "fullName", "avatarUrl"], read_only=True)
 
@@ -455,6 +567,18 @@ class ResumeSerializer(serializers.ModelSerializer):
             return None
 
         return resume_viewed.update_at
+    
+    def get_cv_image_url(self, resume):
+        cv_file = resume.file
+        if cv_file:
+            return cv_file.get_full_url().replace(f".{cv_file.format}", ".jpg")
+        return None
+    
+    def get_cv_file_url(self, resume):
+        cv_file = resume.file
+        if cv_file:
+            return cv_file.get_full_url()
+        return None
 
     class Meta:
         model = Resume
@@ -469,27 +593,42 @@ class ResumeSerializer(serializers.ModelSerializer):
                   "type")
 
     def create(self, validated_data):
-        request = self.context['request']
-        user = request.user
-        job_seeker_profile = user.job_seeker_profile
-        pdf_file = validated_data.pop('file')
+        with transaction.atomic():
+            # Retrieve the request and user from the serializer context
+            request = self.context['request']
+            user = request.user
+            # Get the job seeker profile associated with the user
+            job_seeker_profile = user.job_seeker_profile
+            # Remove the 'file' field from validated_data as it's handled separately
+            pdf_file = validated_data.pop('file')
 
-        resume = Resume.objects.create(**validated_data,
-                                       user=user,
-                                       job_seeker_profile=job_seeker_profile)
+            # Create a new Resume instance with the validated data and additional fields
+            resume = Resume.objects.create(**validated_data,
+                                           user=user,
+                                           job_seeker_profile=job_seeker_profile)
 
-        pdf_upload_result = cloudinary.uploader.upload(pdf_file,
-                                                       folder=settings.CLOUDINARY_DIRECTORY["cv"],
-                                                       public_id=resume.id)
-        pdf_public_id = pdf_upload_result.get('public_id')
-        image_url = cloudinary.utils.cloudinary_url(pdf_public_id + ".jpg")[0]
+            # Upload the PDF file to Cloudinary and get the upload result
+            pdf_upload_result = cloudinary.uploader.upload(pdf_file,
+                                                           folder=settings.CLOUDINARY_DIRECTORY["cv"],
+                                                           public_id=resume.id)
 
-        resume.file_url = pdf_upload_result["secure_url"]
-        resume.image_url = image_url
-        resume.public_id = pdf_public_id
-        resume.save()
+            # Create a new File instance with the details from the Cloudinary upload result
+            cv_file = File.objects.create(
+                public_id=pdf_upload_result.get('public_id'),
+                version=pdf_upload_result.get('version'),
+                format=pdf_upload_result.get('format'),
+                resource_type=pdf_upload_result.get('resource_type'),
+                uploaded_at=pdf_upload_result.get('created_at'),
+                bytes=pdf_upload_result.get('bytes'),
+                metadata=pdf_upload_result
+            )
 
-        return resume
+            # Associate the uploaded file with the resume and save the changes
+            resume.file = cv_file
+            resume.save()
+
+            # Return the newly created resume instance
+            return resume
 
 
 class ExperiencePdfSerializer(serializers.ModelSerializer):

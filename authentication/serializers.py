@@ -237,11 +237,14 @@ class UserSerializer(serializers.ModelSerializer):
     def get_company(self, user):
         if user.role_name == var_sys.EMPLOYER:
             company = user.company
+            company_logo = company.logo
+            company_logo_url = company_logo.get_full_url() if company_logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
+
             return {
                 "id": company.id,
                 "slug": company.slug,
                 "companyName": company.company_name,
-                "imageUrl": company.company_image_url
+                "imageUrl": company_logo_url
             }
         return None
 

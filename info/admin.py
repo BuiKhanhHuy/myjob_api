@@ -4,9 +4,11 @@ from django.conf import settings
 from django.contrib import admin
 from django import forms
 from django.utils.html import mark_safe
+from django.db import transaction
 from helpers import helper
 from myjob_api.admin import custom_admin_site
 from configs import variable_system as var_sys
+from common.models import File
 from .models import (
     JobSeekerProfile,
     Resume,
@@ -101,25 +103,28 @@ class CompanyImageInlineAdmin(admin.StackedInline):
     fk_name = 'company'
     extra = 1
     max_num = 5
-    fields = ('show_image', 'image_file', 'image_public_id', 'image_url')
-    readonly_fields = ('show_image', 'image_public_id', 'image_url')
+    fields = ('show_image',)
+    readonly_fields = ('show_image',)
     form = CompanyImageInlineForm
 
     def show_image(self, company_image):
-        if company_image:
-            if company_image.image_url:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 50px;object-fit:cover;" width='50px' height='50px'/>""".format(
-                        company_image.image_url,
-                        company_image.company.company_name)
-                )
-            else:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
-                        var_sys.NO_IMAGE, "No image")
-                )
+        # Initialize default values for image URL and alt text
+        image_url = var_sys.NO_IMAGE
+        image_alt = "No image"
+        
+        # Retrieve the company image
+        image = company_image.image
+        # If an image exists, update the URL and alt text
+        if image:
+            image_url = image.get_full_url()  # Get the full URL of the image
+            image_alt = company_image.company.company_name  # Use the company name as alt text
+            
+        # Return HTML code for displaying the company image
+        return mark_safe(
+            r"""<img src='{0}'
+            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                image_url, image_alt)
+        )
 
 
 # ADMIN
@@ -152,7 +157,7 @@ class ResumeAdmin(admin.ModelAdmin):
         ("is_active", DropdownFilter),
     ]
     ordering = ('is_active',)
-    readonly_fields = ("type", 'public_id', 'show_resume_image',
+    readonly_fields = ("type", 'show_resume_image',
                        'job_seeker_profile', 'user')
     inlines = (EducationDetailInlineAdmin, ExperienceDetailInlineAdmin,
                CertificateInlineAdmin, LanguageSkillInlineAdmin,
@@ -161,7 +166,7 @@ class ResumeAdmin(admin.ModelAdmin):
     fields = ("title", "salary_min", "salary_max",
               "position", "experience", "academic_level",
               "type_of_workplace", "job_type", "city", "career",
-              "job_seeker_profile", "user", "public_id", "type",
+              "job_seeker_profile", "user", "type",
               "is_active", "show_resume_image", "resume_file",
               "description")
 
@@ -170,20 +175,23 @@ class ResumeAdmin(admin.ModelAdmin):
     list_select_related = ('city', 'career',)
 
     def show_resume_image(self, resume):
+        # Check if there is a resume
         if resume:
-            if resume.image_url:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 20px;object-fit:cover;" width='' height='200px'/>""".format(
-                        resume.image_url,
-                        resume.title)
-                )
-            else:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
-                        var_sys.NO_IMAGE, "No image")
-                )
+            # Get the cv file of the resume
+            cv_file = resume.file
+            # Set the default alt for the image to "No image"
+            image_alt = "No image"
+            # Set the default URL for the image to the default avatar URL
+            image_url = var_sys.AVATAR_DEFAULT["AVATAR"]
+            # If there is an image, change the URL and alt of the image
+            if cv_file:
+                # Prepare data for image file derived from PDF
+                image_url = cv_file.get_full_url().replace(f".{cv_file.format}", ".jpg")
+                image_alt = resume.title
+            # Return the image that has been formatted for safe display
+            return mark_safe(
+                f"<img src='{image_url}' alt='{image_alt}' style='border-radius: 2px;object-fit:cover;' width='45px' height='45px'/>"
+            )
 
     show_resume_image.short_description = "Resume image"
 
@@ -195,20 +203,38 @@ class ResumeAdmin(admin.ModelAdmin):
         resume_file = request.FILES.get('resume_file', None)
         if resume_file:
             try:
-                pdf_upload_result = cloudinary.uploader.upload(resume_file,
-                                                               folder=settings.CLOUDINARY_DIRECTORY["cv"],
-                                                               public_id=obj.id)
-                pdf_upload_url = pdf_upload_result["secure_url"]
-                pdf_public_id = pdf_upload_result.get('public_id')
-                image_url = cloudinary.utils.cloudinary_url(pdf_public_id + ".jpg")[0]
+                with transaction.atomic():
+                    # Upload PDF to cloudinary
+                    pdf_upload_result = cloudinary.uploader.upload(
+                        resume_file,
+                        folder=settings.CLOUDINARY_DIRECTORY["cv"],
+                        public_id=obj.id
+                    )
+                    
+                    # Prepare data for PDF file
+                    pdf_data = {
+                        "public_id": pdf_upload_result.get("public_id"),
+                        "version": pdf_upload_result.get("version"),
+                        "format": pdf_upload_result.get("format"),
+                        "resource_type": pdf_upload_result.get("resource_type"),
+                        "uploaded_at": pdf_upload_result.get("created_at"),
+                        "bytes": pdf_upload_result.get("bytes"),
+                        "metadata": pdf_upload_result
+                    }
+                    
+                    # Update or create PDF file
+                    if obj.file:
+                        for key, value in pdf_data.items():
+                            setattr(obj.file, key, value)
+                        obj.file.save()
+                    else:
+                        pdf_file = File.objects.create(**pdf_data)
+                        obj.file = pdf_file
+
+                    obj.save()
 
             except Exception as ex:
                 helper.print_log_error("resume_save_model", ex)
-            else:
-                obj.file_url = pdf_upload_url
-                obj.public_id = pdf_public_id
-                obj.image_url = image_url
-                obj.save()
 
 
 class CompanyAdmin(admin.ModelAdmin):
@@ -242,38 +268,43 @@ class CompanyAdmin(admin.ModelAdmin):
     )
 
     def show_company_image(self, company):
-        if company:
-            if company.company_image_url:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 50px;object-fit:cover;" width='50px' height='50px'/>""".format(
-                        company.company_image_url,
-                        company.company_name)
-                )
-            else:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
-                        var_sys.NO_IMAGE, "No image")
-                )
+        # Set default values for company logo URL and alt text
+        company_logo_url = var_sys.NO_IMAGE
+        company_logo_alt = "No image"
+        
+        # Get company logo and update URL and alt text if logo exists
+        company_logo = company.logo
+        if company_logo:
+            company_logo_url = company_logo.get_full_url()
+            company_logo_alt = company.company_name
+           
+        # Return HTML code for displaying the company logo
+        return mark_safe(
+            r"""<img src='{0}'
+            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                company_logo_url, company_logo_alt)
+        )
 
     show_company_image.short_description = "Logo"
 
     def show_company_cover_image(self, company):
-        if company:
-            if company.company_cover_image_url:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 5px;" width='75%' height='220px'/>""".format(
-                        company.company_cover_image_url,
-                        company.company_name)
-                )
-            else:
-                return mark_safe(
-                    r"""<img src='{0}'
-                    alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
-                        var_sys.NO_IMAGE, "No image")
-                )
+        # Initialize default values for company cover image URL and alt text
+        company_cover_image_url = var_sys.NO_IMAGE
+        company_cover_image_alt = "No image"
+        
+        # Retrieve the company cover image
+        company_cover_image = company.cover_image
+        # If a cover image exists, update the URL and alt text
+        if company_cover_image:
+            company_cover_image_url = company_cover_image.get_full_url()
+            company_cover_image_alt = company.company_name
+            
+        # Return HTML code for displaying the company cover image
+        return mark_safe(
+            r"""<img src='{0}'
+            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+                company_cover_image_url, company_cover_image_alt)
+        )
 
     show_company_cover_image.short_description = "Cover image"
 
@@ -292,40 +323,74 @@ class CompanyAdmin(admin.ModelAdmin):
         for a in company_image_files:
             print(a)
 
-        # save company
+        # Update company logo
         if logo_file:
             try:
-                company_image_upload_result = cloudinary.uploader.upload(
-                    logo_file,
-                    folder=settings.CLOUDINARY_DIRECTORY[
-                        "logo"],
-                    public_id=company.id
-                )
-                company_image_url = company_image_upload_result.get('secure_url')
-                company_image_public_id = company_image_upload_result.get('public_id')
+                with transaction.atomic():
+                    # Upload logo to cloudinary
+                    logo_upload_result = cloudinary.uploader.upload(
+                        logo_file,
+                        folder=settings.CLOUDINARY_DIRECTORY["logo"],
+                        public_id=company.id
+                    )
+                    
+                    # Prepare data for logo
+                    company_logo_data = {
+                        "public_id": logo_upload_result.get("public_id"),
+                        "version": logo_upload_result.get("version"),
+                        "format": logo_upload_result.get("format"),
+                        "resource_type": logo_upload_result.get("resource_type"),
+                        "uploaded_at": logo_upload_result.get("created_at"),
+                        "bytes": logo_upload_result.get("bytes"),
+                        "metadata": logo_upload_result
+                    }
+                    
+                    # Update or create logo
+                    if company.logo:
+                        for key, value in company_logo_data.items():
+                            setattr(company.logo, key, value)
+                        company.logo.save()
+                    else:
+                        company_logo_new = File.objects.create(**company_logo_data)
+                        company.logo = company_logo_new
             except Exception as ex:
                 helper.print_log_error("company_image_save_model", ex)
-            else:
-                company.company_image_url = company_image_url
-                company.company_image_public_id = company_image_public_id
 
+        # Update company cover image
         if company_cover_image_file:
             try:
-                company_cover_image_upload_result = cloudinary.uploader.upload(
-                    company_cover_image_file,
-                    folder=settings.CLOUDINARY_DIRECTORY[
-                        "cover_image"],
-                    public_id=company.id
-                )
-                company_cover_image_url = company_cover_image_upload_result.get('secure_url')
-                company_cover_image_public_id = company_cover_image_upload_result.get('public_id')
+                with transaction.atomic():
+                    # Upload cover image to cloudinary
+                    company_cover_image_upload_result = cloudinary.uploader.upload(
+                        company_cover_image_file,
+                        folder=settings.CLOUDINARY_DIRECTORY["cover_image"],
+                        public_id=company.id
+                    )
+
+                    # Prepare data for cover image
+                    company_cover_image_data = {
+                        "public_id": company_cover_image_upload_result.get("public_id"),
+                        "version": company_cover_image_upload_result.get("version"),
+                        "format": company_cover_image_upload_result.get("format"),
+                        "resource_type": company_cover_image_upload_result.get("resource_type"),
+                        "uploaded_at": company_cover_image_upload_result.get("created_at"),
+                        "bytes": company_cover_image_upload_result.get("bytes"),
+                        "metadata": company_cover_image_upload_result
+                    }
+                    
+                    # Update or create cover image
+                    if company.cover_image:
+                        for key, value in company_cover_image_data.items():
+                            setattr(company.cover_image, key, value)
+                        company.cover_image.save()
+                    else:
+                        company_cover_image_new = File.objects.create(**company_cover_image_data)
+                        company.cover_image = company_cover_image_new
             except Exception as ex:
                 helper.print_log_error("company_cover_image_save_model", ex)
-            else:
-                company.company_cover_image_url = company_cover_image_url
-                company.company_cover_image_public_id = company_cover_image_public_id
 
         if logo_file or company_cover_image_file:
+            # Save company
             company.save()
 
         # save company image
