@@ -35,8 +35,8 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 
 class BannerSerializer(serializers.ModelSerializer):
-    imageUrl = serializers.URLField(source="image_url", read_only=True)
-    imageMobileUrl = serializers.URLField(source="image_mobile_url", read_only=True)
+    imageUrl = serializers.SerializerMethodField(method_name='get_image_url', read_only=True)
+    imageMobileUrl = serializers.SerializerMethodField(method_name='get_image_mobile_url', read_only=True)
     buttonText = serializers.CharField(source='button_text', read_only=True)
     description = serializers.CharField(read_only=True)
     buttonLink = serializers.URLField(source="button_link", read_only=True)
@@ -54,6 +54,16 @@ class BannerSerializer(serializers.ModelSerializer):
             existing = set(self.fields)
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
+                
+    def get_image_url(self, banner):
+        if banner.image:
+            return banner.image.get_full_url()
+        return None
+    
+    def get_image_mobile_url(self, banner):
+        if banner.image_mobile:
+            return banner.image_mobile.get_full_url()
+        return None
 
     class Meta:
         model = Feedback

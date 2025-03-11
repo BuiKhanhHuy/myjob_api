@@ -137,7 +137,10 @@ def add_apply_job_notifications(job_post_activity):
         title = NOTIFICATION_MESSAGES["APPLICANT_APPLICATION"].format(full_name=job_post_activity.full_name,
                                                                      email=job_post_activity.email)
         content = NOTIFICATION_MESSAGES["JOB_APPLICATION_SUBMITTED"].format(job_name=job_post_activity.job_post.job_name)
-        avatar = job_post_activity.user.avatar_url
+        # Avatar
+        avatar = job_post_activity.user.avatar
+        avatar_url = avatar.get_full_url() if avatar else var_sys.AVATAR_DEFAULT["AVATAR"]
+        # Content
         content_of_type = {
             "resume_id": job_post_activity.resume_id,
             "resume_slug": job_post_activity.resume.slug
@@ -145,7 +148,7 @@ def add_apply_job_notifications(job_post_activity):
         user_id = job_post_activity.job_post.user_id
         type_name = var_sys.NOTIFICATION_TYPE["APPLY_JOB"]
         queue_notification.add_notification_to_user.delay(title=title, content=content,
-                                                          image=avatar,
+                                                          image=avatar_url,
                                                           content_of_type=content_of_type,
                                                           type_name=type_name, user_id_list=[user_id])
     except Exception as ex:
@@ -159,7 +162,7 @@ def add_post_verify_required_notifications(company, job_post):
 
         title = company.company_name
         content = NOTIFICATION_MESSAGES["JOB_POSTING_REQUEST"].format(job_post_title=job_post_title)
-        company_image = company.company_image_url
+        company_image = company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
 
         user_id_list = list(User.objects.filter(is_staff=True).values_list('id', flat=True))
 

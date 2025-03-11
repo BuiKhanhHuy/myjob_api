@@ -1,6 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from authentication.models import User
+from common.models import File
 
 
 class MyJobBaseModel(models.Model):
@@ -27,8 +28,6 @@ class Feedback(MyJobBaseModel):
 
 
 class Banner(MyJobBaseModel):
-    image_url = models.URLField(null=True, blank=True)
-    image_mobile_url = models.URLField(null=True, blank=True)
     button_text = models.TextField(max_length=20, null=True, blank=True)
     description = models.TextField(max_length=100, null=True, blank=True)
     button_link = models.URLField(null=True, blank=True)
@@ -40,6 +39,9 @@ class Banner(MyJobBaseModel):
     type = models.IntegerField(choices=var_sys.BANNER_TYPE,
                                default=var_sys.BANNER_TYPE[0][0])
     is_active = models.BooleanField(default=False)
+    
+    image = models.OneToOneField(File, on_delete=models.SET_NULL, null=True, related_name="banner_image")
+    image_mobile = models.OneToOneField(File, on_delete=models.SET_NULL, null=True, related_name="banner_image_mobile")
 
     class Meta:
         db_table = "myjob_myjob_banner"

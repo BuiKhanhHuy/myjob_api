@@ -14,7 +14,7 @@ from configs.messages import APPLICATION_STATUS_MESSAGES, ERROR_MESSAGES
 from helpers import utils, helper
 from helpers.redis_service import RedisService
 from django.conf import settings
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Q, Sum, Case, When, CharField
 from django.db.models.functions import TruncDate, ExtractYear, ExtractMonth
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view
@@ -44,6 +44,7 @@ from ..serializers import (
     JobPostNotificationSerializer,
     StatisticsSerializer
 )
+from common.models import File
 from info.models import (
     ResumeViewed,
     CompanyFollowed
@@ -456,7 +457,11 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
             .annotate(userId=F('user_id'),
                       fullName=F('user__full_name'),
                       userEmail=F('user__email'),
-                      avatarUrl=F('user__avatar_url'),
+                      avatarUrl=Case(
+                          When(user__avatar__isnull=False, then=F('user__avatar__id')),
+                          default=None,
+                          output_field=CharField(),
+                      ),
                       jobPostTitle=F('job_post__job_name')) \
             .values('id', 'userId', "fullName", 'userEmail', "avatarUrl", 'jobPostTitle')
             .order_by('-id', 'create_at')
@@ -465,6 +470,12 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
         res_data = page
 
         if page is not None:
+            for item in res_data:
+                if item['avatarUrl']:
+                    avatar = File.objects.get(id=item['avatarUrl'])
+                    item['avatarUrl'] = avatar.get_full_url() if avatar else var_sys.AVATAR_DEFAULT["AVATAR"]
+                else:
+                    item['avatarUrl'] = var_sys.AVATAR_DEFAULT["AVATAR"]
             return self.get_paginated_response(res_data)
         return var_res.Response(res_data)
 
@@ -489,30 +500,46 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
     @action(methods=["put"], detail=True,
             url_path="application-status", url_name="application-status")
     def change_application_status(self, request, pk):
+        # Retrieve data from the request
         data = request.data
 
+        # Check if the request data contains a status
         if data.get("status", None):
+            # Extract the status from the request data
             stt = data["status"]
+            # Retrieve the job post activity object
             job_post_activity = self.get_object()
+            # Check if the current status is greater than the new status
             if job_post_activity.status > stt:
+                # Return a bad request response if the current status is greater
                 return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
+            # Update the status of the job post activity
             job_post_activity.status = stt
             job_post_activity.save()
 
-            # send notification
+            # Prepare to send a notification
+            # Set the notification title to the company name of the job post
             notification_title = job_post_activity.job_post.company.company_name
+            # Format the notification content using the job name and the new status
             notification_content = APPLICATION_STATUS_MESSAGES["STATUS_UPDATED"].format(
                 job_name=job_post_activity.job_post.job_name,
                 status=[x for x in var_sys.APPLICATION_STATUS if x[0] == stt][0][1]
             )
-            company_img = job_post_activity.job_post.company.company_image_url
+            # Retrieve the company logo
+            logo = job_post_activity.job_post.company.logo
+            # Set the company logo URL or use a default if no logo exists
+            company_logo_url = logo.get_full_url() if logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
+
+            # Send the notification
             helper.add_apply_status_notifications(
                 notification_title,
                 notification_content,
-                company_img,
+                company_logo_url,
                 job_post_activity.user_id
             )
+            # Return a successful response
             return var_res.Response(status=status.HTTP_200_OK)
+        # Return a bad request response if no status is provided
         return var_res.Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=["post"], detail=True,
@@ -536,7 +563,7 @@ class EmployerJobPostActivityViewSet(viewsets.ViewSet,
 
             email_data = {
                 'content': validate_data.get("content"),
-                'company_image': company.company_image_url,
+                'company_image': company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
                 'company_name': company.company_name,
                 'company_phone': company.company_phone,
                 'company_email': company.company_email,

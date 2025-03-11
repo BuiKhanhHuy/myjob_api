@@ -1,7 +1,7 @@
 from configs import variable_system as var_sys
 from django.db import models
 from django.contrib.auth.models import (AbstractUser, BaseUserManager)
-
+from common.models import File
 
 class AuthBaseModel(models.Model):
     class Meta:
@@ -61,8 +61,6 @@ class User(AbstractUser, AuthBaseModel):
     date_joined = None
     full_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100, unique=True, db_index=True)
-    avatar_url = models.URLField(max_length=300, default=var_sys.AVATAR_DEFAULT["AVATAR"])
-    avatar_public_id = models.CharField(max_length=300, null=True)
     email_notification_active = models.BooleanField(default=True)
     sms_notification_active = models.BooleanField(default=True)
     has_company = models.BooleanField(default=False)
@@ -71,6 +69,7 @@ class User(AbstractUser, AuthBaseModel):
     # ForeignKey
     role_name = models.CharField(max_length=10, choices=var_sys.ROLE_CHOICES,
                                  default=var_sys.JOB_SEEKER)
+    avatar = models.OneToOneField(File, on_delete=models.SET_NULL, null=True, blank=True, related_name='user')
 
     class Meta:
         db_table = "myjob_authentication_user"
