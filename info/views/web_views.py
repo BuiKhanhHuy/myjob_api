@@ -76,7 +76,8 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
 
         job_seeker_profile = self.get_object()
         if not job_seeker_profile:
-            raise Exception(ERROR_MESSAGES["USER_DOESNT_HAVE_JOB_SEEKER_PROFILE"])
+            raise Exception(
+                ERROR_MESSAGES["USER_DOESNT_HAVE_JOB_SEEKER_PROFILE"])
 
         resumes = job_seeker_profile.resumes
         # get all
@@ -96,7 +97,11 @@ class JobSeekerProfileViewSet(viewsets.ViewSet,
                     return var_res.response_data()
                 serializer = ResumeSerializer(resumes.first(),
                                               fields=["id", "slug", "title", "experience", "position",
-                                                      "salaryMin", "salaryMax", "updateAt", "user", "isActive"])
+                                                      "salaryMin", "salaryMax", "updateAt", "user", "isActive",
+                                                      "positionChooseData", "experienceChooseData", "academicLevelChooseData",
+                                                      "typeOfWorkplaceChooseData", "jobTypeChooseData",
+                                                      "experienceDetails", "educationDetails", "certificateDetails",
+                                                      "languageSkills", "advancedSkills"])
             else:
                 serializer = ResumeSerializer(resumes, many=True,
                                               fields=["id", "slug", "title", "updateAt",
@@ -203,7 +208,8 @@ class PrivateResumeViewSet(viewsets.ViewSet,
     @get_cv.mapping.put
     def update_cv_file(self, request, slug):
         files = request.FILES
-        cv_serializer = CvSerializer(self.get_object(), data=files, fields=["file"])
+        cv_serializer = CvSerializer(
+            self.get_object(), data=files, fields=["file"])
         if not cv_serializer.is_valid():
             return var_res.response_data(status=status.HTTP_400_BAD_REQUEST,
                                          errors=cv_serializer.errors)
@@ -303,7 +309,8 @@ class ResumeViewSet(viewsets.ViewSet,
             url_path="resume-saved", url_name="resume-saved")
     def resume_saved(self, request, slug):
         user = request.user
-        saved_resumes = ResumeSaved.objects.filter(company=user.company, resume=self.get_object())
+        saved_resumes = ResumeSaved.objects.filter(
+            company=user.company, resume=self.get_object())
         is_saved = False
         if saved_resumes.exists():
             saved_resume = saved_resumes.first()
@@ -317,11 +324,13 @@ class ResumeViewSet(viewsets.ViewSet,
             is_saved = True
         # send notification
         company = user.company
-        notification_content = NOTIFICATION_MESSAGES['RESUME_SAVED'] if is_saved else NOTIFICATION_MESSAGES['RESUME_UNSAVED']
+        notification_content = NOTIFICATION_MESSAGES[
+            'RESUME_SAVED'] if is_saved else NOTIFICATION_MESSAGES['RESUME_UNSAVED']
         helper.add_employer_saved_resume_notifications(
             company.company_name,
             notification_content,
-            company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
+            company.logo.get_full_url(
+            ) if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
             self.get_object().user_id
         )
         return Response(data={
@@ -345,7 +354,8 @@ class ResumeViewSet(viewsets.ViewSet,
             helper.add_employer_viewed_resume_notifications(
                 company.company_name,
                 "Đã xem hồ sơ của bạn",
-                company.logo.get_full_url() if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
+                company.logo.get_full_url(
+                ) if company.logo else var_sys.AVATAR_DEFAULT["COMPANY_LOGO"],
                 self.get_object().user_id
             )
         except Exception as ex:
@@ -389,7 +399,8 @@ class ResumeViewSet(viewsets.ViewSet,
             )
 
             # save contact profile
-            ContactProfile.objects.create(company=company, resume=self.get_object())
+            ContactProfile.objects.create(
+                company=company, resume=self.get_object())
         except Exception as ex:
             helper.print_log_error("send_email", ex)
             return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -523,7 +534,8 @@ class CompanyView(viewsets.ViewSet):
     def get_job_post_detail(self, request, pk):
         try:
             user = request.user
-            job_post_queryset = JobPost.objects.get(pk=pk, user=user, company=user.company)
+            job_post_queryset = JobPost.objects.get(
+                pk=pk, user=user, company=user.company)
 
             job_post_serializer = job_serializers \
                 .JobPostSerializer(job_post_queryset,
@@ -553,7 +565,8 @@ class PrivateCompanyViewSet(viewsets.ViewSet,
             url_path="company-image-url", url_name="company-image-url")
     def update_company_image_url(self, request):
         files = request.FILES
-        company_image_url_serializer = LogoCompanySerializer(request.user.company, data=files)
+        company_image_url_serializer = LogoCompanySerializer(
+            request.user.company, data=files)
         if not company_image_url_serializer.is_valid():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -568,7 +581,8 @@ class PrivateCompanyViewSet(viewsets.ViewSet,
             url_path="company-cover-image-url", url_name="company-cover-image-url")
     def update_company_cover_image_url(self, request):
         files = request.FILES
-        company_cover_image_url_serializer = CompanyCoverImageSerializer(request.user.company, data=files)
+        company_cover_image_url_serializer = CompanyCoverImageSerializer(
+            request.user.company, data=files)
         if not company_cover_image_url_serializer.is_valid():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -634,7 +648,7 @@ class CompanyViewSet(viewsets.ViewSet,
             queryset = Company.objects.annotate(num_follow=Count('companyfollowed'),
                                                 num_job_post=Count('job_posts')
                                                 ) \
-                           .order_by('-num_follow', '-num_job_post')[:10]
+                .order_by('-num_follow', '-num_job_post')[:10]
             serializer = CompanySerializer(queryset, many=True,
                                            fields=[
                                                'id', 'slug', 'companyName', 'companyImageUrl'
@@ -651,7 +665,8 @@ class CompanyViewSet(viewsets.ViewSet,
         company = self.get_object()
 
         is_followed = False
-        companies_followed = CompanyFollowed.objects.filter(user=user, company=company)
+        companies_followed = CompanyFollowed.objects.filter(
+            user=user, company=company)
         if companies_followed.exists():
             company_followed = companies_followed.first()
             company_followed.delete()
@@ -663,11 +678,13 @@ class CompanyViewSet(viewsets.ViewSet,
             is_followed = True
         # send notification
         notification_title = f"{user.full_name} - {user.email}"
-        notification_content = NOTIFICATION_MESSAGES["FOLLOW_NOTIFICATION"] if is_followed else NOTIFICATION_MESSAGES["UNFOLLOW_NOTIFICATION"]
+        notification_content = NOTIFICATION_MESSAGES[
+            "FOLLOW_NOTIFICATION"] if is_followed else NOTIFICATION_MESSAGES["UNFOLLOW_NOTIFICATION"]
         helper.add_company_followed_notifications(
             notification_title,
             notification_content,
-            user.avatar.get_full_url() if user.avatar else var_sys.AVATAR_DEFAULT["AVATAR"],
+            user.avatar.get_full_url(
+            ) if user.avatar else var_sys.AVATAR_DEFAULT["AVATAR"],
             company.user_id
         )
         return Response(data={
