@@ -28,6 +28,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-m)n0iq(0d55p5$xc7t)wmn5$9-dv8zw1a3k9nwnf#v86&mu=gt'
 
+APP_ENVIRONMENT = config('APP_ENV')
+
+COMPANY_NAME = "MyJob"
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
@@ -287,22 +291,26 @@ DJANGO_CELERY_BEAT_TZ_AWARE = True
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME')
+
 # Set the Cloudinary configuration
 cloudinary.config(
-    cloud_name=config('CLOUDINARY_CLOUD_NAME'),
+    cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=config('CLOUDINARY_API_KEY'),
     api_secret=config('CLOUDINARY_API_SECRET'),
 )
 
+CLOUDINARY_PATH = "https://res.cloudinary.com/" + CLOUDINARY_CLOUD_NAME + "/image/upload/v{0}/"
+
 CLOUDINARY_DIRECTORY = {
-    "avatar": f"my-job/avatar/{datetime.now().year}/{datetime.now().month}/",
-    "cv": f"my-job/cv/{datetime.now().year}/{datetime.now().month}/",
-    "logo": f"my-job/logo/{datetime.now().year}/{datetime.now().month}/",
-    "coverImage": f"my-job/cover-image/{datetime.now().year}/{datetime.now().month}/",
-    "company_image": f"my-job/company-image/{datetime.now().year}/{datetime.now().month}/",
-    "careerImage": f"my-job/career-images/",
-    "webBanner": f"my-job/banners/web-banners/",
-    "mobileBanner": f"my-job/banners/mobile-banners/"
+    "avatar": f"my-job/{APP_ENVIRONMENT}/avatar/{datetime.now().year}/{datetime.now().month}/",
+    "cv": f"my-job/{APP_ENVIRONMENT}/cv/{datetime.now().year}/{datetime.now().month}/",
+    "logo": f"my-job/{APP_ENVIRONMENT}/logo/{datetime.now().year}/{datetime.now().month}/",
+    "cover_image": f"my-job/{APP_ENVIRONMENT}/cover-image/{datetime.now().year}/{datetime.now().month}/",
+    "company_image": f"my-job/{APP_ENVIRONMENT}/company-image/{datetime.now().year}/{datetime.now().month}/",
+    "career_image": f"my-job/{APP_ENVIRONMENT}/career-images/{datetime.now().year}/{datetime.now().month}/",
+    "web_banner": f"my-job/{APP_ENVIRONMENT}/banners/web-banners/{datetime.now().year}/{datetime.now().month}/",
+    "mobile_banner": f"my-job/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/"
 }
 
 DOMAIN_CLIENT = {
@@ -350,8 +358,4 @@ firebase_admin.initialize_app(cred, {
     'databaseURL': config('FIREBASE_DATABASE_URL', default='')
 })
 
-COMPANY_NAME = "MyJob"
-
 JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\\')
-
-APP_ENVIRONMENT = config('APP_ENV')

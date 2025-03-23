@@ -5,7 +5,7 @@ from ckeditor.fields import RichTextField
 from autoslug import AutoSlugField
 from authentication.models import User
 from common.models import (
-    Career, City, District, Location,
+    Career, City, Location, File
 )
 
 
@@ -54,10 +54,6 @@ class Resume(InfoBaseModel):
     type_of_workplace = models.SmallIntegerField(choices=var_sys.TYPE_OF_WORKPLACE_CHOICES, null=True)
     job_type = models.SmallIntegerField(choices=var_sys.JOB_TYPE_CHOICES, null=True)
     is_active = models.BooleanField(default=False)
-
-    image_url = models.URLField(null=True)
-    file_url = models.URLField(null=True)
-    public_id = models.CharField(null=True, max_length=255)
     type = models.CharField(max_length=10, default=var_sys.CV_UPLOAD)
 
     # ForeignKey
@@ -65,6 +61,7 @@ class Resume(InfoBaseModel):
     career = models.ForeignKey(Career, on_delete=models.SET_NULL, null=True, related_name="resumes")
     job_seeker_profile = models.ForeignKey(JobSeekerProfile, on_delete=models.CASCADE, related_name="resumes")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="resumes")
+    file = models.OneToOneField(File, on_delete=models.SET_NULL, null=True, related_name="resume_file")
 
     # ManyToManyField
     company_viewers = models.ManyToManyField("Company", through='ResumeViewed', related_name="resumes_viewed")
@@ -162,10 +159,6 @@ class Company(InfoBaseModel):
     slug = AutoSlugField(populate_from='company_name', unique=True,
                          unique_with=['id'],
                          slugify=slugify, max_length=300)
-    company_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_LOGO"])
-    company_image_public_id = models.CharField(max_length=300, null=True)
-    company_cover_image_url = models.URLField(default=var_sys.AVATAR_DEFAULT["COMPANY_COVER_IMAGE"])
-    company_cover_image_public_id = models.CharField(max_length=300, null=True)
     facebook_url = models.URLField(null=True, blank=True)
     youtube_url = models.URLField(null=True, blank=True)
     linkedin_url = models.URLField(null=True, blank=True)
@@ -181,6 +174,10 @@ class Company(InfoBaseModel):
     # OneToOneField
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 related_name="company")
+    logo = models.OneToOneField(File, on_delete=models.SET_NULL, null=True,
+                                related_name="company_logo")
+    cover_image = models.OneToOneField(File, on_delete=models.SET_NULL, null=True,
+                                       related_name="company_cover_image")
     # ForeignKey
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True,
                                  related_name="companies")
@@ -197,10 +194,8 @@ class Company(InfoBaseModel):
 
 
 class CompanyImage(InfoBaseModel):
-    image_url = models.URLField(max_length=300)
-    image_public_id = models.CharField(max_length=300, null=True)
-
     # ForeignKey
+    image = models.OneToOneField(File, on_delete=models.CASCADE, related_name="company_image", null=True)
     company = models.ForeignKey("Company", on_delete=models.CASCADE,
                                 related_name="company_images")
 

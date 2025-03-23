@@ -30,7 +30,7 @@ AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'goog
 
 AVATAR_DEFAULT = {
     "AVATAR": "https://res.cloudinary.com/dtnpj540t/image/upload/v1680687265/my-job/images_default/avt_default.jpg",
-    "COMPANY_LOGO": "https://res.cloudinary.com/dtnpj540t/image/upload/v1682831706/my-job/images_default/company_image_default.png",
+    "COMPANY_LOGO": "https://res.cloudinary.com/dtnpj540t/image/upload/v1742055868/my-job/images_default/company-logo-default.png",
     "COMPANY_COVER_IMAGE": "https://res.cloudinary.com/dtnpj540t/image/upload/v1683615297/my-job/images_default/company_cover_image_default.jpg",
 }
 
@@ -97,15 +97,12 @@ LANGUAGE_LEVEL_CHOICES = (
 )
 
 POSITION_CHOICES = (
-    (1, 'Sinh viên/Thực tập sinh'),
-    (2, 'Mới tốt nghiệp'),
-    (3, 'Nhân viên'),
-    (4, 'Trưởng nhóm/Giám sát'),
-    (5, 'Quản lý'),
-    (6, 'Phó Giám đốc'),
-    (7, 'Giám đốc'),
-    (8, 'Tổng Giám đốc'),
-    (9, 'Chủ tịch/Phó Chủ tịch')
+    (1, 'Quản lý cấp cao'),
+    (2, 'Quản lý cấp trung'),
+    (3, 'Quản lý nhóm- giám sát'),
+    (4, 'Chuyên gia'),
+    (5, 'Chuyên viên- nhân viên'),
+    (6, 'Cộng tác viên'),
 )
 
 TYPE_OF_WORKPLACE_CHOICES = (
@@ -114,11 +111,15 @@ TYPE_OF_WORKPLACE_CHOICES = (
     (3, 'Làm việc tại nhà')
 )
 
+# OK
 JOB_TYPE_CHOICES = (
-    (1, 'Nhân viên chính thức'),
-    (2, 'Bán thời gian'),
-    (3, 'Thời vụ - Nghề tự do'),
-    (4, 'Thực tập')
+    (1, 'Toàn thời gian cố định'),
+    (2, 'Toàn thời gian tạm thời'),
+    (3, 'Bán thời gian cố định'),
+    (4, 'Bán thời gian tạm thời'),
+    (5, 'Theo hợp đồng tư vấn'),
+    (6, 'Thực tập'),
+    (7, 'Khác'),
 )
 
 EXPERIENCE_CHOICES = (
@@ -138,18 +139,14 @@ ACADEMIC_LEVEL = (
     (3, 'Cao đẳng'),
     (4, 'Trung cấp'),
     (5, 'Trung học'),
-    (6, 'Chứng chỉ nghề')
+    (6, 'Chứng chỉ')
 )
 
 EMPLOYEE_SIZE_CHOICES = (
-    (1, '1-9 nhân viên'),
-    (2, '10-24 nhân viên'),
-    (3, '25-99 nhân viên'),
-    (4, '100-499 nhân viên'),
-    (5, '500-1000 nhân viên'),
-    (6, '1000+ nhân viên'),
-    (7, '5000+ nhân viên'),
-    (8, '10000+ nhân viên')
+    (1, 'Dưới 10 nhân viên'),
+    (2, '10 - 150 nhân viên'),
+    (3, '150 - 300 nhân viên'),
+    (4, 'Trên 300 nhân viên'),
 )
 
 APPLICATION_STATUS = (
