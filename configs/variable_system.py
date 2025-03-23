@@ -77,13 +77,15 @@ MARITAL_STATUS_CHOICES = (
 LANGUAGE_CHOICES = (
     (1, 'Việt Nam'),
     (2, 'Anh'),
-    (3, 'Pháp'),
-    (4, 'Đức'),
-    (5, 'Nga'),
-    (6, 'Trung Quốc'),
+    (3, 'Nhật Bản'),
+    (4, 'Pháp'),
+    (5, 'Trung Quốc'),
+    (6, 'Nga'),
     (7, 'Hàn Quốc'),
-    (8, 'Nhật Bản'),
-    (9, 'Khác')
+    (8, 'Đức'),
+    (9, 'Ý'),
+    (10, 'Ả Rập'),
+    (11, 'Khác'),
 )
 
 LANGUAGE_LEVEL_CHOICES = (
