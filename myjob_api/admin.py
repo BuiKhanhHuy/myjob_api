@@ -30,6 +30,10 @@ class CustomAdminSite(admin.AdminSite):
     notifications_template = "admin/notifications.html"
     site_url = "/admin/dashboard/"
     
+    # Redirect to dashboard page instead of default index page
+    def index(self, request, extra_context=None):
+        return redirect('/admin/dashboard/')
+    
     # Add custom context to the admin site
     def each_context(self, request):
         context = super().each_context(request)
