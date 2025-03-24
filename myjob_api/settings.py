@@ -293,6 +293,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME')
 
+CLOUDINARY_BUCKET_NAME = 'my-job-bucket'
+
 # Set the Cloudinary configuration
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
@@ -303,14 +305,14 @@ cloudinary.config(
 CLOUDINARY_PATH = "https://res.cloudinary.com/" + CLOUDINARY_CLOUD_NAME + "/image/upload/v{0}/"
 
 CLOUDINARY_DIRECTORY = {
-    "avatar": f"my-job/{APP_ENVIRONMENT}/avatar/{datetime.now().year}/{datetime.now().month}/",
-    "cv": f"my-job/{APP_ENVIRONMENT}/cv/{datetime.now().year}/{datetime.now().month}/",
-    "logo": f"my-job/{APP_ENVIRONMENT}/logo/{datetime.now().year}/{datetime.now().month}/",
-    "cover_image": f"my-job/{APP_ENVIRONMENT}/cover-image/{datetime.now().year}/{datetime.now().month}/",
-    "company_image": f"my-job/{APP_ENVIRONMENT}/company-image/{datetime.now().year}/{datetime.now().month}/",
-    "career_image": f"my-job/{APP_ENVIRONMENT}/career-images/{datetime.now().year}/{datetime.now().month}/",
-    "web_banner": f"my-job/{APP_ENVIRONMENT}/banners/web-banners/{datetime.now().year}/{datetime.now().month}/",
-    "mobile_banner": f"my-job/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/"
+    "avatar": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/avatar/{datetime.now().year}/{datetime.now().month}/",
+    "cv": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cv/{datetime.now().year}/{datetime.now().month}/",
+    "logo": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/logo/{datetime.now().year}/{datetime.now().month}/",
+    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cover-image/{datetime.now().year}/{datetime.now().month}/",
+    "company_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/company-image/{datetime.now().year}/{datetime.now().month}/",
+    "career_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/career-images/{datetime.now().year}/{datetime.now().month}/",
+    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/web-banners/{datetime.now().year}/{datetime.now().month}/",
+    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/"
 }
 
 DOMAIN_CLIENT = {
