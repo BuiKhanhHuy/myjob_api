@@ -387,8 +387,7 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
         job_post = job_post_activity.job_post
         company = job_post.company
 
-        app_env = settings.APP_ENVIRONMENT
-        domain = settings.DOMAIN_CLIENT[app_env]
+        domain = settings.DOMAIN_CLIENT["job_seeker"]
         subject = f"Xác nhận ứng tuyển: {job_post.job_name}"
         to = [user.email]
         data = {

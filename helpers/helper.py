@@ -16,10 +16,8 @@ def print_log_error(func_name, error, now=datetime.now()):
     print(f">>> ERROR [{now}][{func_name}] >> {error}")
 
 
-def get_full_client_url(func):
-    app_env = settings.APP_ENVIRONMENT
-
-    return settings.DOMAIN_CLIENT[app_env] + func
+def get_full_client_url(func, domain_type):
+    return settings.DOMAIN_CLIENT[domain_type] + func
 
 
 def check_expiration_time(expiration_time):
@@ -52,7 +50,7 @@ def urlsafe_base64_decode_with_encoded_data(encoded_data):
 
 def send_email_verify_email(request, user, platform):
     role_name = user.role_name
-    redirect_login = settings.REDIRECT_LOGIN_CLIENT[role_name]
+    redirect_login = settings.REDIRECT_LOGIN_CLIENT
 
     # send mail verify email
     encoded_data = urlsafe_base64_encode_with_expires(
@@ -66,7 +64,7 @@ def send_email_verify_email(request, user, platform):
 
     confirm_email_deeplink = None
     if role_name == var_sys.JOB_SEEKER and platform == "APP":
-        confirm_email_deeplink = f"{settings.DOMAIN_CLIENT[settings.APP_ENVIRONMENT]}active/{encoded_data}/{token}/APP"
+        confirm_email_deeplink = f"{settings.DOMAIN_CLIENT['job_seeker']}active/{encoded_data}/{token}/APP"
 
     data = {
         "confirm_email_url": f'{protocol}://{domain}/{func}',

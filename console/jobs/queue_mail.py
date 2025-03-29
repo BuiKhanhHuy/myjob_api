@@ -6,6 +6,9 @@ from celery import shared_task
 from configs.messages import MAIL_MESSAGES
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from authentication.models import (
+    User
+)
 from job.models import (
     JobPost,
     JobPostNotification
@@ -177,69 +180,74 @@ def send_an_account_deactivation_email(to, full_name, email, cc=None, bcc=None):
 @shared_task
 def send_email_for_user(user_id, full_name, to_email, frequency):
     try:
-        job_post_list = []
-        # Get list job post notification
-        job_post_notifications = JobPostNotification.objects \
-            .filter(user_id=user_id, is_active=True, frequency=frequency) \
-            .values("job_name", "position", "experience", "salary", "career", "city")
+        user = User.objects.filter(id=user_id).first()
+        if user:
+            job_post_list = []
+            # Get list job post notification
+            job_post_notifications = JobPostNotification.objects \
+                .filter(user_id=user_id, is_active=True, frequency=frequency) \
+                .values("job_name", "position", "experience", "salary", "career", "city")
 
-        # Cancel send email if not setting up job notifications
-        if job_post_notifications.count() == 0:
-            return f'Send job notification email to {to_email} cancel. Due to not setting up job notifications'
+            # Cancel send email if not setting up job notifications
+            if job_post_notifications.count() == 0:
+                return f'Send job notification email to {to_email} cancel. Due to not setting up job notifications'
 
-        for job_post_notification in job_post_notifications:
-            query = JobPost.objects.filter(
-                status=var_sys.JOB_POST_STATUS[2][0],
-                deadline__gte=datetime.now().date(),
-                job_name__icontains=job_post_notification.get("job_name", None),
-                career=job_post_notification.get("career", None),
-                location__city=job_post_notification.get("city", None),
-            )
-            if job_post_notification.get("position", None):
-                query = query.filter(position=job_post_notification.get("position", None))
-            if job_post_notification.get("experience", None):
-                query = query.filter(experience=job_post_notification.get("experience", None))
-            if job_post_notification.get("salary", None):
-                query = query.filter(salary_min__lte=job_post_notification.get("salary", None),
-                                     salary_max__gte=job_post_notification.get("salary", None))
+            for job_post_notification in job_post_notifications:
+                query = JobPost.objects.filter(
+                    status=var_sys.JOB_POST_STATUS[2][0],
+                    deadline__gte=datetime.now().date(),
+                    job_name__icontains=job_post_notification.get("job_name", None),
+                    career=job_post_notification.get("career", None),
+                    location__city=job_post_notification.get("city", None),
+                )
+                if job_post_notification.get("position", None):
+                    query = query.filter(position=job_post_notification.get("position", None))
+                if job_post_notification.get("experience", None):
+                    query = query.filter(experience=job_post_notification.get("experience", None))
+                if job_post_notification.get("salary", None):
+                    query = query.filter(salary_min__lte=job_post_notification.get("salary", None),
+                                        salary_max__gte=job_post_notification.get("salary", None))
 
-            job_posts = query.values("id", "slug", "job_name", "career__name",
-                                     "location__city__name", "salary_min",
-                                     "salary_max", "company__company_name",
-                                     "company__company_image_url",
-                                     "company__slug",
-                                     "position")[:3]
-            job_post_list.extend(job_posts)
+                job_posts = query.values("id", "slug", "job_name", "career__name",
+                                        "location__city__name", "salary_min",
+                                        "salary_max", "company__company_name",
+                                        "company__company_image_url",
+                                        "company__slug",
+                                        "position")[:3]
+                job_post_list.extend(job_posts)
 
-        total_result = len(job_post_list)
-        if total_result == 0:
-            return f"Send job notification email to {to_email} cancel. Can't find any suitable job"
+            total_result = len(job_post_list)
+            if total_result == 0:
+                return f"Send job notification email to {to_email} cancel. Can't find any suitable job"
 
-        subject = MAIL_MESSAGES["JOB_NAME_SUBJECT"][0].format(job_name=job_post_list[0].get("job_name"))
-        if total_result > 1:
-            subject += MAIL_MESSAGES["JOB_NAME_SUBJECT"][1].format(total_result=total_result - 1)
+            subject = MAIL_MESSAGES["JOB_NAME_SUBJECT"][0].format(job_name=job_post_list[0].get("job_name"))
+            if total_result > 1:
+                subject += MAIL_MESSAGES["JOB_NAME_SUBJECT"][1].format(total_result=total_result - 1)
 
-        subject += f" {MAIL_MESSAGES['JOB_NAME_SUBJECT'][2]}"
-        app_env = settings.APP_ENVIRONMENT
-        domain = settings.DOMAIN_CLIENT[app_env]
-        data = {
-            "my_address": var_sys.COMPANY_INFO["ADDRESS"],
-            "full_name": full_name,
-            "description": MAIL_MESSAGES["JOB_NOTIFICATION_FOUND"].format(total_result=total_result),
-            "job_post_link": f"{domain}viec-lam/",
-            "company_link": f"{domain}cong-ty/",
-            "job_post_notification_link": f"{domain}ung-vien/viec-lam-cua-toi/?tab=3",
-            "job_post_list": job_post_list
-        }
+            subject += f" {MAIL_MESSAGES['JOB_NAME_SUBJECT'][2]}"
+            # Select domain of user type
+            if user.role_name == var_sys.JOB_SEEKER:
+                domain = settings.DOMAIN_CLIENT["job_seeker"]
+            else:
+                domain = settings.DOMAIN_CLIENT["employer"]
+            data = {
+                "my_address": var_sys.COMPANY_INFO["ADDRESS"],
+                "full_name": full_name,
+                "description": MAIL_MESSAGES["JOB_NOTIFICATION_FOUND"].format(total_result=total_result),
+                "job_post_link": f"{domain}viec-lam/",
+                "company_link": f"{domain}cong-ty/",
+                "job_post_notification_link": f"{domain}ung-vien/viec-lam-cua-toi/?tab=3",
+                "job_post_list": job_post_list
+            }
 
-        email_html = render_to_string('suggested-job-post.html', data)
-        text_content = strip_tags(email_html)
-        sent = utils.send_mail(subject, text_content, email_html, to=[to_email])
+            email_html = render_to_string('suggested-job-post.html', data)
+            text_content = strip_tags(email_html)
+            sent = utils.send_mail(subject, text_content, email_html, to=[to_email])
 
-        if sent:
-            return f'Send job notification email to {to_email} successfully.'
-        else:
-            return f'Send job notification email to {to_email} failed.'
+            if sent:
+                return f'Send job notification email to {to_email} successfully.'
+            else:
+                return f'Send job notification email to {to_email} failed.'
     except Exception as ex:
         helper.print_log_error("send_email_for_user", ex)
         return f'Send job notification email to {to_email} has errors.'
