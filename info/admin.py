@@ -204,11 +204,16 @@ class ResumeAdmin(admin.ModelAdmin):
         if resume_file:
             try:
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if obj.file:
+                        path_list = obj.file.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
                     # Upload PDF to cloudinary
                     pdf_upload_result = cloudinary.uploader.upload(
                         resume_file,
                         folder=settings.CLOUDINARY_DIRECTORY["cv"],
-                        public_id=obj.id
+                        public_id=public_id
                     )
                     
                     # Prepare data for PDF file
@@ -327,11 +332,16 @@ class CompanyAdmin(admin.ModelAdmin):
         if logo_file:
             try:
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if company.logo:
+                        path_list = company.logo.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
                     # Upload logo to cloudinary
                     logo_upload_result = cloudinary.uploader.upload(
                         logo_file,
                         folder=settings.CLOUDINARY_DIRECTORY["logo"],
-                        public_id=company.id
+                        public_id=public_id
                     )
                     
                     # Prepare data for logo
@@ -360,11 +370,16 @@ class CompanyAdmin(admin.ModelAdmin):
         if company_cover_image_file:
             try:
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if company.cover_image:
+                        path_list = company.cover_image.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
                     # Upload cover image to cloudinary
                     company_cover_image_upload_result = cloudinary.uploader.upload(
                         company_cover_image_file,
                         folder=settings.CLOUDINARY_DIRECTORY["cover_image"],
-                        public_id=company.id
+                        public_id=public_id
                     )
 
                     # Prepare data for cover image

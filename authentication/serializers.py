@@ -292,9 +292,17 @@ class AvatarSerializer(serializers.ModelSerializer):
 
         try:
             with transaction.atomic():
-                avatar_upload_result = cloudinary.uploader.upload(file,
-                                                              folder=settings.CLOUDINARY_DIRECTORY["avatar"],
-                                                              public_id=user.id)
+                public_id = None
+                # Overwrite if image already exists
+                if user.avatar:
+                    path_list = user.avatar.public_id.split('/')
+                    public_id = path_list[-1] if path_list else None
+                # Upload
+                avatar_upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=settings.CLOUDINARY_DIRECTORY["avatar"],
+                    public_id=public_id
+                )
                 avatar_data = {
                     "public_id": avatar_upload_result.get("public_id"),
                     "version": avatar_upload_result.get("version"),

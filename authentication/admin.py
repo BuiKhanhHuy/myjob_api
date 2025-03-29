@@ -102,11 +102,16 @@ class UserAdmin(admin.ModelAdmin):
             try:
                 # Start transaction
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if user.avatar:
+                        path_list = user.avatar.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
                     # Upload to cloudinary
                     avatar_upload_result = cloudinary.uploader.upload(
                         file,
                         folder=settings.CLOUDINARY_DIRECTORY["avatar"],
-                        public_id=user.id
+                        public_id=public_id
                     )
 
                     avatar_data = {

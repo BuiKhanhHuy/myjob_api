@@ -1,8 +1,6 @@
-import json
 from configs import variable_system as var_sys
-from django.conf import settings
 from helpers import utils, helper
-from configs import variable_response as var_res, paginations, app_setting
+from configs import variable_response as var_res, paginations
 from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -14,44 +12,6 @@ from .models import (
 from .serializers import (
     CareerSerializer
 )
-
-
-@api_view(http_method_names=["POST"])
-def create_database(request):
-    if settings.APP_ENVIRONMENT == app_setting.ENV_PROD:
-        return var_res.response_data(status=status.HTTP_403_FORBIDDEN)
-
-    data = {}
-    nghe = [{'id': 1, 'name': 'Hành chính - Thư ký'}, {'id': 2, 'name': 'An ninh - Bảo vệ'},
-            {'id': 3, 'name': 'Thiết kế - Sáng tạo nghệ thuật'}, {'id': 4, 'name': 'Kiến trúc - Thiết kế nội thất'},
-            {'id': 5, 'name': 'Khách sạn - Nhà hàng - Du lịch'},
-            {'id': 6, 'name': 'Bán buôn - Bán lẻ - Quản lý cửa hàng'},
-            {'id': 7, 'name': 'IT Phần cứng - Mạng - Viễn Thông'}, {'id': 8, 'name': 'IT Phần mềm'},
-            {'id': 9, 'name': 'Sản xuất - Lắp ráp - Chế biến'},
-            {'id': 10, 'name': 'Vận hành máy - Bảo trì - Bảo dưỡng thiết bị'},
-            {'id': 11, 'name': 'Nông - Lâm - Ngư nghiệp'}, {'id': 12, 'name': 'Marketing'},
-            {'id': 13, 'name': 'Kinh doanh'}, {'id': 14, 'name': 'Thu mua - Kho Vận - Chuỗi cung ứng'},
-            {'id': 15, 'name': 'Xuất Nhập Khẩu'}, {'id': 16, 'name': 'Vận Tải - Lái xe - Giao nhận'},
-            {'id': 17, 'name': 'Kế toán'}, {'id': 18, 'name': 'Tài chính - Đầu tư'}, {'id': 19, 'name': 'Ngân hàng'},
-            {'id': 20, 'name': 'Khai thác năng lượng - Khoáng sản'}, {'id': 21, 'name': 'Y tế - Chăm sóc sức khỏe'},
-            {'id': 22, 'name': 'Nhân sự'}, {'id': 23, 'name': 'Bảo hiểm'},
-            {'id': 24, 'name': 'Thông tin - Truyền thông - Xuất bản - In ấn'}, {'id': 25, 'name': 'Pháp Lý - Tuân thủ'},
-            {'id': 26, 'name': 'Kiểm toán'}, {'id': 27, 'name': 'Quản lý dự án - Chương trình'},
-            {'id': 28, 'name': 'Quản lý tiêu chuẩn và chất lượng'}, {'id': 29, 'name': 'Bất động sản'},
-            {'id': 30, 'name': 'Chăm sóc khách hàng'}, {'id': 31, 'name': 'Xây dựng'},
-            {'id': 32, 'name': 'Giáo dục - Đào tạo'},
-            {'id': 33, 'name': 'Data Analytics - Warehousing, & Business Intelligence'},
-            {'id': 34, 'name': 'Khoa học - Kỹ thuật'}, {'id': 35, 'name': 'Nghề nghiệp khác'}]
-    for c in nghe:
-        career = Career.objects.create(name=c["name"])
-        data[c["id"]] = career.id
-
-    with open("C:/Users/khuy2/Desktop/map.json", "w", encoding="utf-8") as file:
-        json.dump({
-            "career_map": data
-        }, file, ensure_ascii=False)
-    return var_res.response_data(data="OKE")
-
 
 @api_view(http_method_names=["GET"])
 def get_all_config(request):

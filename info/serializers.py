@@ -83,8 +83,7 @@ class CompanyImageSerializer(serializers.ModelSerializer):
                 # Upload the file to Cloudinary
                 company_image_upload_result = cloudinary.uploader.upload(
                     file,
-                    folder=settings.CLOUDINARY_DIRECTORY["company_image"],
-                    public_id=company_image.id
+                    folder=settings.CLOUDINARY_DIRECTORY["company_image"]
                 )
 
                 # Create a new File object for the uploaded image
@@ -312,10 +311,17 @@ class LogoCompanySerializer(serializers.ModelSerializer):
 
         try:
             with transaction.atomic():
+                public_id = None
+                # Overwrite if image already exists
+                if company.logo:
+                    path_list = company.logo.public_id.split('/')
+                    public_id = path_list[-1] if path_list else None
                 # Upload the logo to Cloudinary
-                logo_upload_result = cloudinary.uploader.upload(file,
-                                                                folder=settings.CLOUDINARY_DIRECTORY["logo"],
-                                                                public_id=company.id)
+                logo_upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=settings.CLOUDINARY_DIRECTORY["logo"],
+                    public_id=public_id
+                )
                 # Prepare the data for the company logo
                 company_logo_data = {
                     "public_id": logo_upload_result.get("public_id"),
@@ -370,11 +376,17 @@ class CompanyCoverImageSerializer(serializers.ModelSerializer):
 
         try:
             with transaction.atomic():
+                public_id = None
+                # Overwrite if image already exists
+                if company.cover_image:
+                    path_list = company.cover_image.public_id.split('/')
+                    public_id = path_list[-1] if path_list else None
                 # Upload the company cover image to Cloudinary
-                company_cover_image_upload_result = cloudinary.uploader.upload(file,
-                                                                               folder=settings.CLOUDINARY_DIRECTORY[
-                                                                                   "cover_image"],
-                                                                               public_id=company.id)
+                company_cover_image_upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=settings.CLOUDINARY_DIRECTORY["cover_image"],
+                    public_id=public_id
+                )
                 # Prepare the data for the company cover image
                 company_cover_image_data = {
                     "public_id": company_cover_image_upload_result.get("public_id"),
@@ -509,10 +521,17 @@ class CvSerializer(serializers.ModelSerializer):
         # Extract the PDF file from validated data
         pdf_file = validated_data.pop('file')
 
+        public_id = None
+        # Overwrite if image already exists
+        if instance.file:
+            path_list = instance.file.public_id.split('/')
+            public_id = path_list[-1] if path_list else None
         # Upload the PDF file to Cloudinary
-        pdf_upload_result = cloudinary.uploader.upload(pdf_file,
-                                                       folder=settings.CLOUDINARY_DIRECTORY["cv"],
-                                                       public_id=instance.id)
+        pdf_upload_result = cloudinary.uploader.upload(
+            pdf_file,
+            folder=settings.CLOUDINARY_DIRECTORY["cv"],
+            public_id=public_id
+        )
 
         # Prepare the data for the PDF file
         pdf_data = {
@@ -783,9 +802,10 @@ class ResumeSerializer(serializers.ModelSerializer):
                                            job_seeker_profile=job_seeker_profile)
 
             # Upload the PDF file to Cloudinary and get the upload result
-            pdf_upload_result = cloudinary.uploader.upload(pdf_file,
-                                                           folder=settings.CLOUDINARY_DIRECTORY["cv"],
-                                                           public_id=resume.id)
+            pdf_upload_result = cloudinary.uploader.upload(
+                pdf_file,
+                folder=settings.CLOUDINARY_DIRECTORY["cv"]
+            )
 
             # Create a new File instance with the details from the Cloudinary upload result
             cv_file = File.objects.create(
