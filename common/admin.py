@@ -106,10 +106,16 @@ class CareerAdmin(admin.ModelAdmin):
         if icon_file:
             try:
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if career.icon:
+                        path_list = career.icon.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
+                    # Upload
                     career_image_upload_result = cloudinary.uploader.upload(
                         icon_file,
                         folder=settings.CLOUDINARY_DIRECTORY["career_image"],
-                        public_id=career.id
+                        public_id=public_id
                     )
                     
                     career_image_data = {

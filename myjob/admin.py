@@ -125,10 +125,16 @@ class BannerAdmin(admin.ModelAdmin):
             try:
                 # Upload the image to cloudinary
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if banner.image:
+                        path_list = banner.image.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
+                    # Upload
                     banner_image_upload_result = cloudinary.uploader.upload(
                         image_file,
                         folder=settings.CLOUDINARY_DIRECTORY["web_banner"],
-                        public_id=banner.id
+                        public_id=public_id
                     )
                     # Prepare the image data
                     image_data = {
@@ -157,10 +163,16 @@ class BannerAdmin(admin.ModelAdmin):
             try:
                 # Upload the image to cloudinary
                 with transaction.atomic():
+                    public_id = None
+                    # Overwrite if image already exists
+                    if banner.image_mobile:
+                        path_list = banner.image_mobile.public_id.split('/')
+                        public_id = path_list[-1] if path_list else None
+                    # Upload
                     banner_mobile_image_upload_result = cloudinary.uploader.upload(
                         image_mobile_file,
                         folder=settings.CLOUDINARY_DIRECTORY["mobile_banner"],
-                        public_id=banner.id
+                        public_id=public_id
                     )
                     # Prepare the image data
                     banner_mobile_image_data = {
