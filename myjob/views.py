@@ -82,7 +82,17 @@ def send_sms_download_app(request):
 
 @api_view(http_method_names=['get'])
 def get_web_banner(request):
+    query_params = request.GET
+    
+    # Get banner type options
+    banner_type_options = {item[1]: item[0] for item in var_sys.BANNER_TYPE}
+    # Type query params
+    banner_type_param = query_params.get("type", None)  
+    banner_type = banner_type_options.get(banner_type_param, None)
+
     banner_queryset = Banner.objects.filter(is_active=True, platform="WEB")
+    if banner_type:
+        banner_queryset = banner_queryset.filter(type=banner_type)
     serializer = BannerSerializer(banner_queryset, many=True, fields=[
         "id", "imageUrl", "buttonText", "description",
         "buttonLink", "isShowButton", "descriptionLocation"

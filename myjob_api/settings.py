@@ -32,6 +32,10 @@ APP_ENVIRONMENT = config('APP_ENV')
 
 COMPANY_NAME = "MyJob"
 
+# Web client URL
+WEB_JOB_SEEKER_CLIENT_URL = config("WEB_JOB_SEEKER_CLIENT_URL")
+WEB_EMPLOYER_CLIENT_URL = config("WEB_EMPLOYER_CLIENT_URL")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
@@ -312,18 +316,16 @@ CLOUDINARY_DIRECTORY = {
     "company_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/company-image/{datetime.now().year}/{datetime.now().month}/",
     "career_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/career-images/{datetime.now().year}/{datetime.now().month}/",
     "web_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/web-banners/{datetime.now().year}/{datetime.now().month}/",
-    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/"
+    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/",
+    "system": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/system/"
 }
 
 DOMAIN_CLIENT = {
-    "development": "http://localhost:3000/",
-    "production": config('WEB_CLIENT_URL'),
+    "job_seeker": WEB_JOB_SEEKER_CLIENT_URL if WEB_JOB_SEEKER_CLIENT_URL else "http://127.0.0.1:3000/",
+    "employer": WEB_EMPLOYER_CLIENT_URL if WEB_EMPLOYER_CLIENT_URL else "http://localhost:3000/",
 }
 
-REDIRECT_LOGIN_CLIENT = {
-    "JOB_SEEKER": "dang-nhap-ung-vien",
-    "EMPLOYER": "dang-nhap-nha-tuyen-dung"
-}
+REDIRECT_LOGIN_CLIENT = "dang-nhap"
 
 MYJOB_AUTH = {
     "VERIFY_EMAIL_LINK_EXPIRE_SECONDS": 7200,

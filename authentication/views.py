@@ -212,32 +212,33 @@ def user_active(request, encoded_data, token):
             return HttpResponseNotFound()
 
         redirect_login = request.GET.get("redirectLogin")
-        if redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.JOB_SEEKER] and \
-                redirect_login != settings.REDIRECT_LOGIN_CLIENT[var_sys.EMPLOYER]:
+        if redirect_login != settings.REDIRECT_LOGIN_CLIENT:
             return HttpResponseNotFound()
 
     try:
         uid, expiration_time = helper.urlsafe_base64_decode_with_encoded_data(encoded_data)
         if uid is None or expiration_time is None:
             if platform == var_sys.PLATFORM_CHOICES[0][0]:
+                domain_type = "job_seeker"
                 return HttpResponseRedirect(
-                    helper.get_full_client_url(
-                        f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}"))
+                    helper.get_full_client_url(f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}", domain_type)
+                )
             else:
                 response_data(status=status.HTTP_400_BAD_REQUEST, errors={
                     "errorMessage": [ERROR_MESSAGES["INVALID_EMAIL_VERIFICATION"]]})
 
+        user = User.objects.get(pk=uid)
         if not helper.check_expiration_time(expiration_time):
             if platform == var_sys.PLATFORM_CHOICES[0][0]:
+                domain_type = "job_seeker" if user.role_name == var_sys.JOB_SEEKER else "employer"
                 return HttpResponseRedirect(
-                    helper.get_full_client_url(
-                        f"{redirect_login}/?errorMessage={ERROR_MESSAGES['EMAIL_VERIFICATION_EXPIRED']}"))
+                    helper.get_full_client_url(f"{redirect_login}/?errorMessage={ERROR_MESSAGES['EMAIL_VERIFICATION_EXPIRED']}", domain_type)
+                )
             else:
                 response_data(status=status.HTTP_400_BAD_REQUEST, errors={
                     "errorMessage": [ERROR_MESSAGES["EMAIL_VERIFICATION_EXPIRED"]]
                 })
 
-        user = User.objects.get(pk=uid)
     except Exception as ex:
         user = None
         helper.print_log_error("user_active", ex)
@@ -258,15 +259,20 @@ def user_active(request, encoded_data, token):
             [user.id]
         )
         if platform == var_sys.PLATFORM_CHOICES[0][0]:
+            domain_type = "job_seeker" if user.role_name == var_sys.JOB_SEEKER else "employer"
             return HttpResponseRedirect(
-                helper.get_full_client_url(f"{redirect_login}/?successMessage={SUCCESS_MESSAGES['EMAIL_VERIFIED']}"))
+                helper.get_full_client_url(f"{redirect_login}/?successMessage={SUCCESS_MESSAGES['EMAIL_VERIFIED']}", domain_type)
+            )
         else:
             return response_data(status=status.HTTP_200_OK)
     else:
         if platform == var_sys.PLATFORM_CHOICES[0][0]:
+            domain_type = "job_seeker"
+            if user:
+                domain_type = "job_seeker" if user.role_name == var_sys.JOB_SEEKER else "employer"
             return HttpResponseRedirect(
-                helper.get_full_client_url(
-                    f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}"))
+                helper.get_full_client_url(f"{redirect_login}/?errorMessage={ERROR_MESSAGES['INVALID_EMAIL_VERIFICATION']}", domain_type)
+            )
         else:
             return response_data(status=status.HTTP_400_BAD_REQUEST, errors={
                 "errorMessage": [ERROR_MESSAGES["INVALID_EMAIL_VERIFICATION"]]
@@ -306,11 +312,12 @@ def forgot_password(request):
                 expired_at = now + datetime.timedelta(seconds=settings.MYJOB_AUTH["RESET_PASSWORD_EXPIRE_SECONDS"])
 
                 if platform == "WEB":
-                    app_env = settings.APP_ENVIRONMENT
-
                     access_token = urlsafe_base64_encode(force_bytes(user.pk))
-
-                    domain = settings.DOMAIN_CLIENT[app_env]
+                    # Redirect to the domain of the role name
+                    if user.role_name == var_sys.JOB_SEEKER:
+                        domain = settings.DOMAIN_CLIENT["job_seeker"]
+                    else:
+                        domain = settings.DOMAIN_CLIENT["employer"]
                     func = f"cap-nhat-mat-khau/{access_token}"
                     reset_password_url = domain + func
 
@@ -375,10 +382,8 @@ def reset_password(request):
                         user.save()
                         forgot_password_token.is_active = False
                         forgot_password_token.save()
-                        role_name = user.role_name
 
-                        redirect_login_url = settings.REDIRECT_LOGIN_CLIENT[role_name]
-                        return response_data(data={"redirectLoginUrl": f"/{redirect_login_url}"})
+                        return response_data(data={"redirectLoginUrl": f"/{settings.REDIRECT_LOGIN_CLIENT}"})
         else:
             code = serializer.data.get("code")
             forgot_password_tokens = ForgotPasswordToken.objects.filter(code=code)

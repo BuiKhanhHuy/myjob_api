@@ -17,8 +17,8 @@ NOTIFICATION_TYPE = {
     "POST_VERIFY_REQUIRED": "POST_VERIFY_REQUIRED",
     "POST_VERIFY_RESULT": "POST_VERIFY_RESULT"
 }
-NO_IMAGE = "https://cdn-icons-png.flaticon.com/128/3460/3460724.png"
-NOTIFICATION_IMAGE_DEFAULT = "https://res.cloudinary.com/dtnpj540t/image/upload/v1683799130/my-job/images_default/notification_image_default.png"
+NO_IMAGE = f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}no_image.png"
+NOTIFICATION_IMAGE_DEFAULT = f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}notification_image_default.png"
 
 DATE_TIME_FORMAT = {
     "dmY": "%d/%m/%Y",
@@ -29,14 +29,14 @@ DATE_TIME_FORMAT = {
 AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
 
 AVATAR_DEFAULT = {
-    "AVATAR": "https://res.cloudinary.com/dtnpj540t/image/upload/v1680687265/my-job/images_default/avt_default.jpg",
-    "COMPANY_LOGO": "https://res.cloudinary.com/dtnpj540t/image/upload/v1742055868/my-job/images_default/company-logo-default.png",
-    "COMPANY_COVER_IMAGE": "https://res.cloudinary.com/dtnpj540t/image/upload/v1683615297/my-job/images_default/company_cover_image_default.jpg",
+    "AVATAR": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}avt_default.jpg",
+    "COMPANY_LOGO": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}company_logo_default.png",
+    "COMPANY_COVER_IMAGE": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}company_cover_image_default.jpg",
 }
 
 COMPANY_INFO = {
-    "DARK_LOGO_LINK": "https://res.cloudinary.com/dtnpj540t/image/upload/v1681050602/my-job/my-company-media/myjob-dark-logo.png",
-    "LIGHT_LOGO_LINK": "https://res.cloudinary.com/dtnpj540t/image/upload/v1681050660/my-job/my-company-media/myjob-light-logo.png",
+    "DARK_LOGO_LINK": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}job_dark_logo.png",
+    "LIGHT_LOGO_LINK": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}myjob_light_logo.png",
     "EMAIL": "myjob.contact00000@gmail.com",
     "PHONE": "0888-425-094",
     "ADDRESS": "1242 QL1A, Tân Tạo A, Bình Tân, TP. Hồ Chí Minh",
