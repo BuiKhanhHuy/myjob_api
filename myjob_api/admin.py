@@ -28,11 +28,11 @@ class CustomAdminSite(admin.AdminSite):
 
     dashboard_template = "admin/dashboard.html"
     notifications_template = "admin/notifications.html"
-    site_url = "/admin/dashboard/"
+    site_url = "/dashboard/"
     
     # Redirect to dashboard page instead of default index page
     def index(self, request, extra_context=None):
-        return redirect('/admin/dashboard/')
+        return redirect('/dashboard/')
     
     # Add custom context to the admin site
     def each_context(self, request):
@@ -383,7 +383,7 @@ class CustomAdminSite(admin.AdminSite):
 
     def dashboard(self, request, extra_context=None):
         if request.user.is_anonymous or not request.user.is_staff:
-            return redirect('/admin/login/?next=/admin/notifications/')
+            return redirect('/login/?next=/dashboard/')
 
         now = timezone.now()
         last_month = now.replace(day=1) - timedelta(days=1)
@@ -445,7 +445,7 @@ class CustomAdminSite(admin.AdminSite):
 
     def notifications(self, request, extra_context=None):
         if request.user.is_anonymous or not request.user.is_staff:
-            return redirect('/admin/login/?next=/admin/notifications/')
+            return redirect('/login/?next=/notifications/')
 
         app_list = self.get_app_list(request)
 
@@ -472,7 +472,7 @@ class CustomAdminSite(admin.AdminSite):
         my_urls = [
             path("dashboard/", self.dashboard, name="dashboard"),
             path("notifications/", self.notifications, name="notifications"),
-            path("api/", include([
+            path("admin/api/", include([
                 path("user-chart/", self.user_chart, name="dashboard_user_chart"),
                 path("job-post-chart/", self.job_post_chart, name="dashboard_job_post_chart"),
                 path("career-chart/", self.career_chart, name="dashboard_career_chart"),
@@ -490,13 +490,13 @@ class CustomAdminSite(admin.AdminSite):
                     {
                         "name": "Dashboard",
                         "object_name": "dashboard",
-                        "admin_url": "/admin/dashboard/",
+                        "admin_url": "/dashboard/",
                         "view_only": True,
                     },
                     {
                         "name": "Notifications",
                         "object_name": "notifications",
-                        "admin_url": "/admin/notifications/",
+                        "admin_url": "/notifications/",
                         "view_only": True,
                     }
                 ],

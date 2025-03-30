@@ -2,8 +2,14 @@ from configs import variable_system as var_sys
 from helpers import utils, helper
 from configs import variable_response as var_res, paginations
 from django.db.models import Count
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework import status
+from rest_framework.response import Response
+from django.db import connections
+from django.db.utils import OperationalError
+from redis import Redis
+from django.conf import settings
 from .models import (
     Career,
     City,
@@ -13,6 +19,7 @@ from .serializers import (
     CareerSerializer
 )
 
+
 @api_view(http_method_names=["GET"])
 def get_all_config(request):
     # exclude city name
@@ -20,22 +27,36 @@ def get_all_config(request):
 
     try:
         # system
-        gender_tuple = utils.convert_tuple_or_list_to_options(var_sys.GENDER_CHOICES)
-        marital_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.MARITAL_STATUS_CHOICES)
-        language_tuple = utils.convert_tuple_or_list_to_options(var_sys.LANGUAGE_CHOICES)
-        language_level_tuple = utils.convert_tuple_or_list_to_options(var_sys.LANGUAGE_LEVEL_CHOICES)
-        position_tuple = utils.convert_tuple_or_list_to_options(var_sys.POSITION_CHOICES)
-        type_of_workplace_tuple = utils.convert_tuple_or_list_to_options(var_sys.TYPE_OF_WORKPLACE_CHOICES)
-        job_type_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_TYPE_CHOICES)
-        academic_level_tuple = utils.convert_tuple_or_list_to_options(var_sys.ACADEMIC_LEVEL)
-        experience_tuple = utils.convert_tuple_or_list_to_options(var_sys.EXPERIENCE_CHOICES)
-        employee_size_tuple = utils.convert_tuple_or_list_to_options(var_sys.EMPLOYEE_SIZE_CHOICES)
-        application_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.APPLICATION_STATUS)
-        frequency_notification_tuple = utils.convert_tuple_or_list_to_options(var_sys.FREQUENCY_NOTIFICATION)
-        job_post_status_tuple = utils.convert_tuple_or_list_to_options(var_sys.JOB_POST_STATUS)
+        gender_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.GENDER_CHOICES)
+        marital_status_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.MARITAL_STATUS_CHOICES)
+        language_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.LANGUAGE_CHOICES)
+        language_level_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.LANGUAGE_LEVEL_CHOICES)
+        position_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.POSITION_CHOICES)
+        type_of_workplace_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.TYPE_OF_WORKPLACE_CHOICES)
+        job_type_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.JOB_TYPE_CHOICES)
+        academic_level_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.ACADEMIC_LEVEL)
+        experience_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.EXPERIENCE_CHOICES)
+        employee_size_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.EMPLOYEE_SIZE_CHOICES)
+        application_status_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.APPLICATION_STATUS)
+        frequency_notification_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.FREQUENCY_NOTIFICATION)
+        job_post_status_tuple = utils.convert_tuple_or_list_to_options(
+            var_sys.JOB_POST_STATUS)
 
         # database
-        cities = City.objects.exclude(name__icontains=exclude_city_name).values_list("id", "name")
+        cities = City.objects.exclude(
+            name__icontains=exclude_city_name).values_list("id", "name")
         careers = Career.objects.values_list("id", "name")
         city_tuple = utils.convert_tuple_or_list_to_options(cities)
         career_tuple = utils.convert_tuple_or_list_to_options(careers)
@@ -136,8 +157,10 @@ def get_districts(request):
 @api_view(http_method_names=["GET"])
 def get_top_10_careers(request):
     try:
-        queryset = Career.objects.annotate(num_job_posts=Count('job_posts')).order_by('-num_job_posts')[:10]
-        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'iconUrl', 'jobPostTotal'])
+        queryset = Career.objects.annotate(num_job_posts=Count(
+            'job_posts')).order_by('-num_job_posts')[:10]
+        serializer = CareerSerializer(queryset, many=True, fields=[
+                                      'id', 'name', 'iconUrl', 'jobPostTotal'])
     except Exception as ex:
         helper.print_log_error("get_top_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -157,11 +180,49 @@ def get_all_careers(request):
 
         page = paginator.paginate_queryset(queryset, request)
         if page is not None:
-            serializer = CareerSerializer(page, many=True, fields=['id', 'name', 'appIconName', 'jobPostTotal'])
+            serializer = CareerSerializer(page, many=True, fields=[
+                                          'id', 'name', 'appIconName', 'jobPostTotal'])
             return paginator.get_paginated_response(serializer.data)
 
-        serializer = CareerSerializer(queryset, many=True, fields=['id', 'name', 'appIconName', 'jobPostTotal'])
+        serializer = CareerSerializer(queryset, many=True, fields=[
+                                      'id', 'name', 'appIconName', 'jobPostTotal'])
         return var_res.response_data(data=serializer.data)
     except Exception as ex:
         helper.print_log_error("get_all_careers", ex)
         return var_res.response_data(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    # Check database connection
+    try:
+        db_conn = connections['default']
+        db_conn.cursor()
+        db_status = True
+    except OperationalError:
+        db_status = False
+
+    # Test Redis connection
+    try:
+        redis_client = Redis(
+            host=settings.SERVICE_REDIS_HOST,
+            port=settings.SERVICE_REDIS_PORT,
+            db=settings.SERVICE_REDIS_DB,
+            password=settings.SERVICE_REDIS_PASSWORD,
+        )
+        redis_status = redis_client.ping()
+    except:
+        redis_status = False
+
+    # Overall status
+    is_healthy = all([db_status, redis_status])
+
+    response_data = {
+        "status": "healthy" if is_healthy else "unhealthy",
+        "database": "connected" if db_status else "disconnected",
+        "redis": "connected" if redis_status else "disconnected",
+    }
+
+    status_code = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    return Response(response_data, status=status_code)

@@ -231,7 +231,8 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
-INTERNAL_IPS = ('127.0.0.1', '192.168.1.5')
+CORS_ALLOWED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
+INTERNAL_IPS = ('127.0.0.1')
 
 LOGIN_REDIRECT_URL = '/'
 

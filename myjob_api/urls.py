@@ -21,15 +21,15 @@ urlpatterns = [
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    path('admin/', custom_admin_site.urls),
     path('api/', include(
         [
-            path('common/', include('common.urls')),
+            path('common/', include('common.urls')),            
             path('auth/', include('authentication.urls')),
             path('info/', include('info.urls')),
             path('job/', include('job.urls')),
             path('myjob/', include('myjob.urls')),
             path('chatbot/', include('chatbot.urls')),
         ]
-    ))
+    )),
+    path('', custom_admin_site.urls),
 ]

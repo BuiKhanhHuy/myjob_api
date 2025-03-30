@@ -47,7 +47,7 @@ class Location(CommonBaseModel):
         db_table = "myjob_common_location"
 
     def __str__(self):
-        return f"{self.city.name} - {self.district.name} - {self.address}"
+        return f"City: {self.city.name if self.city else '---'} / District: {self.district.name if self.district else '---'} / Address: {self.address} / Location: ({self.lat}:{self.lng})"
 
 
 class Career(CommonBaseModel):
