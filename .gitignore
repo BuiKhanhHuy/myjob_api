@@ -132,3 +132,8 @@ dmypy.json
 
 # Temp
 /tmp
+
+# Static file
+staticfiles
+
+.DS_Store
