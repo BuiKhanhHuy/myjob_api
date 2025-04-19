@@ -26,7 +26,8 @@ DATE_TIME_FORMAT = {
     "ISO8601": "%Y-%m-%dT%H:%M:%S.%fZ"
 }
 
-AUTH_PROVIDERS = (('email', 'email'), ('facebook', 'facebook'), ('google', 'google'))
+AUTH_PROVIDERS = (('email', 'email'), ('facebook',
+                  'facebook'), ('google', 'google'))
 
 AVATAR_DEFAULT = {
     "AVATAR": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}avt_default.jpg",
@@ -37,10 +38,71 @@ AVATAR_DEFAULT = {
 COMPANY_INFO = {
     "DARK_LOGO_LINK": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}job_dark_logo.png",
     "LIGHT_LOGO_LINK": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['system']}myjob_light_logo.png",
-    "EMAIL": "myjob.contact00000@gmail.com",
+    "EMAIL": "myjob.support@gmail.com",
     "PHONE": "0888-425-094",
     "ADDRESS": "1242 QL1A, Tân Tạo A, Bình Tân, TP. Hồ Chí Minh",
+    "WORK_TIME": "8:00 - 17:30 (Thứ 2 - Thứ 6)",
     "MY_COMPANY_NAME": settings.COMPANY_NAME
+}
+
+ABOUT_US_IMAGE_URLS = {
+    "JOB_SEEKER": {
+        # TODO: Upload Cloudinary later
+        "FEEDBACK_GUIDE": "https://i.postimg.cc/5t7fJjLG/Screenshot-2025-04-12-at-14-43-12.png",
+        "ACHIEVEMENTS": "https://i.postimg.cc/WpnKdxhm/dd346eca-7a6a-44a0-8816-f9bee25ac68e.png",
+    },
+    "EMPLOYER": {
+        # TODO: Upload Cloudinary later
+        "FEEDBACK_GUIDE": "https://i.postimg.cc/sgCLBy32/Screenshot-2025-04-12-at-15-28-12.png",
+        "ACHIEVEMENTS": "https://i.postimg.cc/WpnKdxhm/dd346eca-7a6a-44a0-8816-f9bee25ac68e.png",
+    }
+}
+
+# TODO: Upload Cloudinary later
+CHATBOT_ICONS = {
+    # Job Seeker
+    "job_seeker_search_job": "https://img.icons8.com/?size=100&id=132&format=png",
+    "job_seeker_search_company": "https://img.icons8.com/?size=100&id=102675&format=png",
+    "job_seeker_manage_profile": "https://img.icons8.com/?size=100&id=20317&format=png",
+    "job_seeker_track_application_status": "https://img.icons8.com/?size=100&id=62774&format=png",
+    "job_seeker_manage_all_profile": "https://img.icons8.com/?size=100&id=11733&format=png",
+    "job_seeker_myjob_profile": "https://img.icons8.com/?size=100&id=63384&format=png",
+    "job_seeker_attached_profile": "https://img.icons8.com/?size=100&id=123834&format=png",
+    "job_seeker_about_us_target_1": "https://img.icons8.com/?size=100&id=20884&format=png",
+    "job_seeker_about_us_target_2": "https://img.icons8.com/?size=100&id=58125&format=png",
+    "job_seeker_about_us_target_3": "https://img.icons8.com/?size=100&id=345&format=png",
+    "job_seeker_about_us_target_4": "https://img.icons8.com/?size=100&id=54481&format=png",
+    # Employer
+    "employer_search_candidate": "https://img.icons8.com/?size=100&id=132&format=png",
+    "employer_manage_candidate": "https://img.icons8.com/?size=100&id=20317&format=png",
+    "employer_update_company_info": "https://img.icons8.com/?size=100&id=102675&format=png",
+    # Common
+    "common_feedback": "https://img.icons8.com/?size=100&id=52209&format=png",
+    "common_support": "https://img.icons8.com/?size=100&id=97144&format=png",
+    "common_about_us": "https://img.icons8.com/?size=100&id=3439&format=png",
+    "common_notification": "https://img.icons8.com/?size=100&id=11642&format=png",
+    "common_login": "https://img.icons8.com/?size=100&id=djM90N1WNk5W&format=png",
+    "common_account_and_password": "https://img.icons8.com/?size=100&id=7820&format=png",
+    "common_faq": "https://img.icons8.com/?size=100&id=646&format=png",
+    "common_how_to_use": "https://img.icons8.com/?size=100&id=iiBewifv8LwR&format=png",
+    "common_chat_with_us": "https://img.icons8.com/?size=100&id=1361&format=png",
+    "common_social": "https://img.icons8.com/?size=80&id=JqWLVxr0WCrz&format=png",
+    "common_social_facebook": "https://img.icons8.com/?size=96&id=13912&format=png",
+    "common_social_linkedin": "https://img.icons8.com/?size=100&id=8808&format=png",
+    "common_social_youtube": "https://img.icons8.com/?size=96&id=108794&format=png",
+    "common_social_instagram": "https://img.icons8.com/?size=160&id=BrU2BBoRXiWq&format=png",
+    "common_privacy_policy": "https://img.icons8.com/?size=100&id=LeS5bIxWv2Kc&format=png",
+}
+
+SOCIAL_MEDIA_LINKS = {
+    "facebook": "https://www.facebook.com/bkhuy/",
+    "linkedin": "https://www.linkedin.com/in/huy-khanh-10041b20b/",
+    "youtube": "https://www.youtube.com/channel/UCn49BvcP1w1mamaOSGTKVZw",
+    "instagram": "https://www.instagram.com/huy.buikhanh_/",
+    "github": "https://github.com/BuiKhanhHuy",
+    "tiktok": "https://www.tiktok.com/@khanhhuy_27?_t=ZS-8vSsKoClLBB&_r=1",
+    "twitter": "",
+    "telegram": "",
 }
 
 PLATFORM_CHOICES = (

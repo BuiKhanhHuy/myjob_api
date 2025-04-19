@@ -56,15 +56,13 @@ services:
       - myjob-network
     volumes:
       - ./:/myjob_api
-    ports:
-      - "8000"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/common/health/"]
+      test: ["CMD", "curl", "-f", "http://backend:8000/api/common/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -93,34 +91,24 @@ services:
         limits:
           cpus: '1'
           memory: 1G
-  nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
-    container_name: myjob-backend-nginx
-    restart: always
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ssl-certs:/etc/nginx/ssl
-      - ./staticfiles:/myjob_api/staticfiles
-    ports:
-      - "80:80"
-      - "443:443"
+
+  # Ngrok to public API
+  # Domain: ngrok-url (ngrok-url.com)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: myjob-ngrok-container
+    restart: unless-stopped
+    command: 
+      - "tunnel"
+      - "--label"
+      - "edge=${NGROK_EDGE_ID}"
+      - "http://backend:8000"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     networks:
       - myjob-network
     depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
+      - backend
 
 networks:
   myjob-network:
@@ -128,4 +116,3 @@ networks:
 
 volumes:
   myjob-volume:
-  ssl-certs:
