@@ -41,8 +41,11 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
-
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
+INTERNAL_IPS = ('127.0.0.1')
 
 # Application definition
 INSTALLED_APPS = [
@@ -230,10 +233,6 @@ CKEDITOR_UPLOAD_PATH = "uploads/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
-INTERNAL_IPS = ('127.0.0.1')
-
 LOGIN_REDIRECT_URL = '/'
 
 SERVICE_REDIS_HOST = config('SERVICE_REDIS_HOST')
@@ -310,14 +309,14 @@ cloudinary.config(
 CLOUDINARY_PATH = "https://res.cloudinary.com/" + CLOUDINARY_CLOUD_NAME + "/image/upload/v{0}/"
 
 CLOUDINARY_DIRECTORY = {
-    "avatar": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/avatar/{datetime.now().year}/{datetime.now().month}/",
-    "cv": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cv/{datetime.now().year}/{datetime.now().month}/",
-    "logo": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/logo/{datetime.now().year}/{datetime.now().month}/",
-    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cover-image/{datetime.now().year}/{datetime.now().month}/",
-    "company_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/company-image/{datetime.now().year}/{datetime.now().month}/",
-    "career_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/career-images/{datetime.now().year}/{datetime.now().month}/",
-    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/web-banners/{datetime.now().year}/{datetime.now().month}/",
-    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/{datetime.now().year}/{datetime.now().month}/",
+    "avatar": f"{CLOUDINARY_BUCKET_NAME}/avatar/",
+    "cv": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cv/",
+    "logo": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/logo/",
+    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cover-image/",
+    "company_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/company-image/",
+    "career_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/career-images/",
+    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/web-banners/",
+    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/",
     "system": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/system/"
 }
 
