@@ -1,5 +1,3 @@
-import cloudinary.uploader
-
 from console.jobs import queue_mail
 from helpers import utils
 from configs import variable_system as var_sys, table_export
@@ -54,6 +52,7 @@ from job.models import (
     JobPost
 )
 from job import serializers as job_serializers
+from helpers.cloudinary_service import CloudinaryService
 
 
 class JobSeekerProfileViewSet(viewsets.ViewSet,
@@ -746,7 +745,9 @@ class CompanyImageViewSet(viewsets.ViewSet,
             with transaction.atomic():
                 image = instance.image
                 if image:
-                    cloudinary.uploader.destroy(image.public_id)
+                    is_destroy_success = CloudinaryService.delete_image(image.public_id)
+                    if not is_destroy_success:
+                        helper.print_log_error("CompanyImageViewSet__destroy", ERROR_MESSAGES["CLOUDINARY_UPLOAD_ERROR"])
                     image.delete()
                 self.perform_destroy(instance)
         except Exception as ex:

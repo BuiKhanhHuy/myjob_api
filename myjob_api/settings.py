@@ -297,7 +297,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME')
 
-CLOUDINARY_BUCKET_NAME = 'my-job-bucket'
+CLOUDINARY_BUCKET_NAME = 'myjob-bucket'
 
 # Set the Cloudinary configuration
 cloudinary.config(
@@ -310,14 +310,14 @@ CLOUDINARY_PATH = "https://res.cloudinary.com/" + CLOUDINARY_CLOUD_NAME + "/imag
 
 CLOUDINARY_DIRECTORY = {
     "avatar": f"{CLOUDINARY_BUCKET_NAME}/avatar/",
-    "cv": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cv/",
-    "logo": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/logo/",
-    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/cover-image/",
-    "company_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/company-image/",
-    "career_image": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/career-images/",
-    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/web-banners/",
-    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/banners/mobile-banners/",
-    "system": f"{CLOUDINARY_BUCKET_NAME}/{APP_ENVIRONMENT}/system/"
+    "cv": f"{CLOUDINARY_BUCKET_NAME}/cv/",
+    "logo": f"{CLOUDINARY_BUCKET_NAME}/logo/",
+    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/cover-image/",
+    "company_image": f"{CLOUDINARY_BUCKET_NAME}/company-image/",
+    "career_image": f"{CLOUDINARY_BUCKET_NAME}/career-images/",
+    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/web-banners/",
+    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/mobile-banners/",
+    "system": f"{CLOUDINARY_BUCKET_NAME}/system/"
 }
 
 DOMAIN_CLIENT = {

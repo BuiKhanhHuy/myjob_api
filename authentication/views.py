@@ -1,6 +1,5 @@
 import json
 import datetime
-import cloudinary.uploader
 import pytz
 import requests
 from django.conf import settings
@@ -22,6 +21,7 @@ from django.core.exceptions import BadRequest
 from drf_social_oauth2.views import TokenView, ConvertTokenView, RevokeTokenView
 from oauth2_provider.models import get_access_token_model
 from social_django.models import UserSocialAuth
+from helpers.cloudinary_service import CloudinaryService
 
 from console.jobs import queue_mail, queue_auth
 from .tokens_custom import email_verification_token
@@ -474,8 +474,8 @@ def avatar(request):
         user = request.user
         try:
             if user.avatar:
-                destroy_result = cloudinary.uploader.destroy(user.avatar.public_id)
-                if not destroy_result.get("result", "") == "ok":
+                is_destroy_success = CloudinaryService.delete_image(user.avatar.public_id)
+                if not is_destroy_success:
                     helper.print_log_error("destroy_avatar_in_cloud", ERROR_MESSAGES["CLOUDINARY_UPLOAD_ERROR"])
                 # Delete file in DB
                 user.avatar.delete()
