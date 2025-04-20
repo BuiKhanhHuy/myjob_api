@@ -1,5 +1,4 @@
 import concurrent.futures
-import cloudinary.uploader
 from django.conf import settings
 from django.contrib import admin
 from django import forms
@@ -25,6 +24,7 @@ from .models import (
 
 )
 from django_admin_listfilter_dropdown.filters import (DropdownFilter, ChoiceDropdownFilter)
+from helpers.cloudinary_service import CloudinaryService
 
 
 class CompanyImageInlineForm(forms.ModelForm):
@@ -210,32 +210,17 @@ class ResumeAdmin(admin.ModelAdmin):
                         path_list = obj.file.public_id.split('/')
                         public_id = path_list[-1] if path_list else None
                     # Upload PDF to cloudinary
-                    pdf_upload_result = cloudinary.uploader.upload(
+                    pdf_upload_result = CloudinaryService.upload_image(
                         resume_file,
-                        folder=settings.CLOUDINARY_DIRECTORY["cv"],
+                        settings.CLOUDINARY_DIRECTORY["cv"],
                         public_id=public_id
                     )
-                    
-                    # Prepare data for PDF file
-                    pdf_data = {
-                        "public_id": pdf_upload_result.get("public_id"),
-                        "version": pdf_upload_result.get("version"),
-                        "format": pdf_upload_result.get("format"),
-                        "resource_type": pdf_upload_result.get("resource_type"),
-                        "uploaded_at": pdf_upload_result.get("created_at"),
-                        "bytes": pdf_upload_result.get("bytes"),
-                        "metadata": pdf_upload_result
-                    }
-                    
-                    # Update or create PDF file
-                    if obj.file:
-                        for key, value in pdf_data.items():
-                            setattr(obj.file, key, value)
-                        obj.file.save()
-                    else:
-                        pdf_file = File.objects.create(**pdf_data)
-                        obj.file = pdf_file
-
+                    # Update or create file
+                    obj.file = File.update_or_create_file_with_cloudinary(
+                        obj.file,
+                        pdf_upload_result,
+                        File.CV_TYPE
+                    )
                     obj.save()
 
             except Exception as ex:
@@ -338,31 +323,18 @@ class CompanyAdmin(admin.ModelAdmin):
                         path_list = company.logo.public_id.split('/')
                         public_id = path_list[-1] if path_list else None
                     # Upload logo to cloudinary
-                    logo_upload_result = cloudinary.uploader.upload(
+                    logo_upload_result = CloudinaryService.upload_image(
                         logo_file,
-                        folder=settings.CLOUDINARY_DIRECTORY["logo"],
+                        settings.CLOUDINARY_DIRECTORY["logo"],
                         public_id=public_id
                     )
-                    
-                    # Prepare data for logo
-                    company_logo_data = {
-                        "public_id": logo_upload_result.get("public_id"),
-                        "version": logo_upload_result.get("version"),
-                        "format": logo_upload_result.get("format"),
-                        "resource_type": logo_upload_result.get("resource_type"),
-                        "uploaded_at": logo_upload_result.get("created_at"),
-                        "bytes": logo_upload_result.get("bytes"),
-                        "metadata": logo_upload_result
-                    }
-                    
-                    # Update or create logo
-                    if company.logo:
-                        for key, value in company_logo_data.items():
-                            setattr(company.logo, key, value)
-                        company.logo.save()
-                    else:
-                        company_logo_new = File.objects.create(**company_logo_data)
-                        company.logo = company_logo_new
+                    # Update or create file
+                    company.logo = File.update_or_create_file_with_cloudinary(
+                        company.logo,
+                        logo_upload_result,
+                        File.LOGO_TYPE
+                    )
+                    company.save()
             except Exception as ex:
                 helper.print_log_error("company_image_save_model", ex)
 
@@ -376,31 +348,18 @@ class CompanyAdmin(admin.ModelAdmin):
                         path_list = company.cover_image.public_id.split('/')
                         public_id = path_list[-1] if path_list else None
                     # Upload cover image to cloudinary
-                    company_cover_image_upload_result = cloudinary.uploader.upload(
+                    company_cover_image_upload_result = CloudinaryService.upload_image(
                         company_cover_image_file,
-                        folder=settings.CLOUDINARY_DIRECTORY["cover_image"],
+                        settings.CLOUDINARY_DIRECTORY["cover_image"],
                         public_id=public_id
                     )
-
-                    # Prepare data for cover image
-                    company_cover_image_data = {
-                        "public_id": company_cover_image_upload_result.get("public_id"),
-                        "version": company_cover_image_upload_result.get("version"),
-                        "format": company_cover_image_upload_result.get("format"),
-                        "resource_type": company_cover_image_upload_result.get("resource_type"),
-                        "uploaded_at": company_cover_image_upload_result.get("created_at"),
-                        "bytes": company_cover_image_upload_result.get("bytes"),
-                        "metadata": company_cover_image_upload_result
-                    }
-                    
-                    # Update or create cover image
-                    if company.cover_image:
-                        for key, value in company_cover_image_data.items():
-                            setattr(company.cover_image, key, value)
-                        company.cover_image.save()
-                    else:
-                        company_cover_image_new = File.objects.create(**company_cover_image_data)
-                        company.cover_image = company_cover_image_new
+                    # Update or create file
+                    company.cover_image = File.update_or_create_file_with_cloudinary(
+                        company.cover_image,
+                        company_cover_image_upload_result,
+                        File.COVER_IMAGE_TYPE
+                    )
+                    company.save()
             except Exception as ex:
                 helper.print_log_error("company_cover_image_save_model", ex)
 

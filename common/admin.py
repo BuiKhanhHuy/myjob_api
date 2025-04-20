@@ -1,4 +1,3 @@
-import cloudinary.uploader
 from django.contrib import admin
 from django.utils.html import mark_safe
 from django import forms
@@ -15,6 +14,7 @@ from .models import (
     File
 )
 from django_admin_listfilter_dropdown.filters import (RelatedDropdownFilter)
+from helpers.cloudinary_service import CloudinaryService
 
 
 class LocationForm(forms.ModelForm):
@@ -112,29 +112,18 @@ class CareerAdmin(admin.ModelAdmin):
                         path_list = career.icon.public_id.split('/')
                         public_id = path_list[-1] if path_list else None
                     # Upload
-                    career_image_upload_result = cloudinary.uploader.upload(
+                    career_image_upload_result = CloudinaryService.upload_image(
                         icon_file,
                         folder=settings.CLOUDINARY_DIRECTORY["career_image"],
                         public_id=public_id
                     )
                     
-                    career_image_data = {
-                        "public_id": career_image_upload_result["public_id"],
-                        "version": career_image_upload_result["version"],
-                        "format": career_image_upload_result["format"],
-                        "resource_type": career_image_upload_result["resource_type"],
-                        "uploaded_at": career_image_upload_result["created_at"],
-                        "bytes": career_image_upload_result["bytes"],
-                        "metadata": career_image_upload_result,
-                    }
-                    if career.icon:
-                        # Update icon
-                        for key, value in career_image_data.items():
-                            setattr(career.icon, key, value)
-                        career.icon.save()
-                    else:
-                        icon_new = File.objects.create(**career_image_data)
-                        career.icon = icon_new
+                    # Update or create file
+                    career.icon = File.update_or_create_file_with_cloudinary(
+                        career.icon,
+                        career_image_upload_result,
+                        File.CAREER_IMAGE_TYPE
+                    )
                     career.save()
             except Exception as ex:
                 helper.print_log_error("career_image_save_model", ex)

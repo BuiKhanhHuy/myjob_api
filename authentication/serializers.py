@@ -1,5 +1,3 @@
-import cloudinary.uploader
-
 from configs import variable_system as var_sys
 from configs.messages import ERROR_MESSAGES
 from helpers import helper
@@ -15,6 +13,7 @@ from info.models import (
 )
 from common.models import Location, File
 from common.serializers import LocationSerializer
+from helpers.cloudinary_service import CloudinaryService
 
 
 class CheckCredsSerializer(serializers.Serializer):
@@ -297,31 +296,18 @@ class AvatarSerializer(serializers.ModelSerializer):
                 if user.avatar:
                     path_list = user.avatar.public_id.split('/')
                     public_id = path_list[-1] if path_list else None
-                # Upload
-                avatar_upload_result = cloudinary.uploader.upload(
+                # Upload to cloudinary
+                avatar_upload_result = CloudinaryService.upload_image(
                     file,
-                    folder=settings.CLOUDINARY_DIRECTORY["avatar"],
+                    settings.CLOUDINARY_DIRECTORY["avatar"],
                     public_id=public_id
                 )
-                avatar_data = {
-                    "public_id": avatar_upload_result.get("public_id"),
-                    "version": avatar_upload_result.get("version"),
-                    "format": avatar_upload_result.get("format"),
-                    "resource_type": avatar_upload_result.get("resource_type"),
-                    "uploaded_at": avatar_upload_result.get("created_at"),
-                    "bytes": avatar_upload_result.get("bytes"),
-                    "metadata": avatar_upload_result
-                }
-                if user.avatar:
-                    # Update avatar
-                    for key, value in avatar_data.items():
-                        setattr(user.avatar, key, value)
-                    user.avatar.save()
-                else:
-                    # Create avatar
-                    avatar = File(**avatar_data)
-                    avatar.save()
-                    user.avatar = avatar
+                # Update or create file
+                user.avatar = File.update_or_create_file_with_cloudinary(
+                    user.avatar,
+                    avatar_upload_result,
+                    File.AVATAR_TYPE
+                )
                 user.save()
 
                 # update in firebase
