@@ -1,3 +1,14 @@
+"""
+MyJob Recruitment System - Part of MyJob Platform
+
+Author: Bui Khanh Huy
+Email: khuy220@gmail.com
+Copyright (c) 2023 Bui Khanh Huy
+
+License: MIT License
+See the LICENSE file in the project root for full license information.
+"""
+
 # Error Messages
 ERROR_MESSAGES = {
     'SOCIAL_EMAIL_EXISTS': 'Email tài khoản mạng xã hội bạn vừa liên kết đã tồn tại, vui lòng đăng nhập bằng tài khoản khác',
