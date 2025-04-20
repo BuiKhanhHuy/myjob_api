@@ -1,9 +1,4 @@
-.PHONY: setup-hosts generate-certs docker-up docker-down docker-build docker-restart docker-nginx-restart
-
-# Setup hosts
-setup-hosts:
-	chmod +x ./docker/scripts/setup-hosts.sh
-	sudo ./docker/scripts/setup-hosts.sh
+.PHONY: docker-up docker-down docker-build docker-restart docker-nginx-restart init logs
 
 # Start docker containers
 docker-up:
@@ -20,8 +15,9 @@ docker-build:
 # Restart nginx container
 docker-nginx-restart:
 	docker-compose restart nginx
-# Setup everything (hosts + docker)
-init: setup-hosts docker-build docker-up
+
+# Setup everything
+init: docker-build docker-up
 
 # Show logs
 logs:
