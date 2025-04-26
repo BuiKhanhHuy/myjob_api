@@ -58,51 +58,48 @@ COMPANY_INFO = {
 
 ABOUT_US_IMAGE_URLS = {
     "JOB_SEEKER": {
-        # TODO: Upload Cloudinary later
-        "FEEDBACK_GUIDE": "https://i.postimg.cc/5t7fJjLG/Screenshot-2025-04-12-at-14-43-12.png",
-        "ACHIEVEMENTS": "https://i.postimg.cc/WpnKdxhm/dd346eca-7a6a-44a0-8816-f9bee25ac68e.png",
+        "FEEDBACK_GUIDE": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['about_us']}job_seeker_feedback_guide.png",
+        "ACHIEVEMENTS": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['about_us']}job_seeker_achievements.png",
     },
     "EMPLOYER": {
-        # TODO: Upload Cloudinary later
-        "FEEDBACK_GUIDE": "https://i.postimg.cc/sgCLBy32/Screenshot-2025-04-12-at-15-28-12.png",
-        "ACHIEVEMENTS": "https://i.postimg.cc/WpnKdxhm/dd346eca-7a6a-44a0-8816-f9bee25ac68e.png",
+        "FEEDBACK_GUIDE": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['about_us']}job_seeker_feedback_guide.png",
+        "ACHIEVEMENTS": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['about_us']}employer_achievements.png",
     }
 }
 
-# TODO: Upload Cloudinary later
 CHATBOT_ICONS = {
     # Job Seeker
-    "job_seeker_search_job": "https://img.icons8.com/?size=100&id=132&format=png",
-    "job_seeker_search_company": "https://img.icons8.com/?size=100&id=102675&format=png",
-    "job_seeker_manage_profile": "https://img.icons8.com/?size=100&id=20317&format=png",
-    "job_seeker_track_application_status": "https://img.icons8.com/?size=100&id=62774&format=png",
-    "job_seeker_manage_all_profile": "https://img.icons8.com/?size=100&id=11733&format=png",
-    "job_seeker_myjob_profile": "https://img.icons8.com/?size=100&id=63384&format=png",
-    "job_seeker_attached_profile": "https://img.icons8.com/?size=100&id=123834&format=png",
-    "job_seeker_about_us_target_1": "https://img.icons8.com/?size=100&id=20884&format=png",
-    "job_seeker_about_us_target_2": "https://img.icons8.com/?size=100&id=58125&format=png",
-    "job_seeker_about_us_target_3": "https://img.icons8.com/?size=100&id=345&format=png",
-    "job_seeker_about_us_target_4": "https://img.icons8.com/?size=100&id=54481&format=png",
+    "job_seeker_search_job": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_search_job.png",
+    "job_seeker_search_company": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_search_company.png",
+    "job_seeker_manage_profile": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_manage_profile.png",
+    "job_seeker_track_application_status": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_track_application_status.png",
+    "job_seeker_manage_all_profile": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_manage_all_profile.png",
+    "job_seeker_myjob_profile": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_myjob_profile.png",
+    "job_seeker_attached_profile": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_attached_profile.png",
+    "job_seeker_about_us_target_1": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_about_us_target_1.png",
+    "job_seeker_about_us_target_2": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_about_us_target_2.png",
+    "job_seeker_about_us_target_3": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_about_us_target_3.png",
+    "job_seeker_about_us_target_4": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}job_seeker_about_us_target_4.png",
     # Employer
-    "employer_search_candidate": "https://img.icons8.com/?size=100&id=132&format=png",
-    "employer_manage_candidate": "https://img.icons8.com/?size=100&id=20317&format=png",
-    "employer_update_company_info": "https://img.icons8.com/?size=100&id=102675&format=png",
+    "employer_search_candidate": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}employer_search_candidate.png",
+    "employer_manage_candidate": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}employer_manage_candidate.png",
+    "employer_update_company_info": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}employer_update_company_info.png",
     # Common
-    "common_feedback": "https://img.icons8.com/?size=100&id=52209&format=png",
-    "common_support": "https://img.icons8.com/?size=100&id=97144&format=png",
-    "common_about_us": "https://img.icons8.com/?size=100&id=3439&format=png",
-    "common_notification": "https://img.icons8.com/?size=100&id=11642&format=png",
-    "common_login": "https://img.icons8.com/?size=100&id=djM90N1WNk5W&format=png",
-    "common_account_and_password": "https://img.icons8.com/?size=100&id=7820&format=png",
-    "common_faq": "https://img.icons8.com/?size=100&id=646&format=png",
-    "common_how_to_use": "https://img.icons8.com/?size=100&id=iiBewifv8LwR&format=png",
-    "common_chat_with_us": "https://img.icons8.com/?size=100&id=1361&format=png",
-    "common_social": "https://img.icons8.com/?size=80&id=JqWLVxr0WCrz&format=png",
-    "common_social_facebook": "https://img.icons8.com/?size=96&id=13912&format=png",
-    "common_social_linkedin": "https://img.icons8.com/?size=100&id=8808&format=png",
-    "common_social_youtube": "https://img.icons8.com/?size=96&id=108794&format=png",
-    "common_social_instagram": "https://img.icons8.com/?size=160&id=BrU2BBoRXiWq&format=png",
-    "common_privacy_policy": "https://img.icons8.com/?size=100&id=LeS5bIxWv2Kc&format=png",
+    "common_feedback": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_feedback.png",
+    "common_support": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_support.png",
+    "common_about_us": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_about_us.png",
+    "common_notification": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_notification.png",
+    "common_login": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_login.png",
+    "common_account_and_password": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_account_and_password.png",
+    "common_faq": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_faq.png",
+    "common_how_to_use": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_how_to_use.png",
+    "common_chat_with_us": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_chat_with_us.png",
+    "common_social": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_social.png",
+    "common_social_facebook": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_social_facebook.png",
+    "common_social_linkedin": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_social_linkedin.png",
+    "common_social_youtube": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_social_youtube.png",
+    "common_social_instagram": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_social_instagram.png",
+    "common_privacy_policy": f"{settings.CLOUDINARY_PATH.format('1')}{settings.CLOUDINARY_DIRECTORY['icons']}common_privacy_policy.png"
 }
 
 SOCIAL_MEDIA_LINKS = {

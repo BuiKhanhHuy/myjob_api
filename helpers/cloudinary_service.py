@@ -77,6 +77,8 @@ class CloudinaryService:
             if not public_id:
                 return None
                 
+            # Ensure always use HTTPS
+            options_config['secure'] = True
             url, options = utils_cloudinary.cloudinary_url(public_id, **options_config)
             return url, options
             
