@@ -312,12 +312,14 @@ CLOUDINARY_DIRECTORY = {
     "avatar": f"{CLOUDINARY_BUCKET_NAME}/avatar/",
     "cv": f"{CLOUDINARY_BUCKET_NAME}/cv/",
     "logo": f"{CLOUDINARY_BUCKET_NAME}/logo/",
-    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/cover-image/",
-    "company_image": f"{CLOUDINARY_BUCKET_NAME}/company-image/",
-    "career_image": f"{CLOUDINARY_BUCKET_NAME}/career-images/",
-    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/web-banners/",
-    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/mobile-banners/",
-    "system": f"{CLOUDINARY_BUCKET_NAME}/system/"
+    "cover_image": f"{CLOUDINARY_BUCKET_NAME}/cover_image/",
+    "company_image": f"{CLOUDINARY_BUCKET_NAME}/company_image/",
+    "career_image": f"{CLOUDINARY_BUCKET_NAME}/career_image/",
+    "web_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/web_banners/",
+    "mobile_banner": f"{CLOUDINARY_BUCKET_NAME}/banners/mobile_banners/",
+    "system": f"{CLOUDINARY_BUCKET_NAME}/system/",
+    "icons": f"{CLOUDINARY_BUCKET_NAME}/icons/",
+    "about_us": f"{CLOUDINARY_BUCKET_NAME}/about_us/"
 }
 
 DOMAIN_CLIENT = {

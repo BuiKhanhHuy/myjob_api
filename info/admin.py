@@ -156,7 +156,7 @@ class JobSeekerProfileAdmin(admin.ModelAdmin):
 
 class ResumeAdmin(admin.ModelAdmin):
     list_display = ("id", "user", "title", "position", "experience", "academic_level",
-                    "type_of_workplace", "job_type", "is_active",)
+                    "type_of_workplace", "job_type", "type", "is_active",)
     list_display_links = ("id", "user", "title",)
     search_fields = ("id", "title", "user__email")
     list_filter = [
@@ -165,10 +165,11 @@ class ResumeAdmin(admin.ModelAdmin):
         ("academic_level", ChoiceDropdownFilter),
         ("type_of_workplace", ChoiceDropdownFilter),
         ("job_type", ChoiceDropdownFilter),
+        ("type", DropdownFilter),
         ("is_active", DropdownFilter),
     ]
     ordering = ('is_active',)
-    readonly_fields = ("type", 'show_resume_image',
+    readonly_fields = ("type", 'preview_pdf',
                        'job_seeker_profile', 'user')
     inlines = (EducationDetailInlineAdmin, ExperienceDetailInlineAdmin,
                CertificateInlineAdmin, LanguageSkillInlineAdmin,
@@ -177,34 +178,20 @@ class ResumeAdmin(admin.ModelAdmin):
     fields = ("title", "salary_min", "salary_max",
               "position", "experience", "academic_level",
               "type_of_workplace", "job_type", "city", "career",
-              "job_seeker_profile", "user", "type",
-              "is_active", "show_resume_image", "resume_file",
-              "description")
+              "job_seeker_profile", "user", "type", 'preview_pdf', "resume_file",
+              "description", "is_active")
 
     autocomplete_fields = ['city', 'career',
                            'company_viewers', 'company_savers']
     list_select_related = ('city', 'career',)
 
-    def show_resume_image(self, resume):
-        # Check if there is a resume
-        if resume:
-            # Get the cv file of the resume
+    def preview_pdf(self, resume):
+        if resume.file:
             cv_file = resume.file
-            # Set the default alt for the image to "No image"
-            image_alt = "No image"
-            # Set the default URL for the image to the default avatar URL
-            image_url = var_sys.AVATAR_DEFAULT["AVATAR"]
-            # If there is an image, change the URL and alt of the image
-            if cv_file:
-                # Prepare data for image file derived from PDF
-                image_url = cv_file.get_full_url().replace(f".{cv_file.format}", ".jpg")
-                image_alt = resume.title
-            # Return the image that has been formatted for safe display
-            return mark_safe(
-                f"<img src='{image_url}' alt='{image_alt}' style='border-radius: 2px;object-fit:cover;' width='45px' height='45px'/>"
-            )
+            return mark_safe(f'<iframe src="{cv_file.get_full_url()}" width="1000" height="800"></iframe>')
+        return "---"
 
-    show_resume_image.short_description = "Resume image"
+    preview_pdf.short_description = "CV Preview"
 
     form = ResumeForm
 
@@ -240,7 +227,7 @@ class ResumeAdmin(admin.ModelAdmin):
 
 class CompanyAdmin(admin.ModelAdmin):
     inlines = [CompanyImageInlineAdmin]
-    list_display = ("id", "company_name", "field_operation", "company_email",
+    list_display = ("id", "show_company_image", "company_name", "field_operation", "company_email",
                     "company_phone", "employee_size", "tax_code", "user",)
     list_display_links = ("id", "company_name",)
     search_fields = ("id", "company_name", "field_operation", "company_email", "company_phone", "tax_code")
@@ -282,7 +269,7 @@ class CompanyAdmin(admin.ModelAdmin):
         # Return HTML code for displaying the company logo
         return mark_safe(
             r"""<img src='{0}'
-            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+            alt='{1}' style="border-radius: 2px;object-fit:contain;" width='45px' height='45px'/>""".format(
                 company_logo_url, company_logo_alt)
         )
 
@@ -303,7 +290,7 @@ class CompanyAdmin(admin.ModelAdmin):
         # Return HTML code for displaying the company cover image
         return mark_safe(
             r"""<img src='{0}'
-            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
+            alt='{1}' style="border-radius: 2px;object-fit:cover;" width='450px' height='175px'/>""".format(
                 company_cover_image_url, company_cover_image_alt)
         )
 

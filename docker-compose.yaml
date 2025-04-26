@@ -4,9 +4,10 @@ services:
   db:
     image: mysql:8.0
     container_name: myjob-db-container
-    restart: unless-stopped
+    restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
     volumes:
       - ./data/myjob_db.sql:/docker-entrypoint-initdb.d/data.sql
       - myjob-volume:/var/lib/mysql
@@ -15,10 +16,13 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: >
+        mysqladmin ping -h localhost -u root -p${DB_PASSWORD} &&
+        mysql -u root -p${DB_PASSWORD} -e 'SELECT 1 FROM information_schema.schemata WHERE schema_name = "${DB_NAME}"'
+      interval: 20s
+      timeout: 30s
+      retries: 10
+      start_period: 120s
     deploy:
       resources:
         limits:
@@ -27,7 +31,7 @@ services:
   redis:
     image: redis:alpine
     container_name: myjob-redis
-    restart: unless-stopped
+    restart: always
     command: redis-server --requirepass ${SERVICE_REDIS_PASSWORD} --port ${SERVICE_REDIS_PORT}
     networks:
       - myjob-network
@@ -59,14 +63,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: true
       redis:
         condition: service_healthy
+        required: true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://backend:8000/api/common/health/"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -75,29 +81,38 @@ services:
   celery-worker:
     image: myjob-backend
     container_name: myjob-celery-worker
-    restart: unless-stopped
-    command: celery -A myjob_api.celery worker --loglevel=info --concurrency=4
+    restart: always
+    command: bash -c "celery -A myjob_api.celery worker --loglevel=info --concurrency=4 --max-memory-per-child=512000 & celery -A myjob_api.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler & wait"
     env_file:
       - .env
     networks:
       - myjob-network
+    volumes:
+      - ./:/myjob_api
     depends_on:
+      db:
+        condition: service_healthy
+        required: true
       redis:
         condition: service_healthy
+        required: true
       backend:
         condition: service_healthy
+        required: true
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1G
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 512M
 
   # Ngrok to public API
   # Domain: ngrok-url (ngrok-url.com)
   ngrok:
     image: ngrok/ngrok:latest
     container_name: myjob-ngrok-container
-    restart: unless-stopped
+    restart: always
     command: 
       - "tunnel"
       - "--label"
@@ -108,7 +123,9 @@ services:
     networks:
       - myjob-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+        required: true
 
 networks:
   myjob-network:

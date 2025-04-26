@@ -23,10 +23,16 @@ from helpers import helper
 from configs import variable_system as var_sys
 
 from django_celery_beat.models import (
-    PeriodicTask
+    IntervalSchedule,
+    CrontabSchedule,
+    PeriodicTask,
+    SolarSchedule,
+    ClockedSchedule
 )
 from django_celery_beat.admin import (
-    TaskChoiceField, PeriodicTaskAdmin
+    TaskChoiceField, PeriodicTaskAdmin,
+    CrontabScheduleAdmin,
+    ClockedScheduleAdmin
 )
 from myjob_api.admin import custom_admin_site
 from common.models import File
@@ -267,7 +273,26 @@ class CustomPeriodicTaskAdmin(PeriodicTaskAdmin):
     )
 
 
+class IntervalScheduleAdmin(admin.ModelAdmin):
+    """Admin class for IntervalSchedule"""
+    list_display = ('every', 'period')
+    list_filter = ('period',)
+    search_fields = ('every',)
+
+
+class SolarScheduleAdmin(admin.ModelAdmin):
+    """Admin class for SolarSchedule"""
+    list_display = ('event', 'latitude', 'longitude')
+    search_fields = ('event', 'latitude', 'longitude')
+
+
 admin.site.unregister(PeriodicTask)
+admin.site.unregister(CrontabSchedule)
+admin.site.unregister(ClockedSchedule)
 custom_admin_site.register(Feedback, FeedbackAdmin)
 custom_admin_site.register(Banner, BannerAdmin)
+custom_admin_site.register(IntervalSchedule, IntervalScheduleAdmin)
+custom_admin_site.register(CrontabSchedule, CrontabScheduleAdmin)
+custom_admin_site.register(SolarSchedule, SolarScheduleAdmin)
+custom_admin_site.register(ClockedSchedule, ClockedScheduleAdmin)
 custom_admin_site.register(PeriodicTask, CustomPeriodicTaskAdmin)
