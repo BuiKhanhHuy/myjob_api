@@ -36,6 +36,11 @@ COMPANY_NAME = "MyJob"
 WEB_JOB_SEEKER_CLIENT_URL = config("WEB_JOB_SEEKER_CLIENT_URL")
 WEB_EMPLOYER_CLIENT_URL = config("WEB_EMPLOYER_CLIENT_URL")
 
+DOMAIN_CLIENT = {
+    "job_seeker": WEB_JOB_SEEKER_CLIENT_URL if WEB_JOB_SEEKER_CLIENT_URL else "http://127.0.0.1:3000/",
+    "employer": WEB_EMPLOYER_CLIENT_URL if WEB_EMPLOYER_CLIENT_URL else "http://localhost:3000/",
+}
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 APPEND_SLASH = config('APPEND_SLASH', default=True, cast=bool)
@@ -256,6 +261,8 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 
 # GOOGLE
 # Google configuration
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = DOMAIN_CLIENT['job_seeker'].rstrip('/')
+SOCIAL_AUTH_GOOGLE_OAUTH2_TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'
 SOCIAL_AUTH_GOOGLE_OAUTH2_URL = 'https://accounts.google.com/o/oauth2/auth'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
@@ -320,11 +327,6 @@ CLOUDINARY_DIRECTORY = {
     "system": f"{CLOUDINARY_BUCKET_NAME}/system/",
     "icons": f"{CLOUDINARY_BUCKET_NAME}/icons/",
     "about_us": f"{CLOUDINARY_BUCKET_NAME}/about_us/"
-}
-
-DOMAIN_CLIENT = {
-    "job_seeker": WEB_JOB_SEEKER_CLIENT_URL if WEB_JOB_SEEKER_CLIENT_URL else "http://127.0.0.1:3000/",
-    "employer": WEB_EMPLOYER_CLIENT_URL if WEB_EMPLOYER_CLIENT_URL else "http://localhost:3000/",
 }
 
 REDIRECT_LOGIN_CLIENT = "dang-nhap"

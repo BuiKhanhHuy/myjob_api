@@ -129,14 +129,19 @@ class CompanyImageInlineAdmin(admin.StackedInline):
         if image:
             image_url = image.get_full_url()  # Get the full URL of the image
             image_alt = company_image.company.company_name  # Use the company name as alt text
-            
-        # Return HTML code for displaying the company image
+            # Return HTML code for displaying the company image
+            return mark_safe(
+                r"""<img src='{0}'
+                alt='{1}' style="border-radius: 2px;object-fit:cover;" width='450px' height='175px'/>""".format(
+                    image_url, image_alt)
+            )
         return mark_safe(
             r"""<img src='{0}'
             alt='{1}' style="border-radius: 2px;object-fit:cover;" width='45px' height='45px'/>""".format(
                 image_url, image_alt)
         )
 
+    show_image.short_description = "Image"
 
 # ADMIN
 class JobSeekerProfileAdmin(admin.ModelAdmin):

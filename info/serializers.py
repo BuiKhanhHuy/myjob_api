@@ -1214,9 +1214,10 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
     jobType = serializers.IntegerField(source="job_type", required=True)
     isActive = serializers.BooleanField(source="is_active", default=False)
     updateAt = serializers.DateTimeField(source="update_at", read_only=True)
-    fileUrl = serializers.URLField(
-        source="file_url", required=False, read_only=True)
-    filePublicId = serializers.CharField(source="public_id", read_only=True)
+    fileUrl = serializers.SerializerMethodField(
+        method_name='get_cv_file_url', read_only=True)
+    filePublicId = serializers.SerializerMethodField(
+        method_name='get_cv_file_public_id', read_only=True)
     type = serializers.CharField(required=False, read_only=True)
 
     isSaved = serializers.SerializerMethodField(
@@ -1293,6 +1294,18 @@ class ResumeDetailSerializer(serializers.ModelSerializer):
         contact_profile_exist = resume.contactprofile_set.filter(
             company=company, resume=resume).exists()
         return contact_profile_exist
+    
+    def get_cv_file_url(self, resume):
+        cv_file = resume.file
+        if cv_file:
+            return cv_file.get_full_url()
+        return None
+    
+    def get_cv_file_public_id(self, resume):
+        cv_file = resume.file
+        if cv_file:
+            return cv_file.public_id
+        return None
 
     class Meta:
         model = Resume
