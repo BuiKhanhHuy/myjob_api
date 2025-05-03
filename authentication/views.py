@@ -99,12 +99,51 @@ class CustomTokenView(TokenView):
 
 
 class CustomConvertTokenView(ConvertTokenView):
+    def get_google_access_token(self, code):
+        """
+        Get access token from Google OAuth2 by authorization code
+        """
+        try:
+            # Send request to Google OAuth2 token endpoint
+            data = {
+                'code': code,
+                'client_id': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
+                'client_secret': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
+                'redirect_uri': settings.SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI,
+                'grant_type': 'authorization_code'
+            }
+            response = requests.post(
+                settings.SOCIAL_AUTH_GOOGLE_OAUTH2_TOKEN_URL,
+                data=data
+            )
+            # Check response status
+            if response.status_code != 200:
+                raise BadRequest("Xác thực thất bại")
+                
+            # Parse response JSON
+            response_data = response.json()
+            access_token = response_data.get('access_token')
+            
+            if not access_token:
+                raise BadRequest('Xác thực thất bại')
+                
+            return access_token
+        except Exception as ex:
+            helper.print_log_error("get_google_access_token", ex)
+            raise BadRequest('Xác thực thất bại')
+    
     def post(self, request, *args, **kwargs):
         try:
             mutable_data = request.data.copy()
             request._request.POST = request._request.POST.copy()
             for key, value in mutable_data.items():
                 request._request.POST[key] = value
+
+            request_data = request._request.POST.dict()
+            # If backend is google-oauth2, get access token from code
+            # If Facebook doesn't need to get access token, because it's using access token
+            if request_data.get("backend") == 'google-oauth2':
+                request._request.POST['token'] = self.get_google_access_token(request_data.get("token"))
 
             url, headers, body, stt = self.create_token_response(request._request)
             if stt == status.HTTP_400_BAD_REQUEST:
