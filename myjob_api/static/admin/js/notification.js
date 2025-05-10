@@ -1,6 +1,6 @@
 import {
     collection, onSnapshot, query, where, updateDoc, doc,
-} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
 import db from './fire-base-config.js'
 
 // global variable

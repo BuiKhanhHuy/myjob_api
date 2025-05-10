@@ -61,7 +61,8 @@ def custom_create_user(strategy, backend, user=None, *args, **kwargs):
 
     # send noti welcome
     helper.add_system_notifications(
-        f"{SYSTEM_MESSAGES['WELCOME_TITLE']} {SYSTEM_MESSAGES['WELCOME_JOBSEEKER']}",
+        {SYSTEM_MESSAGES['WELCOME_TITLE']},
+        {SYSTEM_MESSAGES['WELCOME_JOBSEEKER']},
         [user.id]
     )
 

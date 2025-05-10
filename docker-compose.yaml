@@ -113,11 +113,9 @@ services:
     image: ngrok/ngrok:latest
     container_name: myjob-ngrok-container
     restart: always
-    command: 
-      - "tunnel"
-      - "--label"
-      - "edge=${NGROK_EDGE_ID}"
-      - "http://backend:8000"
+    command: start --all --config /etc/ngrok/ngrok.yml
+    volumes:
+      - ./ngrok.yml:/etc/ngrok/ngrok.yml
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     networks:

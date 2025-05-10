@@ -1,0 +1,6 @@
+version: "2"
+tunnels:
+  backend:
+    proto: http
+    addr: backend:8000
+    domain: <ngrok-domain>
