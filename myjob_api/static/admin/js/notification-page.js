@@ -1,6 +1,6 @@
 import {
     collection, getDocs, limit, onSnapshot, query, where, startAfter, orderBy, updateDoc, doc
-} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
 import { PAGE_SIZE_DEFAULT } from "./init.js";
 import db from './fire-base-config.js'
 import {showDetail} from "./notification.js";

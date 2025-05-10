@@ -1,7 +1,7 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-app.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/11.7.1/firebase-app.js";
 import {
     getFirestore,
-} from "https://www.gstatic.com/firebasejs/9.9.3/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.7.1/firebase-firestore.js";
 // Import Firebase Config from init.js
 import { FIREBASE_CONFIG } from "./init.js";
 

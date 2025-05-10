@@ -351,7 +351,7 @@ FIREBASE_CONFIG = {
     "storageBucket": config('FIREBASE_STORAGE_BUCKET', default=''),
     "messagingSenderId": config('FIREBASE_MESSAGING_SENDER_ID', default=''),
     "appId": config('FIREBASE_APP_ID', default=''),
-    "databaseURL": config('FIREBASE_DATABASE_URL', default=''),
+    "measurementId": config('FIREBASE_MEASUREMENT_ID', default='')
 }
 # Load Firebase credentials
 FIREBASE_CREDENTIALS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
@@ -362,8 +362,6 @@ else:
     FIREBASE_SERVER_CONFIG = {}
 # Initialize Firebase
 cred = credentials.Certificate(FIREBASE_SERVER_CONFIG)
-firebase_admin.initialize_app(cred, {
-    'databaseURL': config('FIREBASE_DATABASE_URL', default='')
-})
+firebase_admin.initialize_app(cred)
 
 JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\\')
