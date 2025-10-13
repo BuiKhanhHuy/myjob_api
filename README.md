@@ -10,9 +10,44 @@
 
 ## 📋 Table of Contents
 
-- [⚙️ Service Configuration](#️-service-configuration)
 - [📦 Installation Guide](#-installation-guide)
+- [⚙️ Service Configuration](#️-service-configuration)
 - [📚 API Documentation](#-api-documentation)
+
+---
+
+## 📦 Installation Guide
+
+### 🔽 Step 1: Clone Project
+
+```bash
+# Clone repository
+git clone https://github.com/BuiKhanhHuy/myjob_api.git
+
+# Navigate to project directory
+cd myjob_api
+
+# Create environment configuration file
+cp .env.example .env
+```
+
+### ⚙️ Step 2: Environment Configuration
+
+1. Open `.env` file 
+2. Fill in all information from the services configured above
+3. Save file
+
+### 🚀 Step 3: Launch Application
+
+```bash
+# Build and run containers
+docker-compose up -d --build
+```
+
+### ✅ Step 4: Verification
+
+- 🌐 **Application**: `https://<your-ngrok-domain>/`
+- 📖 **API Documentation**: `https://<your-ngrok-domain>/swagger/`
 
 ---
 
@@ -68,8 +103,8 @@ CLOUDINARY_API_SECRET=<API Secret>
 
 **Required environment variables:**
 ```env
-FACEBOOK_CLIENT_ID=<App ID>
-FACEBOOK_CLIENT_SECRET=<App Secret>
+SOCIAL_AUTH_FACEBOOK_KEY=<App ID>
+SOCIAL_AUTH_FACEBOOK_SECRET=<App Secret>
 ```
 
 **📝 Configuration steps:**
@@ -90,8 +125,8 @@ FACEBOOK_CLIENT_SECRET=<App Secret>
 
 **Required environment variables:**
 ```env
-GOOGLE_CLIENT_ID=<Client ID>
-GOOGLE_CLIENT_SECRET=<Client Secret>
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=<Client ID>
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=<Client Secret>
 ```
 
 **📝 Configuration steps:**
@@ -160,41 +195,6 @@ NGROK_AUTHTOKEN=<Auth Token>
 
 ---
 
-## 📦 Installation Guide
-
-### 🔽 Step 1: Clone Project
-
-```bash
-# Clone repository
-git clone https://github.com/BuiKhanhHuy/myjob_api.git
-
-# Navigate to project directory
-cd myjob_api
-
-# Create environment configuration file
-cp .env.example .env
-```
-
-### ⚙️ Step 2: Environment Configuration
-
-1. Open `.env` file 
-2. Fill in all information from the services configured above
-3. Save file
-
-### 🚀 Step 3: Launch Application
-
-```bash
-# Build and run containers
-docker-compose up -d --build
-```
-
-### ✅ Step 4: Verification
-
-- 🌐 **Application**: `https://<your-ngrok-domain>/`
-- 📖 **API Documentation**: `https://<your-ngrok-domain>/swagger/`
-
----
-
 ## 📚 API Documentation
 
 | Type | URL | Description |
@@ -216,9 +216,44 @@ docker-compose up -d --build
 
 ## 📋 Mục Lục
 
-- [⚙️ Cấu Hình Dịch Vụ](#️-cấu-hình-dịch-vụ-1)
 - [📦 Hướng Dẫn Cài Đặt](#-hướng-dẫn-cài-đặt-1)
+- [⚙️ Cấu Hình Dịch Vụ](#️-cấu-hình-dịch-vụ-1)
 - [📚 Tài Liệu API](#-tài-liệu-api-1)
+
+---
+
+## 📦 Hướng Dẫn Cài Đặt
+
+### 🔽 Bước 1: Clone Dự Án
+
+```bash
+# Clone repository
+git clone https://github.com/BuiKhanhHuy/myjob_api.git
+
+# Di chuyển vào thư mục dự án
+cd myjob_api
+
+# Tạo file cấu hình môi trường
+cp .env.example .env
+```
+
+### ⚙️ Bước 2: Cấu Hình Môi Trường
+
+1. Mở file `.env` 
+2. Điền đầy đủ thông tin từ các dịch vụ đã cấu hình ở trên
+3. Lưu file
+
+### 🚀 Bước 3: Khởi Chạy Ứng Dụng
+
+```bash
+# Build và chạy các container
+docker-compose up -d --build
+```
+
+### ✅ Bước 4: Kiểm Tra
+
+- 🌐 **Ứng dụng**: `https://<your-ngrok-domain>/`
+- 📖 **API Documentation**: `https://<your-ngrok-domain>/swagger/`
 
 ---
 
@@ -274,8 +309,8 @@ CLOUDINARY_API_SECRET=<API Secret>
 
 **Biến môi trường cần thiết:**
 ```env
-FACEBOOK_CLIENT_ID=<App ID>
-FACEBOOK_CLIENT_SECRET=<App Secret>
+SOCIAL_AUTH_FACEBOOK_KEY=<App ID>
+SOCIAL_AUTH_FACEBOOK_SECRET=<App Secret>
 ```
 
 **📝 Các bước cấu hình:**
@@ -296,8 +331,8 @@ FACEBOOK_CLIENT_SECRET=<App Secret>
 
 **Biến môi trường cần thiết:**
 ```env
-GOOGLE_CLIENT_ID=<Client ID>
-GOOGLE_CLIENT_SECRET=<Client Secret>
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=<Client ID>
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=<Client Secret>
 ```
 
 **📝 Các bước cấu hình:**
@@ -363,41 +398,6 @@ NGROK_AUTHTOKEN=<Auth Token>
 3. **Lấy Domain**:
    - Vào **Domains** → copy domain được cấp
    - Thay thế `<ngrok-domain>` trong file `ngrok.yml`
-
----
-
-## 📦 Hướng Dẫn Cài Đặt
-
-### 🔽 Bước 1: Clone Dự Án
-
-```bash
-# Clone repository
-git clone https://github.com/BuiKhanhHuy/myjob_api.git
-
-# Di chuyển vào thư mục dự án
-cd myjob_api
-
-# Tạo file cấu hình môi trường
-cp .env.example .env
-```
-
-### ⚙️ Bước 2: Cấu Hình Môi Trường
-
-1. Mở file `.env` 
-2. Điền đầy đủ thông tin từ các dịch vụ đã cấu hình ở trên
-3. Lưu file
-
-### 🚀 Bước 3: Khởi Chạy Ứng Dụng
-
-```bash
-# Build và chạy các container
-docker-compose up -d --build
-```
-
-### ✅ Bước 4: Kiểm Tra
-
-- 🌐 **Ứng dụng**: `https://<your-ngrok-domain>/`
-- 📖 **API Documentation**: `https://<your-ngrok-domain>/swagger/`
 
 ---
 
