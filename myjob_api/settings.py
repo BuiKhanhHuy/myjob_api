@@ -360,8 +360,9 @@ if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
         FIREBASE_SERVER_CONFIG = json.load(f)
 else:
     FIREBASE_SERVER_CONFIG = {}
-# Initialize Firebase
-cred = credentials.Certificate(FIREBASE_SERVER_CONFIG)
-firebase_admin.initialize_app(cred)
+# Initialize Firebase (skip if credentials not configured)
+if FIREBASE_SERVER_CONFIG:
+    cred = credentials.Certificate(FIREBASE_SERVER_CONFIG)
+    firebase_admin.initialize_app(cred)
 
 JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'myjob_api\\')
