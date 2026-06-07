@@ -43,14 +43,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     # Gunicorn thay cho runserver; migrate + collectstatic chạy trước khi start
-    command: >
-      bash -c "python manage.py migrate &&
-               python manage.py collectstatic --noinput &&
-               gunicorn myjob_api.wsgi:application
-               --bind 0.0.0.0:8000
-               --workers 4
-               --timeout 120
-               --access-logfile -"
+    command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn myjob_api.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile -"
     # Bind to localhost only — nginx là điểm vào duy nhất từ bên ngoài
     ports:
       - "127.0.0.1:8000:8000"
