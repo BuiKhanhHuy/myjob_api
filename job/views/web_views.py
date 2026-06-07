@@ -375,16 +375,29 @@ class JobSeekerJobPostActivityViewSet(viewsets.ViewSet,
                       companyId=F('job_post__company_id'),
                       companyName=F('job_post__company__company_name'),
                       companySlug=F('job_post__company__slug'),
-                      companyImageUrl=F('job_post__company__company_image_url'),
+                      companyLogoId=F('job_post__company__logo'),
                       jobPostTitle=F('job_post__job_name')) \
             .values('id', 'userId', 'fullName', 'userEmail',
-                    'companyId', "companyName", "companySlug", 'companyImageUrl',
+                    'companyId', "companyName", "companySlug", 'companyLogoId',
                     'jobPostTitle')
         page = self.paginate_queryset(queryset)
         res_data = page
-
+        
         if page is not None:
+            for item in res_data:
+                company_logo = File.objects.get(id=item['companyLogoId'])
+                if company_logo:
+                    item['companyImageUrl'] = company_logo.get_full_url()
+                else:
+                    item['companyImageUrl'] = var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
             return self.get_paginated_response(res_data)
+        
+        for item in res_data:
+            company_logo = File.objects.get(id=item['companyLogoId'])
+            if company_logo:
+                item['companyImageUrl'] = company_logo.get_full_url()
+            else:
+                item['companyImageUrl'] = var_sys.AVATAR_DEFAULT["COMPANY_LOGO"]
         return var_res.Response(res_data)
 
     def create(self, request, *args, **kwargs):
