@@ -1,0 +1,108 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: myjob-db-container
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+    volumes:
+      - ./data/myjob_db.sql:/docker-entrypoint-initdb.d/data.sql
+      - myjob-volume:/var/lib/mysql
+    networks:
+      - myjob-network
+    healthcheck:
+      test: >
+        mysqladmin ping -h localhost -u root -p${DB_PASSWORD} &&
+        mysql -u root -p${DB_PASSWORD} -e 'SELECT 1 FROM information_schema.schemata WHERE schema_name = "${DB_NAME}"'
+      interval: 20s
+      timeout: 30s
+      retries: 10
+      start_period: 120s
+
+  redis:
+    image: redis:alpine
+    container_name: myjob-redis
+    restart: always
+    command: redis-server --requirepass ${SERVICE_REDIS_PASSWORD} --port ${SERVICE_REDIS_PORT}
+    networks:
+      - myjob-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "localhost", "-p", "${SERVICE_REDIS_PORT}", "-a", "${SERVICE_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: myjob-backend
+    container_name: myjob-backend-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # Gunicorn thay cho runserver; migrate + collectstatic chạy trước khi start
+    command: >
+      bash -c "python manage.py migrate &&
+               python manage.py collectstatic --noinput &&
+               gunicorn myjob_api.wsgi:application
+               --bind 0.0.0.0:8000
+               --workers 4
+               --timeout 120
+               --access-logfile -"
+    # Bind to localhost only — nginx là điểm vào duy nhất từ bên ngoài
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    networks:
+      - myjob-network
+    depends_on:
+      db:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/common/health/"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+
+  celery-worker:
+    image: myjob-backend
+    container_name: myjob-celery-worker
+    restart: always
+    command: >
+      bash -c "celery -A myjob_api.celery worker
+               --loglevel=info
+               --concurrency=4
+               --max-memory-per-child=512000 &
+               celery -A myjob_api.celery beat
+               -l info
+               --scheduler django_celery_beat.schedulers:DatabaseScheduler &
+               wait"
+    env_file:
+      - .env
+    networks:
+      - myjob-network
+    depends_on:
+      db:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+      backend:
+        condition: service_healthy
+        required: true
+
+networks:
+  myjob-network:
+    name: myjob-network
+
+volumes:
+  myjob-volume:

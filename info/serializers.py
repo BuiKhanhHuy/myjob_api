@@ -501,7 +501,7 @@ class CvSerializer(serializers.ModelSerializer):
             path_list = instance.file.public_id.split('/')
             public_id = path_list[-1] if path_list else None
         # Upload the PDF file to Cloudinary
-        pdf_upload_result = CloudinaryService.upload_file(
+        pdf_upload_result = CloudinaryService.upload_image(
             pdf_file,
             settings.CLOUDINARY_DIRECTORY["cv"],
             public_id=public_id
@@ -760,7 +760,7 @@ class ResumeSerializer(serializers.ModelSerializer):
                                            job_seeker_profile=job_seeker_profile)
 
             # Upload the PDF file to Cloudinary and get the upload result
-            pdf_upload_result = CloudinaryService.upload_file(
+            pdf_upload_result = CloudinaryService.upload_image(
                 pdf_file,
                 settings.CLOUDINARY_DIRECTORY["cv"]
             )
